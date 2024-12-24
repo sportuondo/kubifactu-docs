@@ -1,71 +1,26 @@
 ---
-title: Introduction
-description: 'Welcome to the home of your new documentation'
+title: Conceptos básicos
+description: 'Conceptos básicos sobre el funcionamiento de Veri*Factu a través de KubiFACTU'
 ---
 
-<img
-  className="block dark:hidden"
-  src="/images/hero-light.svg"
-  alt="Hero Light"
-/>
-<img
-  className="hidden dark:block"
-  src="/images/hero-dark.svg"
-  alt="Hero Dark"
-/>
+## Los registros de facturación
 
-## Setting up
+Los registros de facturación son los envíos que se hacen a Veri*Factu para el **alta, subsanación y anulación de facturas**.
 
-The first step to world-class documentation is setting up your editing environments.
+## Obligatoriedad del envío de las facturas a Veri*Factu
 
-<CardGroup cols={2}>
-  <Card
-    title="Edit Your Docs"
-    icon="pen-to-square"
-    href="https://mintlify.com/docs/quickstart"
-  >
-    Get your docs set up locally for easy development
-  </Card>
-  <Card
-    title="Preview Changes"
-    icon="image"
-    href="https://mintlify.com/docs/development"
-  >
-    Preview your changes before you push to make sure they're perfect
-  </Card>
-</CardGroup>
+El **registro de facturación** se genera en el momento en que la los datos de la factura son remitidos a nuestro sistema. Tras la generación del registro de facturación este se envía a Veri*Factu para su validación y registro.
 
-## Make it yours
+La **fecha de expedición** de la factura debe coincidir con la de generación del registro de facturación, es decir, la factura debe sernos enviada en la misma fecha en que es expedida. Además, la factura debe ser entregada al receptor (ya sea en versión impresa o digital) con un **QR de cotejo con la AEAT**. Dicho QR lo genera nuestro servicio una vez recibida y procesada la factura adecuadamente.
 
-Update your docs to your brand and add valuable content for the best user conversion.
+No obstante, se pueden dar situaciones puntuales de no coincidencia de la fecha de emisión de la factura con la del envío a nuestro sistema y subsiguiente generación del *registro de facturación*, por ejemplo, por incidencia en la remisión o causas similares.
 
-<CardGroup cols={2}>
-  <Card
-    title="Customize Style"
-    icon="palette"
-    href="https://mintlify.com/docs/settings/global"
-  >
-    Customize your docs to your company's colors and brands
-  </Card>
-  <Card
-    title="Reference APIs"
-    icon="code"
-    href="https://mintlify.com/docs/api-playground/openapi"
-  >
-    Automatically generate endpoints from an OpenAPI spec
-  </Card>
-  <Card
-    title="Add Components"
-    icon="screwdriver-wrench"
-    href="https://mintlify.com/docs/components/accordion"
-  >
-    Build interactive features and designs to guide your users
-  </Card>
-  <Card
-    title="Get Inspiration"
-    icon="stars"
-    href="https://mintlify.com/customers"
-  >
-    Check out our showcase of our favorite documentation
-  </Card>
-</CardGroup>
+## Encadenamiento (trazabilidad)
+
+La trazabilidad se refiere a que se pueda garantizar que no hay "huecos" o "saltos" en la secuencia de generación de los registros de facturación correspondientes a las facturas expedidas utilizando un determinado **Sistema Informático de Facturación (SIF)**, así como que dicha secuencia se corresponde con la de la fecha y hora de generación empleadas.
+
+Los registros de facturación encadenan de forma independiente dentro de cada SIF y para cada empresa que emita facturas. Es decir, **existe una única cadena de registros de facturación por cada par de valores distintos de SIF y empresa emisora de facturas**.
+
+<Note>Un SIF puede procesar registros de facturación de diferentes empresas.</Note>
+
+<Info>Nuestro sistema se encarga de generar los datos de encadenamiento de forma automática en base a las facturas previamente procesadas para los correspondientes SIFs y empresas.</Info>

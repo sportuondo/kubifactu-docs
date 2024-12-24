@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Starter Kit",
+  "name": "KubiFactu",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -18,20 +18,23 @@
   "topbarLinks": [
     {
       "name": "Support",
-      "url": "mailto:hi@mintlify.com"
+      "url": "mailto:info@kubicode.com"
     }
   ],
   "topbarCtaButton": {
     "name": "Dashboard",
     "url": "https://dashboard.mintlify.com"
   },
+  "primaryTab": {
+    "name": "Inicio"
+    },
   "tabs": [
     {
-      "name": "API Reference",
+      "name": "Referencia de la API",
       "url": "api-reference"
     }
   ],
-  "anchors": [
+  "anchors_bak": [
     {
       "name": "Documentation",
       "icon": "book-open-cover",
@@ -50,36 +53,27 @@
   ],
   "navigation": [
     {
-      "group": "Get Started",
+      "group": "Empieza",
       "pages": [
         "introduction",
         "quickstart",
-        "development"
+        "development",
+        "prueba"
       ]
     },
     {
-      "group": "Essentials",
-      "pages": [
-        "essentials/markdown",
-        "essentials/code",
-        "essentials/images",
-        "essentials/settings",
-        "essentials/navigation",
-        "essentials/reusable-snippets"
-      ]
-    },
-    {
-      "group": "API Documentation",
+      "group": "Documentación de la API",
       "pages": [
         "api-reference/introduction"
       ]
     },
     {
-      "group": "Endpoint Examples",
+      "group": "Registros de facturación",
       "pages": [
         "api-reference/endpoint/get",
         "api-reference/endpoint/create",
-        "api-reference/endpoint/delete"
+        "api-reference/endpoint/delete",
+        "api-reference/facturas/create"
       ]
     }
   ],
