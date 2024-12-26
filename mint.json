@@ -17,11 +17,11 @@
   },
   "topbarLinks": [
     {
-      "name": "Support",
+      "name": "Soporte",
       "url": "mailto:info@kubicode.com"
     }
   ],
-  "topbarCtaButton": {
+  "topbarCtaButton_BAK": {
     "name": "Dashboard",
     "url": "https://dashboard.mintlify.com"
   },
@@ -56,9 +56,13 @@
       "group": "Empieza",
       "pages": [
         "introduction",
-        "quickstart",
-        "development",
-        "prueba"
+        "quickstart"
+      ]
+    },
+    {
+      "group": "API",
+      "pages": [
+        "api/facturas/create"
       ]
     },
     {
@@ -70,16 +74,22 @@
     {
       "group": "Registros de facturación",
       "pages": [
-        "api-reference/endpoint/get",
-        "api-reference/endpoint/create",
-        "api-reference/endpoint/delete",
         "api-reference/facturas/create"
       ]
     }
   ],
-  "footerSocials": {
+  "footerSocials_BAK": {
     "x": "https://x.com/mintlify",
     "github": "https://github.com/mintlify",
     "linkedin": "https://linkedin.com/company/mintlify"
+  },
+  "api": {
+    "baseUrl": [
+        "https://www.kubifactu.test/api",
+        "https://www.kubifactu.com/api"
+    ],
+    "playground": {
+      "mode": "simple"
+    }
   }
 }
