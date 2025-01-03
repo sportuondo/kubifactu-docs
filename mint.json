@@ -1,6 +1,9 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "KubiFactu",
+  "codeBlock": {
+    "mode": "dark"
+  },
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -60,21 +63,29 @@
       ]
     },
     {
-      "group": "API",
-      "pages": [
-        "api/facturas/create"
-      ]
-    },
-    {
-      "group": "Documentación de la API",
-      "pages": [
-        "api-reference/introduction"
-      ]
-    },
-    {
       "group": "Registros de facturación",
       "pages": [
-        "api-reference/facturas/create"
+        "api-reference/facturas/create",
+        "api-reference/facturas/cancel"
+      ]
+    },
+    {
+      "group": "Listas de valores",
+      "pages": [
+        "api-reference/valores/invoice-type-key",
+        "api-reference/valores/other-tax-id-type-key",
+        "api-reference/valores/correction-key",
+        "api-reference/valores/simplified-invoice-key",
+        "api-reference/valores/without-recipient-identification-key",
+        "api-reference/valores/macrodata-key",
+        "api-reference/valores/issued-by-third-party-or-recipient-key",
+        "api-reference/valores/coupon-key",
+        "api-reference/valores/rectificative-type-key",
+        "api-reference/valores/tax-type-key",
+        "api-reference/valores/vat-tax-regime-key",
+        "api-reference/valores/igic-tax-regime-key",
+        "api-reference/valores/operation-type-key",
+        "api-reference/valores/exemption-cause-key"
       ]
     }
   ],
@@ -85,11 +96,18 @@
   },
   "api": {
     "baseUrl": [
-        "https://www.kubifactu.test/api",
-        "https://www.kubifactu.com/api"
+        "https://www.kubifactu.test",
+        "https://www.kubifactu.com"
     ],
     "playground": {
       "mode": "simple"
+    },
+    "request": {
+        "example": {
+            "languages_BAK": [
+                
+              ]
+        }
     }
   }
 }

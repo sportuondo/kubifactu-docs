@@ -1,14 +1,12 @@
 ---
-title: 'Enviar factura'
-api: 'POST /user'
+title: 'Anular factura'
+api: 'GET /invoices/{invoiceId}/cancel'
 description: 'Welcome to the home of your new documentation'
 ---
 
-| Property | Description                           |
-|----------|---------------------------------------|
-| Name     | Full **name** of user                 |
-| Age      | Reported age                          |
-| Joined   | Whether the user joined the community |
+<ParamField body="user_age" type="integer" default="0" required>
+  The age of the user. Cannot be less than 0
+</ParamField>
 
 <ParamField body="user_age" type="integer" default="0" required>
   The age of the user. Cannot be less than 0
