@@ -1,0 +1,45 @@
+---
+title: 'Factura simplificada'
+description: 'Generación de una factura simplificada'
+---
+
+import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
+
+## Encabezados HTTP
+
+<ClientDefaultHeaders />
+
+## Cuerpo JSON de la petición
+
+El campo `invoice_type_key` utiliza el valor `F2` y no se incluyen destinatarios (`recipients`) de la factura.
+
+<CodeGroup>
+```json JSON
+{
+  "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
+  "certificate_password": "******",
+  "invoice_type_key": "F2",
+  "sender_data": {
+    "company_name": "Empresa emisora de ejemplo",
+    "tax_id_number": "J27290840"
+  },
+  "full_invoice_number": "2024-000010",
+  "fiscal_year": "2025",
+  "issue_date": "2025-01-03",
+  "operation_description": "Factura simplificada por entrega de mercancías.",
+  "total_quota": 42.00,
+  "total_amount": 242.00,
+  "lines": [
+    {
+      "tax_type_key": "01",
+      "vat_tax_regime_key": "01",
+      "operation_type_key": "S1",
+      "tax_base": "200.00",
+      "tax_rate": "21.00",
+      "tax_quota": "42.00"
+    }
+  ],
+  "qr_as_bmp": false
+}
+```
+</CodeGroup>

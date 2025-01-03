@@ -1,31 +1,70 @@
 ---
 title: 'Anular factura'
-api: 'GET /invoices/{invoiceId}/cancel'
-description: 'Welcome to the home of your new documentation'
+api: 'POST /api/invoices/{invoiceId}/cancel'
+description: 'Anulación de un registro de facturación'
 ---
 
-<ParamField body="user_age" type="integer" default="0" required>
-  The age of the user. Cannot be less than 0
+## Encabezados HTTP
+
+<ParamField header="Content-Type" type="string" required>
+  Debe ser `application/json`.
 </ParamField>
 
-<ParamField body="user_age" type="integer" default="0" required>
-  The age of the user. Cannot be less than 0
+<ParamField header="X-Qbikode-ClientApiKey" type="string" required>
+  Api-KEY de la empresa que emite la factura.
 </ParamField>
 
-<ParamField body="user_age" type="integer" default="0" required>
-  The age of the user. Cannot be less than 0
+## Parámetros de la URL
+<ParamField query="invoice_id" type="string" required>
+  ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación. También se peude obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
 </ParamField>
 
-<RequestExample>
-```bash Request
-  curl --request POST \
-    --url https://dog-api.kinduff.com/api/facts
-```
-</RequestExample>
+## Cuerpo JSON
+<ParamField body="certificate_password" type="string" required>
+  Contraseña del certificado de la empresa emisora de la factura.
+</ParamField>
 
-<ResponseExample>
-```json Response
-{ "status": "success" }
-```
-</ResponseExample>
+## Respuesta
 
+<ResponseField name="data" type="object">
+
+  Datos de la anulación del registro de facturación.
+
+  <Expandable title="properties" defaultOpen>
+    <ResponseField name="id" type="string">
+      Identificador (ID) de la factura en el sistema de **KubiFACTU**. Se utiliza para hacer referencia al registro de facturación desde otros endpoints como, por ejemplo, el de [anulación de facturas](/api-reference/facturas/cancel).
+    </ResponseField>
+
+    <ResponseField name="request_id" type="string">
+      Identificador de la petición como referencia para el soporte técnico.
+    </ResponseField>
+
+    <ResponseField name="full_invoice_number" type="string">
+      Número de la factura registrada.
+    </ResponseField>
+
+    <ResponseField name="fingerprint" type="string">
+      Huella de la factura registrada.
+    </ResponseField>
+
+    <ResponseField name="vf_post_status" type="string">
+      Estado del envío a Veri*Factu. Este campo indica si la factura ha sido enviada a Veri*Factu, pero no indica si el registro ha sido aceptado.
+
+      [Valores disponibles](/api-reference/valores/vf-post-status).
+    </ResponseField>
+
+    <ResponseField name="vf_record_registration_status" type="string">
+      Estado del envío a Veri*Factu. Este campo indica si la factura ha sido enviada a Veri*Factu, pero no indica si el registro ha sido aceptado.
+
+      [Valores disponibles](/api-reference/valores/vf-record-registration-status).
+    </ResponseField>
+
+    <ResponseField name="has_warnings" type="boolean">
+      Indica si el registro contiene errores que deban ser subsanados.
+    </ResponseField>
+
+    <ResponseField name="vf_error_descriptions" type="string">
+      Cadena con la descripción de los errores devueltos por Veri*Factu.
+    </ResponseField>
+  </Expandable>
+</ResponseField>

@@ -70,6 +70,18 @@
       ]
     },
     {
+      "group": "Ejemplos",
+      "pages": [
+        "api-reference/facturas/examples/basic",
+        "api-reference/facturas/examples/basic-foreign",
+        "api-reference/facturas/examples/correction",
+        "api-reference/facturas/examples/simplified",
+        "api-reference/facturas/examples/simplified-substitution",
+        "api-reference/facturas/examples/rectificative-substitution",
+        "api-reference/facturas/examples/rectificative-differences"
+      ]
+    },
+    {
       "group": "Listas de valores",
       "pages": [
         "api-reference/valores/invoice-type-key",
@@ -85,7 +97,9 @@
         "api-reference/valores/vat-tax-regime-key",
         "api-reference/valores/igic-tax-regime-key",
         "api-reference/valores/operation-type-key",
-        "api-reference/valores/exemption-cause-key"
+        "api-reference/valores/exemption-cause-key",
+        "api-reference/valores/vf-post-status",
+        "api-reference/valores/vf-record-registration-status"
       ]
     }
   ],

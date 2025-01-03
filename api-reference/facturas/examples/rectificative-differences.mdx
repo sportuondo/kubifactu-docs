@@ -1,0 +1,64 @@
+---
+title: 'Factura en rectificativa por diferencias'
+description: 'Generación de una factura rectificativa por diferencias'
+---
+
+import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
+
+## Encabezados HTTP
+
+<ClientDefaultHeaders />
+
+## Cuerpo JSON de la petición
+
+Esta factura rectifica y aplica una diferencia de importes a una factura anterior (`2024-000008`) de `100.00€` en la base imponible y de `21.00€` en el IVA aplicado.
+
+* El campo `invoice_type_key` utiliza el valor `R1` (Factura Rectificativa (Error fundado en derecho y Art. 80 Uno Dos y Seis LIVA)).
+* El campo `rectificative_type_key` tiene el valor `I`.
+* **NO se incluyen** los campos `rectified_tax_base` y `rectified_tax_quota`.
+* Se incluye la agrupación `rectified_invoices`.
+
+<CodeGroup>
+```json JSON
+{
+  "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
+  "certificate_password": "******",
+  "invoice_type_key": "R1",
+  "sender_data": {
+    "company_name": "Empresa emisora de ejemplo",
+    "tax_id_number": "J27290840"
+  },
+  "recipients": [
+    {
+      "company_name": "Empresa receptora de ejemplo",
+      "tax_id_number": "B99014037"
+    }
+  ],
+  "full_invoice_number": "2024-000015",
+  "fiscal_year": "2025",
+  "issue_date": "2025-01-03",
+  "operation_description": "Factura rectificativa.",
+  "rectificative_type_key": "I",
+  "rectified_invoices": [
+    {
+      "tax_id_number": "J27290840",
+      "full_invoice_number": "2024-000008",
+      "issue_date": "2024-12-12"
+    }
+  ],
+  "total_quota": 21.00,
+  "total_amount": 121.00,
+  "lines": [
+    {
+      "tax_type_key": "01",
+      "vat_tax_regime_key": "01",
+      "operation_type_key": "S1",
+      "tax_base": "100.00",
+      "tax_rate": "21.00",
+      "tax_quota": "21.00"
+    }
+  ],
+  "qr_as_bmp": false
+}
+```
+</CodeGroup>

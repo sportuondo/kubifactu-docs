@@ -1,0 +1,52 @@
+---
+title: 'Factura básica a extranjero'
+description: 'Generación de un nuevo registro de facturación a una empresa extranjera'
+---
+
+import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
+
+## Encabezados HTTP
+
+<ClientDefaultHeaders />
+
+## Cuerpo JSON de la petición
+
+Se trata de la remisión de un registro de facturación de alta de factura ordinaria por un total de `121.00€`, con un concepto por valor de `100.00€` + IVA del `21.00%` a una empresa extranjera.
+
+<CodeGroup>
+```json JSON
+{
+  "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
+  "certificate_password": "xxxxxxx",
+  "invoice_type_key": "F1",
+  "sender_data": {
+    "company_name": "Empresa emisora de ejemplo",
+    "tax_id_number": "J27290840"
+  },
+  "recipients": [
+    {
+      "company_name": "Empresa extranjera de prueba",
+      "other_country_code": "DE",
+      "other_tax_id_type_key": "03",
+      "other_tax_id_number": "L74JF44L2"
+    }
+  ],
+  "full_invoice_number": "2024-000022",
+  "fiscal_year": "2025",
+  "issue_date": "2025-01-03",
+  "operation_description": "Factura ordinaria por entrega de mercancías.",
+  "total_quota": 21.00,
+  "total_amount": 121.00,
+  "lines": [
+    {
+      "tax_type_key": "01", // Impuesto sobre el Valor Añadido (IVA)
+      "vat_tax_regime_key": "01", // Operación de régimen general
+      "operation_type_key": "S1", // Operación Sujeta y No exenta - Sin inversión del sujeto pasivo
+      "tax_base": "100.00",
+      "tax_rate": "21.00",
+      "tax_quota": "21.00"
+    }
+  ]
+}
+```
+</CodeGroup>
