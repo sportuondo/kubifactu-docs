@@ -1,0 +1,916 @@
+openapi: 3.0.0
+info:
+  title: Kubifactu API
+  description: API para el procesamiento y gestión de facturas de Veri*Factu
+  version: 1.0.0
+servers:
+  - url: https://api.kubifactu.com
+    description: Servidor de producción
+  - url: https://devapi.kubifactu.com
+    description: Servidor de pruebas
+paths:
+  /api/invoices:
+    post:
+      summary: "Enviar registro de facturación"
+      description: "Generación de un nuevo registro de facturación."
+      operationId: "createInvoiceRecord"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceRecordRequest"
+      responses:
+        '200':
+          description: "Factura enviada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - api_key: []
+
+  /api/invoices/{invoiceId}/cancel:
+    post:
+      summary: "Anular registro de facturación"
+      description: "Anulación de un registro de facturación."
+      operationId: "cancelInvoiceRecord"
+      parameters:
+        - name: invoiceId
+          in: path
+          description: |
+            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación. También se peude obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelInvoiceRecordRequest"
+      responses:
+        '200':
+          description: "Factura enviada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - api_key: []
+components:
+  schemas:
+    CancelInvoiceRecordRequest:
+      type: object
+      properties:
+        certificate_password:
+          type: string
+          description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
+          example: "passwd"
+
+    CreateInvoiceRecordRequest:
+      type: object
+      properties:
+        sif_id:
+          type: string
+          format: uuid
+          description: "ID del SIF que se quiere utilizar para el envío de la factura. Los SIFs se pueden registrar en el panel web de KubiFACTU."
+          example: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
+
+        certificate_password:
+          type: string
+          description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
+          example: "passwd"
+
+        invoice_type_key:
+          $ref: "#/components/schemas/invoice_type_key"
+
+        sender_data:
+          type: object
+          description: Información referente al emisor de la factura.
+          required:
+            - company_name
+            - tax_id_number
+          properties:
+            company_name:
+              type: string
+              description: Nombre de la empresa emisora.
+            tax_id_number:
+              type: string
+              description: NIF/CIF de la empresa emisora.
+
+        recipients:
+          type: array
+          description: Información de los receptores de la factura. Obligatorio para facturas ordinarias.
+          items:
+            type: object
+            required:
+              - company_name
+            properties:
+              company_name:
+                type: string
+                description: Nombre de la empresa receptora.
+              tax_id_number:
+                type: string
+                nullable: true
+                description: >
+                  NIF/CIF de la empresa receptora. Este campo es obligatorio si el receptor es nacional y se identifica mediante CIF/NIF.
+              other_country_code:
+                $ref: "#/components/schemas/other_country_code"
+                nullable: true
+              other_tax_id_type_key:
+                $ref: "#/components/schemas/other_tax_id_type_key"
+                nullable: true
+              other_tax_id_number:
+                type: string
+                nullable: true
+                description: >
+                  Número de identificación en el país de residencia del destinatario de la operación de la factura expedida. Ejemplo: `L74JF44L2` para una empresa de `DE`.
+
+        representative_company_name:
+          type: string
+          description: |
+            Nombre/razón social del representante del obligado tributario.  
+            A rellenar solo en caso de que los registros de facturación remitidos hayan sido generados por un representante/asesor del obligado tributario.
+          nullable: true
+
+        representative_tax_id_number:
+          type: string
+          description: |
+            NIF del representante del obligado tributario.  
+            A rellenar solo en caso de que los registros de facturación remitidos hayan sido generados por un representante/asesor del obligado tributario.
+          nullable: true
+
+        correction_key:
+          $ref: "#/components/schemas/correction_key"
+          nullable: true
+          example: "N"
+
+        full_invoice_number:
+          type: string
+          description: |
+            Serie+Nº Factura que identifica a la factura emitida.  
+            Ejemplo: `2025-00001`.
+          example: "2025-00001"
+
+        fiscal_year:
+          type: integer
+          description: |
+            Ejercicio fiscal en el que se emite la factura.
+          example: 2025
+
+        issue_date:
+          type: string
+          format: date
+          description: |
+            Fecha de expedición de la factura en formato `yyyy-mm-dd`.  
+            Ejemplo: `2025-02-26`.
+          example: "2025-02-26"
+
+        operation_date:
+          type: string
+          nullable: true
+          format: date
+          description: |
+            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición.  
+            Formato `yyyy-mm-dd`.  
+            Ejemplo: `2025-02-26`.
+          example: "2025-02-26"
+
+        operation_description:
+          type: string
+          description: |
+            Descripción del objeto de la factura.
+
+        lines:
+          type: array
+          description: |
+            Desglose de la factura con la lista de los conceptos facturados.
+          items:
+            type: object
+            required:
+              - tax_type_key
+              - vat_tax_regime_key
+              - igic_tax_regime_key
+              - operation_type_key
+              - tax_base
+            properties:
+              tax_type_key:
+                $ref: "#/components/schemas/tax_type_key"
+              vat_tax_regime_key:
+                $ref: "#/components/schemas/vat_tax_regime_key"
+                nullable: true
+              igic_tax_regime_key:
+                $ref: "#/components/schemas/igic_tax_regime_key"
+                nullable: true
+              operation_type_key:
+                $ref: "#/components/schemas/operation_type_key"
+              exemption_cause_key:
+                $ref: "#/components/schemas/exemption_cause_key"
+                nullable: true
+              tax_base:
+                type: number
+                format: decimal
+                description: |
+                  Magnitud dineraria sobre la que se aplica el tipo impositivo/importe no sujeto.  
+                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `200.00`.
+                example: 200.00
+              tax_base_at_cost:
+                type: number
+                format: decimal
+                description: |
+                  Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.  
+                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `100.00`.
+                nullable: true
+              tax_rate:
+                type: number
+                format: decimal
+                description: |
+                  Porcentaje aplicado sobre la base imponible para calcular la cuota.  
+                  Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `21.00`.
+                nullable: true
+                example: 21.00
+              tax_quota:
+                type: number
+                format: decimal
+                description: |
+                  Cuota resultante de aplicar a la base imponible el tipo impositivo.  
+                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.00`.
+                nullable: true
+                example: 42.00
+              equalization_tax_rate:
+                type: number
+                format: decimal
+                description: |
+                  Porcentaje asociado en función del impuesto y tipo impositivo.  
+                  Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
+                nullable: true
+                example: 5.20
+              equalization_tax_quota:
+                type: number
+                format: decimal
+                description: |
+                  Cuota resultante de aplicar a la base imponible el tipo de recargo de equivalencia.  
+                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `10.40`.
+                nullable: true
+                example: 10.40
+
+        total_quota:
+          type: number
+          format: decimal
+          description: |
+            Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.  
+            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `33.57`.
+
+        total_amount:
+          type: number
+          format: decimal
+          description: |
+            Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las líneas de detalle de desglose (agrupación `lines`).  
+            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2450.75`.
+        
+        simplified_invoice_key:
+          $ref: "#/components/schemas/simplified_invoice_key"
+          nullable: true
+        
+        without_recipient_identification_key:
+          $ref: "#/components/schemas/without_recipient_identification_key"
+          nullable: true
+        
+        macrodata_key:
+          $ref: "#/components/schemas/macrodata_key"
+          nullable: true
+
+        issued_by_third_party_or_recipient_key:
+          type: string
+          nullable: true
+          description: |
+            Identificador que especifica si la factura ha sido expedida materialmente por un tercero o por el destinatario (contraparte).
+
+            - Si es igual a `T` (tercero), el bloque `third_party_data` será de cumplimentación obligatoria.
+            - Si es igual a `D` (destinatario), el bloque `recipients` será de cumplimentación obligatoria.
+
+            - `T`: Tercero
+            - `D`: Destinatario
+          enum:
+            - "T"
+            - "D"
+        
+        third_party_data:
+          type: object
+          description: Información de los receptores de la factura. Obligatorio para facturas ordinarias.
+          required:
+              - company_name
+          properties:
+            company_name:
+              type: string
+              description: Nombre de la empresa del tercero que expide la factura.
+            tax_id_number:
+              type: string
+              nullable: true
+              description: >
+                NIF/CIF de la empresa. Este campo es obligatorio si el tercero que expide la factura es nacional y se identifica mediante CIF/NIF
+            other_country_code:
+              $ref: "#/components/schemas/other_country_code"
+              nullable: true
+            other_tax_id_type_key:
+              $ref: "#/components/schemas/other_tax_id_type_key"
+              nullable: true
+            other_tax_id_number:
+              type: string
+              nullable: true
+              description: >
+                Número de identificación, en el país de residencia del tercero que expide la factura. Ejemplo: `L74JF44L2` para una empresa de `DE`.
+        
+        rectificative_type_key:
+          $ref: "#/components/schemas/rectificative_type_key"
+
+        rectified_tax_base:
+          type: number
+          format: decimal
+          nullable: true
+          description: |
+            Base imponible rectificada.  
+            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2500.55`.
+          example: 2500.55
+
+        rectified_tax_quota:
+          type: number
+          format: decimal
+          nullable: true
+          description: |
+            Cuota de impuesto rectificada.  
+            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.30`.
+          example: 42.30
+
+        rectified_equalization_tax_quota:
+          type: number
+          format: decimal
+          nullable: true
+          description: |
+            Cuota de recargo de equivalencia rectificada.  
+            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
+          example: 5.20
+
+        rectified_invoices:
+          type: array
+          nullable: true
+          description: |
+            Lista de facturas que se están rectificando.
+          items:
+            type: object
+            required:
+              - tax_id_number
+              - full_invoice_number
+              - issue_date
+            properties:
+              tax_id_number:
+                type: string
+                description: |
+                  NIF/CIF de la empresa emisora de la factura que quiere rectificar.
+              full_invoice_number:
+                type: string
+                description: |
+                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
+                  Ejemplo: `2025-00001`.
+              issue_date:
+                type: string
+                format: date
+                description: |
+                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
+                  Ejemplo: `2025-02-26`.
+                example: "2025-02-26"
+        
+        substituted_invoices:
+          type: array
+          nullable: true
+          description: |
+            Lista de facturas que se quieren sustituir.
+            
+            Sólo podrá incluirse esta agrupación cuando el campo `invoice_type_key` sea `F3`.
+          items:
+            type: object
+            required:
+              - tax_id_number
+              - full_invoice_number
+              - issue_date
+            properties:
+              tax_id_number:
+                type: string
+                description: |
+                  NIF/CIF de la empresa emisora de la factura que quiere rectificar.
+              full_invoice_number:
+                type: string
+                description: |
+                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
+                  Ejemplo: `2025-00001`.
+              issue_date:
+                type: string
+                format: date
+                description: |
+                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
+                  Ejemplo: `2025-02-26`.
+                example: "2025-02-26"
+
+        coupon_key:
+          $ref: "#/components/schemas/coupon_key"
+
+        invoicing_agreement_registration_number:
+          type: string
+          nullable: true
+          description: |
+            Número de registro obtenido al enviar la autorización en materia de facturación o de libros registro a que se refiere la disposición adicional primera del Real Decreto que aprueba el Reglamento.
+
+        sif_agreement_id:
+          type: string
+          nullable: true
+          description: |
+            Identificación del acuerdo (resolución) a que se refiere el artículo 5 del Reglamento.
+
+      required:
+        - sif_id
+        - certificate_password
+        - invoice_type_key
+        - sender_data
+        - full_invoice_number
+        - fiscal_year
+        - issue_date
+        - operation_description
+        - lines
+        - total_quota
+        - total_amount
+
+    CreateInvoiceRecordResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: |
+                Identificador (ID) de la factura en el sistema de **KubiFACTU**. Se utiliza para hacer referencia al registro de facturación desde otros endpoints como, por ejemplo, el de anulación de facturas.
+            request_id:
+              type: string
+              description: Identificador de la petición como referencia para el soporte técnico.
+              example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+            full_invoice_number:
+              type: string
+              description: Número de la factura registrada.
+            fingerprint:
+              type: string
+              description: Huella SHA-256 de la factura registrada.
+            vf_post_status:
+              $ref: "#/components/schemas/vf_post_status"
+            vf_record_registration_status:
+              $ref: "#/components/schemas/vf_record_registration_status"
+            has_warnings:
+              type: boolean
+              description: Indica si el registro contiene errores que deban ser subsanados.
+              example: false
+            vf_error_descriptions:
+              type: string
+              description: Cadena con la descripción de los errores devueltos por Veri*Factu.
+              nullable: true
+            qr_value:
+              type: string
+              format: uri
+              description: URL que debe mostrarse en el QR de las facturas procesadas con Veri*Factu. Esta URL sirve para que el receptor de la factura pueda validar que esta ha sido correctamente enviada a Veri*Factu.
+            qr_image:
+              type: string
+              format: byte
+              description: Imagen del QR (PNG) en formato Base64.
+
+    CancelInvoiceRecordResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: |
+                Identificador (ID) de la factura en el sistema de **KubiFACTU**. Se utiliza para hacer referencia al registro de facturación desde otros endpoints como, por ejemplo, el de anulación de facturas.
+            request_id:
+              type: string
+              description: Identificador de la petición como referencia para el soporte técnico.
+              example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+            fingerprint:
+              type: string
+              description: Huella SHA-256 de la factura registrada.
+            vf_post_status:
+              $ref: "#/components/schemas/vf_post_status"
+            vf_record_registration_status:
+              $ref: "#/components/schemas/vf_record_registration_status"
+            has_warnings:
+              type: boolean
+              description: Indica si el registro contiene errores que deban ser subsanados.
+              example: false
+            vf_error_descriptions:
+              type: string
+              description: Cadena con la descripción de los errores devueltos por Veri*Factu.
+              nullable: true
+
+    invoice_type_key:
+      type: string
+      description: |
+        Especificación del tipo de factura: factura completa, factura simplificada, factura emitida en sustitución de facturas simplificadas o factura rectificativa.
+        - `F1`: Factura (art. 6, 7.2 y 7.3 del RD 1619/2012).
+        - `F2`: Factura Simplificada y Facturas sin identificación del destinatario art. 6.1.d) RD 1619/2012.
+        - `F3`: Factura emitida en sustitución de facturas simplificadas facturadas y declaradas.
+        - `R1`: Factura Rectificativa (Error fundado en derecho y Art. 80 Uno Dos y Seis LIVA)
+        - `R2`: Factura Rectificativa (Art. 80.3)
+        - `R3`: Factura Rectificativa (Art. 80.4)
+        - `R4`: Factura Rectificativa (Resto)
+        - `R5`: Factura Rectificativa en facturas simplificadas
+      example: "F1"
+      enum:
+        - F1
+        - F2
+        - F3
+        - R1
+        - R2
+        - R3
+        - R4
+        - R5
+
+    other_tax_id_type_key:
+      type: string
+      description: |
+        Clave para identificar el tipo de documento del receptor de la factura. Los valores posibles son:
+        
+        - `02`: **NIF-IVA**: Número de Identificación Fiscal para IVA.
+        - `03`: **Pasaporte**: Documento oficial que acredita la identidad y nacionalidad del portador.
+        - `04`: **Documento oficial de identificación expedido por el país o territorio de residencia**.
+        - `05`: **Certificado de residencia**: Documento que acredita la residencia fiscal.
+        - `06`: **Otro documento probatorio**: Documento adicional que sirve como prueba de identidad.
+        - `07`: **No censado**: El receptor no está registrado en el censo fiscal.
+      enum:
+        - "02"
+        - "03"
+        - "04"
+        - "05"
+        - "06"
+        - "07"
+
+    other_country_code:
+      type: string
+      description: >
+        Código del país en formato [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-2). Sólo es necesario rellenarlo **si el sujeto no es nacional**. El código de país debe ser `ES` si `other_tax_id_type_key` es `07 (no censado)`. Ejemplo: `DE`
+
+    correction_key:
+      type: string
+      description: |
+        Indicador que especifica que se trata de una subsanación de un registro de facturación de alta previamente generado y exitente en la AEAT. El contenido de este nuevo registro de facturación es el correcto y el que deberá tenerse en cuenta. Si no se informa este campo, se entenderá que tiene valor `N` (alta normal/inicial).
+
+        - `S`: Sí, se trata de una subsanación de un registro de facturación anterior que existe en la AEAT.
+        - `N`: No, se trata de un alta normal/inicial.
+      enum:
+        - S
+        - N
+
+    simplified_invoice_key:
+      type: string
+      description: |
+        Factura simplificada Articulo 7.2 Y 7.3 RD 1619/2012.
+        
+        Si no se informa este campo se entenderá que tiene valor `N`.
+        
+        Sólo se podrá rellenar con `S` si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`.
+
+        - `S`: Sí
+        - `N`: No
+      enum:
+        - S
+        - N
+
+    without_recipient_identification_key:
+      type: string
+      description: |
+        Factura sin identificación del destinatario según el artículo 6.1.d del RD 1619/2012.  
+            
+        Si no se informa este campo, se entenderá que tiene valor `"N"`.
+
+        Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `F2` o `R5`.
+
+        - `S`: Sí
+        - `N`: No
+      enum:
+        - S
+        - N
+    
+    macrodata_key:
+      type: string
+      description: |
+        Identificador que especifica aquellas facturas con base o importe >= |100.000.000,00| (valor absoluto).  
+            
+        Si no se informa este campo, se entenderá que tiene valor `"N"`.
+
+        Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `F2` o `R5`.
+
+        - `S`: Sí
+        - `N`: No
+      enum:
+        - S
+        - N
+
+    coupon_key:
+      type: string
+      description: |
+        Identificador que especifica si tiene minoración de la base imponible por la concesión de cupones, bonificaciones o descuentos cuando solo se expide el original de la factura.  
+        Si no se informa este campo, se entenderá que tiene valor `"N"`.
+
+        Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `R5` o `R1`.
+      enum:
+        - "S"
+        - "N"
+      example: "N"
+
+    tax_type_key:
+      type: string
+      description: |
+        Código que identifica el tipo de impuesto aplicado. Los valores posibles son:
+
+        - `01`: Impuesto sobre el Valor Añadido (IVA).
+        - `02`: Impuesto sobre la Producción, los Servicios y la Importación (IPSI) de Ceuta y Melilla.
+        - `03`: Impuesto General Indirecto Canario (IGIC).
+        - `05`: Otros.
+      enum:
+        - "01"
+        - "02"
+        - "03"
+        - "05"
+
+    vat_tax_regime_key:
+      type: string
+      description: |
+        Código que identifica el tipo de operación según el régimen o naturaleza de la misma en el contexto del IVA. Los valores posibles son:
+
+        - `01`: Operación de régimen general.
+        - `02`: Exportación.
+        - `03`: Operaciones a las que se aplique el régimen especial de bienes usados, objetos de arte, antigüedades y objetos de colección.
+        - `04`: Régimen especial del oro de inversión.
+        - `05`: Régimen especial de las agencias de viajes.
+        - `06`: Régimen especial grupo de entidades en IVA (Nivel Avanzado).
+        - `07`: Régimen especial del criterio de caja.
+        - `08`: Operaciones sujetas al IPSI / IGIC (Impuesto sobre la Producción, los Servicios y la Importación / Impuesto General Indirecto Canario).
+        - `09`: Facturación de las prestaciones de servicios de agencias de viaje que actúan como mediadoras en nombre y por cuenta ajena (D.A.4ª RD1619/2012).
+        - `10`: Cobros por cuenta de terceros de honorarios profesionales o de derechos derivados de la propiedad industrial, de autor u otros por cuenta de sus socios, asociados o colegiados efectuados por sociedades, asociaciones, colegios profesionales u otras entidades que realicen estas funciones de cobro.
+        - `11`: Operaciones de arrendamiento de local de negocio.
+        - `14`: Factura con IVA pendiente de devengo en certificaciones de obra cuyo destinatario sea una Administración Pública.
+        - `15`: Factura con IVA pendiente de devengo en operaciones de tracto sucesivo.
+        - `17`: Operación acogida a alguno de los regímenes previstos en el Capítulo XI del Título IX (OSS e IOSS).
+        - `18`: Recargo de equivalencia.
+        - `19`: Operaciones de actividades incluidas en el Régimen Especial de Agricultura, Ganadería y Pesca (REAGYP).
+        - `20`: Régimen simplificado.
+      enum:
+        - "01"
+        - "02"
+        - "03"
+        - "04"
+        - "05"
+        - "06"
+        - "07"
+        - "08"
+        - "09"
+        - "10"
+        - "11"
+        - "14"
+        - "15"
+        - "17"
+        - "18"
+        - "19"
+        - "20"
+
+    igic_tax_regime_key:
+      type: string
+      description: |
+        Código que identifica el tipo de operación según el régimen o naturaleza de la misma en el contexto del IGIC. Los valores posibles son:
+
+        - `01`: Operación de régimen general.
+        - `02`: Exportación.
+        - `03`: Operaciones a las que se aplique el régimen especial de bienes usados, objetos de arte, antigüedades y objetos de colección.
+        - `04`: Régimen especial del oro de inversión.
+        - `05`: Régimen especial de las agencias de viajes.
+        - `06`: Régimen especial grupo de entidades en IGIC (Nivel Avanzado).
+        - `07`: Régimen especial del criterio de caja.
+        - `08`: Operaciones sujetas al IPSI / IVA (Impuesto sobre la Producción, los Servicios y la Importación / Impuesto sobre el Valor Añadido).
+        - `09`: Facturación de las prestaciones de servicios de agencias de viaje que actúan como mediadoras en nombre y por cuenta ajena (D.A.4ª RD1619/2012).
+        - `10`: Cobros por cuenta de terceros de honorarios profesionales o de derechos derivados de la propiedad industrial, de autor u otros por cuenta de sus socios, asociados o colegiados efectuados por sociedades, asociaciones, colegios profesionales u otras entidades que realicen estas funciones de cobro.
+        - `11`: Operaciones de arrendamiento de local de negocio.
+        - `14`: Factura con IGIC pendiente de devengo en certificaciones de obra cuyo destinatario sea una Administración Pública.
+        - `15`: Factura con IGIC pendiente de devengo en operaciones de tracto sucesivo.
+        - `17`: Régimen especial de comerciante minorista.
+        - `18`: Régimen especial del pequeño empresario o profesional.
+        - `19`: Operaciones interiores exentas por aplicación artículo 25 Ley 19/1994.
+      enum:
+        - "01"
+        - "02"
+        - "03"
+        - "04"
+        - "05"
+        - "06"
+        - "07"
+        - "08"
+        - "09"
+        - "10"
+        - "11"
+        - "14"
+        - "15"
+        - "17"
+        - "18"
+        - "19"
+
+    operation_type_key:
+      type: string
+      description: |
+        Código que identifica el tipo de operación según su sujeción o exención tributaria. Los valores posibles son:
+
+        - `S1`: Operación Sujeta y No exenta - Sin inversión del sujeto pasivo.
+        - `S2`: Operación Sujeta y No exenta - Con Inversión del sujeto pasivo.
+        - `N1`: Operación No Sujeta artículo 7, 14, otros.
+        - `N2`: Operación No Sujeta por Reglas de localización.
+      enum:
+        - "S1"
+        - "S2"
+        - "N1"
+        - "N2"
+
+    exemption_cause_key:
+      type: string
+      description: |
+        Código que identifica la causa de la exención según el artículo correspondiente. Los valores posibles son:
+
+        - `E1`: Exenta por el artículo 20.
+        - `E2`: Exenta por el artículo 21.
+        - `E3`: Exenta por el artículo 22.
+        - `E4`: Exenta por los artículos 23 y 24.
+        - `E5`: Exenta por el artículo 25.
+        - `E6`: Exenta por otros.
+      enum:
+        - "E1"
+        - "E2"
+        - "E3"
+        - "E4"
+        - "E5"
+        - "E6"
+
+    rectificative_type_key:
+      type: string
+      description: |
+        Campo que identifica si el tipo de factura rectificativa es por **sustitución** o por **diferencias**.
+
+        - `S`: Por sustitución.
+        - `I`: Por diferencias.
+      enum:
+        - "S"
+        - "I"
+    
+    vf_post_status:
+      type: string
+      description: |
+        Este campo indica si la factura ha sido enviada a Veri*Factu, pero no indica si el registro ha sido aceptado.  
+        Los valores posibles son:
+
+        - `success`: Se ha realizado el envío a Veri*Factu.
+        - `failure`: No se ha podido hacer el envío a Veri*Factu.
+      enum:
+        - "success"
+        - "failure"
+
+    vf_record_registration_status:
+      type: string
+      description: |
+        Valores posibles para el campo `vf_record_registration_status`, que indican el estado del registro en Veri*Factu.
+
+        - `success`: El registro ha sido correctamente registrado en Veri*Factu.
+        - `accepted_with_errors`: El registro ha sido registrado en Veri*Factu, pero tiene **errores que deben ser subsanados**.
+        - `failed`: El registro tiene errores no aceptables y ha sido **rechazado** por Veri*Factu.
+        - `not_registered`: No se ha encontrado el registro en Veri*Factu.
+        - `cancelled`: El registro está anulado.
+        - `unknown`: Se desconoce el estado del registro.
+      enum:
+        - "success"
+        - "accepted_with_errors"
+        - "failed"
+        - "not_registered"
+        - "cancelled"
+        - "unknown"
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: Código de error.
+                  example: "E-WRONGARGS"
+                message:
+                  type: string
+                  description: Mensaje general del error.
+                  example: "The given data was invalid."
+                http_code:
+                  type: integer
+                  description: Código HTTP asociado al error.
+                  example: 422
+                errors:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
+                  description: |
+                    Lista de errores de validación organizados por campo.  
+                    Cada clave es el nombre del campo asociado al error y contiene un array de mensajes.
+                  example:
+                    invoice_exists:
+                      - "A correctly sent invoice already exists with the indicated invoice number and fiscal for the provided SIF. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                    incorrect_total_quota:
+                      - "The total quota of the invoice does not match the total tax quota and equalization_tax_quota of the lines. Calculated total quota: [26.25]."
+                    incorrect_total_amount:
+                      - "The total amount of the invoice does not match the total tax base of the lines. Calculated total amount: [151.25]."
+                details:
+                  type: object
+                  properties:
+                    request_id:
+                      type: string
+                      description: Identificador único de la solicitud para rastreo.
+                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+
+    UnauthorizedApiKeyErrorResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: Código de error que indica el tipo de problema.
+                  example: "E-UNAUTH-APIKEY"
+                message:
+                  type: string
+                  description: Mensaje detallado del error.
+                  example: "No client with API-KEY '5tVySMGJOpq8HfMgIX28Qz6kF0dFOoq37x55PLZcWsGeGeYkNgJyAcRTlFJ5NbVoDRm8qtCywEoiN3A9JkBanMBXYmxiqR3BItxgxx' was found."
+                http_code:
+                  type: integer
+                  description: Código HTTP asociado al error.
+                  example: 403
+                errors:
+                  type: object
+                  nullable: true
+                  description: |
+                    Detalles adicionales del error. Puede ser `null` si no hay información específica.
+                  example: null
+                details:
+                  type: object
+                  properties:
+                    request_id:
+                      type: string
+                      description: Identificador único de la solicitud para rastreo.
+                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+
+
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: X-Qbikode-ClientApiKey
+      in: header
+  

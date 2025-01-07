@@ -34,10 +34,21 @@
   "tabs": [
     {
       "name": "Referencia de la API",
+      "openapi": "/api-reference/openapi/openapi.yaml",
+      "url": "openapi-reference"
+    },
+    {
+      "name": "Ejemplos",
       "url": "api-reference"
     }
   ],
-  "anchors_bak": [
+  "anchors_BAK": [
+    {
+      "name": "OpenAPI",
+      "openapi": "/api-reference/openapi/openapi.yaml",
+      "url": "openapi-reference",
+      "icon": "book-open-cover"
+    },
     {
       "name": "Documentation",
       "icon": "book-open-cover",
@@ -63,13 +74,6 @@
       ]
     },
     {
-      "group": "Registros de facturación",
-      "pages": [
-        "api-reference/facturas/create",
-        "api-reference/facturas/cancel"
-      ]
-    },
-    {
       "group": "Ejemplos",
       "pages": [
         "api-reference/facturas/examples/basic",
@@ -80,27 +84,6 @@
         "api-reference/facturas/examples/rectificative-substitution",
         "api-reference/facturas/examples/rectificative-differences"
       ]
-    },
-    {
-      "group": "Listas de valores",
-      "pages": [
-        "api-reference/valores/invoice-type-key",
-        "api-reference/valores/other-tax-id-type-key",
-        "api-reference/valores/correction-key",
-        "api-reference/valores/simplified-invoice-key",
-        "api-reference/valores/without-recipient-identification-key",
-        "api-reference/valores/macrodata-key",
-        "api-reference/valores/issued-by-third-party-or-recipient-key",
-        "api-reference/valores/coupon-key",
-        "api-reference/valores/rectificative-type-key",
-        "api-reference/valores/tax-type-key",
-        "api-reference/valores/vat-tax-regime-key",
-        "api-reference/valores/igic-tax-regime-key",
-        "api-reference/valores/operation-type-key",
-        "api-reference/valores/exemption-cause-key",
-        "api-reference/valores/vf-post-status",
-        "api-reference/valores/vf-record-registration-status"
-      ]
     }
   ],
   "footerSocials_BAK": {
@@ -110,11 +93,11 @@
   },
   "api": {
     "baseUrl": [
-        "https://www.kubifactu.test",
-        "https://www.kubifactu.com"
+        "https://api.kubifactu.com",
+        "https://devapi.kubifactu.com"
     ],
     "playground": {
-      "mode": "simple"
+      "mode": "show"
     },
     "request": {
         "example": {
