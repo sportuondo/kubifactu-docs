@@ -86,6 +86,199 @@ paths:
           description: "Error interno del servidor."
       security:
         - client_api_key: []
+
+  /api/clientcompanies:
+    post:
+      summary: "Crear una nueva empresa"
+      description: "Registro de una nueva empresa en el sistema."
+      operationId: "createClientCompany"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CreateClientCompanyRequest"
+      responses:
+        '200':
+          description: "Empresa creada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateClientCompanyResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+
+  /api/clientcompanies/{companyId}:
+    post:
+      summary: "Editar empresa"
+      description: "Edición de los datos de una empresa."
+      operationId: "updateClientCompany"
+      parameters:
+        - name: companyId
+          in: path
+          description: |
+            ID de la empresa a editar.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UpdateClientCompanyRequest"
+      responses:
+        '200':
+          description: "Empresa creada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateClientCompanyResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+
+  /api/clientcompanies/{companyId}/certificate:
+    post:
+      summary: "Actualizar certificado empresa"
+      description: "Actualización del certificado de una empresa."
+      operationId: "updateClientCompanyCertificate"
+      parameters:
+        - name: companyId
+          in: path
+          description: |
+            ID de la empresa.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UpdateClientCompanyCertificateRequest"
+      responses:
+        '200':
+          description: "Empresa creada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateClientCompanyResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+
+  /api/clientcompanies/{companyId}/sifs:
+    get:
+      summary: "Obtener SIFs de empresa"
+      description: "Obtención de los Sistemas Informáticos de Facturación de la empresa."
+      operationId: "getClientCompanySifs"
+      parameters:
+        - name: companyId
+          in: path
+          description: |
+            ID de la empresa.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Empresa creada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSIFsResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+    post:
+      summary: "Nuevo SIF de empresa"
+      description: "Creación de un Sistema Informático de Facturación de empresa."
+      operationId: "createClientCompanySif"
+      parameters:
+        - name: companyId
+          in: path
+          description: |
+            ID de la empresa.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientCompanySifRequest"
+      responses:
+        '200':
+          description: "Empresa creada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSIFResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
 components:
   schemas:
     CancelInvoiceRecordRequest:
@@ -95,6 +288,119 @@ components:
           type: string
           description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
           example: "passwd"
+
+    CreateClientCompanyRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+          description: Nombre de la empresa.
+          example: "Empresa de ejemplo"
+        tax_id_number:
+          type: string
+          description: NIF/CIF de la empresa.
+          example: "S6271969E"
+        email:
+          type: string
+          format: email
+          description: Correo electrónico de la empresa.
+          example: "empresa@prueba.net"
+        certificate_file:
+          type: string
+          format: binary
+          description: Certificado digital de la empresa en formato archivo.
+        certificate_password:
+          type: string
+          description: Contraseña del certificado digital.
+          example: "passwd"
+      required:
+        - company_name
+        - tax_id_number
+        - email
+
+    UpdateClientCompanyRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+          description: Nombre de la empresa.
+          example: "Empresa de ejemplo"
+        tax_id_number:
+          type: string
+          description: NIF/CIF de la empresa.
+          example: "S6271969E"
+        email:
+          type: string
+          format: email
+          description: Correo electrónico de la empresa.
+          example: "empresa@prueba.net"
+        certificate_file:
+          type: string
+          format: binary
+          description: Certificado digital de la empresa en formato archivo.
+        certificate_password:
+          type: string
+          description: Contraseña del certificado digital.
+          example: "passwd"
+      required:
+        - company_name
+        - tax_id_number
+        - email
+
+    UpdateClientCompanyCertificateRequest:
+      type: object
+      properties:
+        certificate_file:
+          type: string
+          format: binary
+          description: Certificado digital de la empresa en formato archivo.
+        certificate_password:
+          type: string
+          description: Contraseña del certificado digital.
+          example: "passwd"
+      required:
+        - certificate_file
+        - certificate_password
+
+    CreateClientCompanySifRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+          description: Nombre de la empresa.
+          example: "Empresa de ejemplo"
+        tax_id_number:
+          type: string
+          description: NIF/CIF de la empresa.
+          example: "S6271969E"
+        name:
+          type: string
+          description: Nombre del SIF.
+          maxLength: 30
+          example: "SIF-0001"
+        sif_id:
+          type: string
+          maxLength: 2
+          description: |
+            Identificador del SIF para Veri*Factu. Deberá distinguirse de otros posibles SIFs que produzca esta entidad productora.
+
+            Deberá tener rellenadas siempre las dos posiciones, cada una de las cuales deberá ser una letra mayúscula, excepto la Ñ, o un dígito numérico.
+        version:
+          type: string
+          description: Versión en formato X.Y.Z del SIF.
+          example: "1.0.0"
+        installation_number:
+          type: string
+          maxLength: 100
+          description: Número de instalación del sistema informático de facturación (SIF) utilizado. Deberá distinguirse de otros posibles SIF utilizados para realizar la facturación del obligado a expedir facturas, es decir, de otras posibles instalaciones de SIF pasadas, presentes o futuras utilizadas para realizar la facturación del obligado a expedir facturas, incluso aunque en dichas instalaciones se emplee el mismo SIF de un productor.
+          example: "LQLFBFLMUSLAEMU7SC2BROSETQU7SSRIKJDRW2QHVMCPE574M4JORYRDLWPS3NRXWJ3APCNKWWXO771GSIO731KXTAUPIMXWV33Y"
+      required:
+        - company_name
+        - tax_id_number
+        - name
+        - sif_id
+        - version
+        - installation_number
 
     CreateInvoiceRecordRequest:
       type: object
@@ -507,6 +813,135 @@ components:
               type: string
               description: Cadena con la descripción de los errores devueltos por Veri*Factu.
 
+    CreateClientCompanyResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Identificador único de la empresa creada.
+              example: "9dcccd85-496d-4ed8-8f78-edfacac68964"
+            company_name:
+              type: string
+              description: Nombre de la empresa.
+              example: "Empresa de ejemplo"
+            tax_id_number:
+              type: string
+              description: NIF/CIF de la empresa.
+              example: "S6271969E"
+            email:
+              type: string
+              format: email
+              description: Correo electrónico de la empresa.
+              example: "empresa@pruebas.net"
+            api_key:
+              type: string
+              description: API Key generada para la empresa.
+              example: "Xxv3en85OJOtI7Q6XFNGuA3FPwDNsnhk1kbtlQ5RgRSAdoo47eSGGYbgfLs8Qf2obGJluvY28a0tIqeM1UjzdbHDSDp1Q0fNX9sz"
+            certificate_data:
+              type: object
+              description: Detalles del certificado digital asociado a la empresa.
+              properties:
+                issuer:
+                  type: string
+                  description: Datos del emisor del certificado.
+                  example: "C=ES, ST=Barcelona, L=Sant Cugat del Vallès, O=TechNova Solutions, S.L., OU=Innovación, CN=TechNova Solutions, S.L., emailAddress=contacto@technova.com"
+                subject:
+                  type: string
+                  description: Datos del sujeto del certificado.
+                  example: "C=ES, ST=Madrid, L=Alcobendas, O=InnovaTec Solutions, S.L., OU=Tecnología, CN=InnovaTec Solutions, S.L., emailAddress=contacto@innovatec.com"
+                valid_from:
+                  type: string
+                  format: date-time
+                  description: Fecha de inicio de validez del certificado.
+                  example: "2024-12-24T08:01:48+00:00"
+                valid_to:
+                  type: string
+                  format: date-time
+                  description: Fecha de vencimiento del certificado.
+                  example: "2025-12-24T08:01:48+00:00"
+                serial_number:
+                  type: string
+                  description: Número de serie del certificado.
+                  example: "6D46F6AA446F3C9359A698D91F57C583F4CEC73B"
+
+    GetSIFsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          description: Lista de SIFs asociados a la empresa.
+          items:
+            $ref: "#/components/schemas/sif"
+
+    CreateSIFResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/sif"
+          
+    sif:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único del SIF.
+          example: "9dccd6c6-08f8-490d-a370-bfef724c0855"
+        company_name:
+          type: string
+          description: Nombre de la empresa asociada al SIF.
+          example: "Empresa de ejemplo"
+        tax_id_number:
+          type: string
+          description: NIF/CIF de la empresa asociada al SIF.
+          example: "S6271969E"
+        other_country_code:
+          $ref: "#/components/schemas/other_country_code"
+        other_tax_id_type_key:
+          $ref: "#/components/schemas/other_tax_id_type_key"
+        other_tax_id_number:
+          type: string
+          description: >
+            Número de identificación en el país de residencia de la empresa. Ejemplo: `L74JF44L2` para una empresa de `DE`.
+        name:
+          type: string
+          description: Nombre del SIF.
+          example: "SIF 0001"
+        sif_id:
+          type: string
+          description: Identificador del SIF para Veri*Factu.
+          example: "DC"
+        version:
+          type: string
+          description: Versión del SIF.
+          example: "1.0.0"
+        installation_number:
+          type: string
+          description: Número de instalación asociado al SIF.
+          example: "BM1WJ36SS5MOL6LWPLHTMBFUOTQO5TNDU2ILL34JG6FLSVAUMD1I0G41AS7PC870QAHHIOWJSBPKRB2XELRCUWO4TSJ8XY0UPAML"
+        only_verifactu_use_key:
+          type: string
+          description: |
+            Indica si el SIF es solo para uso de Veri*Factu.  
+            Valores posibles: `S` (Sí), `N` (No).
+          example: "S"
+        multi_ot_key:
+          type: string
+          description: |
+            Indica si el SIF admite operaciones de registros de facturación de múltiples empresas.  
+            Valores posibles: `S` (Sí), `N` (No).
+          example: "N"
+        supporting_multiple_ots_key:
+          type: string
+          description: |
+            Indica si el SIF soporta actualmente el procesamiento de registros de facturación de múltiples empresas.  
+            Valores posibles: `S` (Sí), `N` (No).
+          example: "N"
+
     invoice_type_key:
       type: string
       description: |
@@ -878,5 +1313,10 @@ components:
     client_api_key:
       type: apiKey
       name: X-Qbikode-ClientApiKey
+      in: header
+
+    owner_api_key:
+      type: apiKey
+      name: X-Qbikode-UserApiKey
       in: header
   
