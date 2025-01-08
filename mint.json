@@ -75,6 +75,7 @@
       "group": "Empieza",
       "pages": [
         "introduction",
+        "basic-concepts",
         "quickstart"
       ]
     },

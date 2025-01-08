@@ -1,30 +1,9 @@
 ---
-title: Conceptos básicos
-description: 'Conceptos básicos sobre el funcionamiento de Veri*Factu a través de KubiFACTU'
+title: Qué es KubiFACTU
 ---
 
-import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
+KubiFACTU es un servicio web diseñado para **simplificar y optimizar** el procesamiento de registros de facturación conforme al estándar **Veri*Factu**, garantizando el cumplimiento normativo con la Agencia Estatal de Administración Tributaria (AEAT).
 
-## Los registros de facturación
+Nuestra solución ofrece una **API REST moderna y basada en estándares**, que facilita la integración con sistemas empresariales mediante el uso de peticiones JSON. Además, KubiFACTU gestiona de manera automatizada el **control de encadenamiento y trazabilidad** de los registros de facturación, una exigencia clave de Veri*Factu para asegurar la transparencia y autenticidad de los datos.
 
-Los registros de facturación son los envíos que se hacen a Veri*Factu para el **alta, subsanación y anulación de facturas**.
-
-## Obligatoriedad del envío de las facturas a Veri*Factu
-
-El **registro de facturación** se genera en el momento en que la los datos de la factura son remitidos a nuestro sistema. Tras la generación del registro de facturación este se envía a Veri*Factu para su validación y registro.
-
-La **fecha de expedición** de la factura debe coincidir con la de generación del registro de facturación, es decir, la factura debe sernos enviada en la misma fecha en que es expedida. Además, la factura debe ser entregada al receptor (ya sea en versión impresa o digital) con un **QR de cotejo** que le permita verificar que la factura ha sido correctamente remitida a la AEAT. Dicho QR lo genera nuestro servicio una vez recibida y procesada la factura adecuadamente.
-
-Se pueden dar situaciones puntuales de no coincidencia de la fecha de emisión de la factura con la del envío a nuestro sistema y subsiguiente generación del *registro de facturación*, por ejemplo, por incidencia en la remisión o causas similares.
-
-## Encadenamiento (trazabilidad)
-
-La trazabilidad se refiere a que se pueda garantizar que no hay "huecos" o "saltos" en la secuencia de generación de los registros de facturación correspondientes a las facturas expedidas utilizando un determinado **Sistema Informático de Facturación (SIF)**, así como que dicha secuencia se corresponde con la de la fecha y hora de generación empleadas.
-
-Los registros de facturación se encadenan de forma independiente dentro de cada SIF y para cada empresa que emita facturas. Es decir, **existe una única cadena de registros de facturación por cada par de valores distintos de SIF y empresa emisora de facturas**.
-
-<Note>Un SIF puede procesar registros de facturación de diferentes empresas.</Note>
-
-<Info>Nuestro sistema se encarga de generar los datos de encadenamiento de forma automática en base a las facturas previamente procesadas para los correspondientes SIFs y empresas.</Info>
-
-<ClientDefaultHeaders />
+Con KubiFACTU, las empresas pueden centralizar y agilizar sus operaciones de facturación, reduciendo la complejidad técnica y asegurando un cumplimiento normativo sólido.
