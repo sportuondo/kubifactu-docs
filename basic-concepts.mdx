@@ -3,7 +3,14 @@ title: Conceptos básicos
 description: 'Conceptos básicos sobre el funcionamiento de Veri*Factu a través de KubiFACTU'
 ---
 
-import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
+## Servidores
+
+<Warning>El servidor de producción estará disponible cuando Veri*Factu habilite su propio servidor de producción.</Warning>
+
+Las URL base de los servidores de producción y de pruebas son las siguientes:
+
+* Servidor de producción: `https://api.kubifactu.com`
+* Servidor de pruebas: `https://devapi.kubifactu.com`
 
 ## Los registros de facturación
 
@@ -26,5 +33,3 @@ Los registros de facturación se encadenan de forma independiente dentro de cada
 <Note>Un SIF puede procesar registros de facturación de diferentes empresas.</Note>
 
 <Info>Nuestro sistema se encarga de generar los datos de encadenamiento de forma automática en base a las facturas previamente procesadas para los correspondientes SIFs y empresas.</Info>
-
-<ClientDefaultHeaders />
