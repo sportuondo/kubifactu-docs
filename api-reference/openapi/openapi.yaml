@@ -873,7 +873,7 @@ components:
       properties:
         data:
           type: array
-          description: Lista de SIFs asociados a la empresa.
+          description: Array con la lista de SIFs asociados a la empresa.
           items:
             $ref: "#/components/schemas/sif"
 
