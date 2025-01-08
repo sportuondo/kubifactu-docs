@@ -76,7 +76,8 @@
       "pages": [
         "introduction",
         "basic-concepts",
-        "quickstart"
+        "quickstart",
+        "changelog"
       ]
     },
     {

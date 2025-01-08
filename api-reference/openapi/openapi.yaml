@@ -3,6 +3,10 @@ info:
   title: Kubifactu API
   description: API para el procesamiento y gestión de facturas de Veri*Factu
   version: 1.0.0
+  contact:
+    email: soporte@kubifactu.com
+    name: Soporte KubiFACTU
+    url: https://apidocs.kubifactu.com
 servers:
   - url: https://api.kubifactu.com
     description: Servidor de producción
