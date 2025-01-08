@@ -38,6 +38,11 @@
       "url": "openapi-reference"
     },
     {
+      "name": "API desde KubiBAI",
+      "openapi": "/api-reference/openapi/openapi-kubibai.yaml",
+      "url": "openapi-kubibai-reference"
+    },
+    {
       "name": "Ejemplos",
       "url": "api-reference"
     }

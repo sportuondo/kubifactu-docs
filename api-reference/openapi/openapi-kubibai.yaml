@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Kubifactu API
-  description: API para el procesamiento y gestión de facturas de Veri*Factu
+  description: API para el procesamiento y gestión de facturas de Veri*Factu para peticiones hechas desde KubiBAI (TicketBAI). Estos endpoints alternativos tratan de ofrecer una estructura similar a la utilizada en KubiBAI.
   version: 1.0.0
 servers:
   - url: https://api.kubifactu.com
@@ -9,7 +9,7 @@ servers:
   - url: https://devapi.kubifactu.com
     description: Servidor de pruebas
 paths:
-  /api/invoices:
+  /api/invoicing/invoices:
     post:
       summary: "Enviar registro de facturación"
       description: "Generación de un nuevo registro de facturación."
@@ -44,7 +44,7 @@ paths:
       security:
         - client_api_key: []
 
-  /api/invoices/{invoiceId}/cancel:
+  /api/invoicing/invoices/{invoiceId}/cancel:
     post:
       summary: "Anular registro de facturación"
       description: "Anulación de un registro de facturación."
@@ -110,20 +110,17 @@ components:
           description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
           example: "passwd"
 
-        invoice_type_key:
-          $ref: "#/components/schemas/invoice_type_key"
-
         sender_data:
           type: object
           description: Información referente al emisor de la factura.
           required:
-            - company_name
-            - tax_id_number
+            - sender_full_name
+            - sender_id_card_number
           properties:
-            company_name:
+            sender_full_name:
               type: string
               description: Nombre de la empresa emisora.
-            tax_id_number:
+            sender_id_card_number:
               type: string
               description: NIF/CIF de la empresa emisora.
 
@@ -133,308 +130,331 @@ components:
           items:
             type: object
             required:
-              - company_name
+              - full_name
             properties:
-              company_name:
+              full_name:
                 type: string
                 description: Nombre de la empresa receptora.
               tax_id_number:
                 type: string
                 description: >
                   NIF/CIF de la empresa receptora. Este campo es obligatorio si el receptor es nacional y se identifica mediante CIF/NIF.
-              other_country_code:
+              other_id_country_code:
                 $ref: "#/components/schemas/other_country_code"
-              other_tax_id_type_key:
+              other_id_type:
                 $ref: "#/components/schemas/other_tax_id_type_key"
-              other_tax_id_number:
+              other_id_card_id:
                 type: string
                 description: >
                   Número de identificación en el país de residencia del destinatario de la operación de la factura expedida. Ejemplo: `L74JF44L2` para una empresa de `DE`.
 
-        representative_company_name:
-          type: string
-          description: |
-            Nombre/razón social del representante del obligado tributario.  
-            A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
-
-        representative_tax_id_number:
-          type: string
-          description: |
-            NIF del representante del obligado tributario.  
-            A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
-
-        correction_key:
-          $ref: "#/components/schemas/correction_key"
-          example: "N"
-
-        full_invoice_number:
-          type: string
-          description: |
-            Serie+Nº Factura que identifica a la factura emitida.  
-            Ejemplo: `2025-00001`.
-          example: "2025-00001"
-
-        fiscal_year:
-          type: integer
-          description: |
-            Ejercicio fiscal en el que se emite la factura.
-          example: 2025
-
-        issue_date:
-          type: string
-          format: date
-          description: |
-            Fecha de expedición de la factura en formato `yyyy-mm-dd`. Ejemplo: `2025-02-26`.
-          example: "2025-02-26"
-
-        operation_date:
-          type: string
-          format: date
-          description: |
-            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición.  
-            Formato `yyyy-mm-dd`.  
-            Ejemplo: `2025-02-26`.
-          example: "2025-02-26"
-
-        operation_description:
-          type: string
-          description: |
-            Descripción del objeto de la factura.
-
-        lines:
-          type: array
-          description: |
-            Desglose de la factura con la lista de los conceptos facturados.
-          items:
-            type: object
-            required:
-              - tax_type_key
-              - vat_tax_regime_key
-              - igic_tax_regime_key
-              - operation_type_key
-              - tax_base
-            properties:
-              tax_type_key:
-                $ref: "#/components/schemas/tax_type_key"
-              vat_tax_regime_key:
-                $ref: "#/components/schemas/vat_tax_regime_key"
-              igic_tax_regime_key:
-                $ref: "#/components/schemas/igic_tax_regime_key"
-              operation_type_key:
-                $ref: "#/components/schemas/operation_type_key"
-              exemption_cause_key:
-                $ref: "#/components/schemas/exemption_cause_key"
-              tax_base:
-                type: number
-                format: decimal
-                description: |
-                  Magnitud dineraria sobre la que se aplica el tipo impositivo/importe no sujeto.  
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `200.00`.
-                example: 200.00
-              tax_base_at_cost:
-                type: number
-                format: decimal
-                description: |
-                  Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.  
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `100.00`.
-              tax_rate:
-                type: number
-                format: decimal
-                description: |
-                  Porcentaje aplicado sobre la base imponible para calcular la cuota.  
-                  Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `21.00`.
-                example: 21.00
-              tax_quota:
-                type: number
-                format: decimal
-                description: |
-                  Cuota resultante de aplicar a la base imponible el tipo impositivo.  
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.00`.
-                example: 42.00
-              equalization_tax_rate:
-                type: number
-                format: decimal
-                description: |
-                  Porcentaje asociado en función del impuesto y tipo impositivo.  
-                  Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
-                example: 5.20
-              equalization_tax_quota:
-                type: number
-                format: decimal
-                description: |
-                  Cuota resultante de aplicar a la base imponible el tipo de recargo de equivalencia.  
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `10.40`.
-                example: 10.40
-
-        total_quota:
-          type: number
-          format: decimal
-          description: |
-            Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.  
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `33.57`.
-
-        total_amount:
-          type: number
-          format: decimal
-          description: |
-            Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las líneas de detalle de desglose (agrupación `lines`).  
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2450.75`.
-        
-        simplified_invoice_key:
-          $ref: "#/components/schemas/simplified_invoice_key"
-        
-        without_recipient_identification_key:
-          $ref: "#/components/schemas/without_recipient_identification_key"
-        
-        macrodata_key:
-          $ref: "#/components/schemas/macrodata_key"
-
-        issued_by_third_party_or_recipient_key:
-          type: string
-          description: |
-            Identificador que especifica si la factura ha sido expedida materialmente por un tercero o por el destinatario (contraparte).
-
-            - Si es igual a `T` (tercero), el bloque `third_party_data` será de cumplimentación obligatoria.
-            - Si es igual a `D` (destinatario), el bloque `recipients` será de cumplimentación obligatoria.
-
-            - `T`: Tercero
-            - `D`: Destinatario
-          enum:
-            - "T"
-            - "D"
-        
-        third_party_data:
+        invoice_data:
           type: object
-          description: Información del tercero que expide la factura.
-          required:
-              - company_name
+          description: Datos del registro de facturación.
           properties:
-            company_name:
+            invoice_type_key:
+              $ref: "#/components/schemas/invoice_type_key"
+
+            fiscal_year:
+              type: integer
+              description: |
+                Ejercicio fiscal en el que se emite la factura.
+              example: 2025
+
+            series_code:
               type: string
-              description: Nombre de la empresa del tercero que expide la factura.
-            tax_id_number:
+              description: |
+                Serie de la factura emitida.  
+                Ejemplo: `2025`.
+              example: "2025"
+
+            invoice_number:
               type: string
-              description: >
-                NIF/CIF de la empresa. Este campo es obligatorio si el tercero que expide la factura es nacional y se identifica mediante CIF/NIF
-            other_country_code:
-              $ref: "#/components/schemas/other_country_code"
-            other_tax_id_type_key:
-              $ref: "#/components/schemas/other_tax_id_type_key"
-            other_tax_id_number:
+              description: |
+                Nº Factura que identifica a la factura emitida.  
+                Ejemplo: `00021`.
+              example: "00021"
+
+            invoice_datetime:
               type: string
-              description: >
-                Número de identificación, en el país de residencia del tercero que expide la factura. Ejemplo: `L74JF44L2` para una empresa de `DE`.
-        
-        rectificative_type_key:
-          $ref: "#/components/schemas/rectificative_type_key"
+              format: date
+              description: |
+                Fecha de expedición de la factura en formato `yyyy-mm-dd hh:mm:ss`. Ejemplo: `2025-02-26 12:35:44`.
+              example: "2025-02-26 12:35:44"
 
-        rectified_tax_base:
-          type: number
-          format: decimal
-          description: |
-            Base imponible rectificada.  
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2500.55`.
-          example: 2500.55
+            operation_date:
+              type: string
+              format: date
+              description: |
+                Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición. Formato `yyyy-mm-dd`. Ejemplo: `2025-02-26`.
+              example: "2025-02-26"
 
-        rectified_tax_quota:
-          type: number
-          format: decimal
-          description: |
-            Cuota de impuesto rectificada.  
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.30`.
-          example: 42.30
+            description:
+              type: string
+              description: |
+                Descripción del objeto de la factura.
 
-        rectified_equalization_tax_quota:
-          type: number
-          format: decimal
-          description: |
-            Cuota de recargo de equivalencia rectificada.  
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
-          example: 5.20
+            representative_company_name:
+              type: string
+              description: |
+                Nombre/razón social del representante del obligado tributario.  
+                A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
 
-        rectified_invoices:
-          type: array
-          description: |
-            Lista de facturas que se están rectificando.
-          items:
-            type: object
-            required:
-              - tax_id_number
-              - full_invoice_number
-              - issue_date
-            properties:
-              tax_id_number:
-                type: string
-                description: |
-                  NIF/CIF de la empresa emisora de la factura que quiere rectificar.
-              full_invoice_number:
-                type: string
-                description: |
-                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
-                  Ejemplo: `2025-00001`.
-              issue_date:
-                type: string
-                format: date
-                description: |
-                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
-                  Ejemplo: `2025-02-26`.
-                example: "2025-02-26"
-        
-        substituted_invoices:
-          type: array
-          description: |
-            Lista de facturas que se quieren sustituir.
+            representative_tax_id_number:
+              type: string
+              description: |
+                NIF del representante del obligado tributario.  
+                A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
+
+            correction_key:
+              $ref: "#/components/schemas/correction_key"
+              example: "N"
+
+            is_simplified:
+              type: boolean
+              description: |
+                Indica si es una factura simplificada Articulo 7.2 Y 7.3 RD 1619/2012.
+
+                Si no se informa este campo se entenderá que tiene valor `N`.
+
+                Sólo se podrá rellenar con `true` si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`.
+              example: false
+
+            without_recipient_identification_key:
+              $ref: "#/components/schemas/without_recipient_identification_key"
+
+            macrodata_key:
+              $ref: "#/components/schemas/macrodata_key"
+
+            coupon_key:
+              $ref: "#/components/schemas/coupon_key"
+
+            invoicing_agreement_registration_number:
+              type: string
+              description: |
+                Número de registro obtenido al enviar la autorización en materia de facturación o de libros registro a que se refiere la disposición adicional primera del Real Decreto que aprueba el Reglamento.
+
+            sif_agreement_id:
+              type: string
+              description: |
+                Identificación del acuerdo (resolución) a que se refiere el artículo 5 del Reglamento.
+
+            issued_by_third_party_or_recipient_key:
+              type: string
+              description: |
+                Identificador que especifica si la factura ha sido expedida materialmente por un tercero o por el destinatario (contraparte).
+
+                - Si es igual a `T` (tercero), el bloque `third_party_data` será de cumplimentación obligatoria.
+                - Si es igual a `D` (destinatario), el bloque `recipients` será de cumplimentación obligatoria.
+
+                - `T`: Tercero
+                - `D`: Destinatario
+              enum:
+                - "T"
+                - "D"
             
-            Sólo podrá incluirse esta agrupación cuando el campo `invoice_type_key` sea `F3`.
-          items:
-            type: object
-            required:
-              - tax_id_number
-              - full_invoice_number
-              - issue_date
-            properties:
-              tax_id_number:
-                type: string
-                description: |
-                  NIF/CIF de la empresa emisora de la factura que quiere rectificar.
-              full_invoice_number:
-                type: string
-                description: |
-                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
-                  Ejemplo: `2025-00001`.
-              issue_date:
-                type: string
-                format: date
-                description: |
-                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
-                  Ejemplo: `2025-02-26`.
-                example: "2025-02-26"
+            third_party_data:
+              type: object
+              description: Información del tercero que expide la factura.
+              required:
+                  - company_name
+              properties:
+                company_name:
+                  type: string
+                  description: Nombre de la empresa del tercero que expide la factura.
+                tax_id_number:
+                  type: string
+                  description: >
+                    NIF/CIF de la empresa. Este campo es obligatorio si el tercero que expide la factura es nacional y se identifica mediante CIF/NIF
+                other_country_code:
+                  $ref: "#/components/schemas/other_country_code"
+                other_tax_id_type_key:
+                  $ref: "#/components/schemas/other_tax_id_type_key"
+                other_tax_id_number:
+                  type: string
+                  description: >
+                    Número de identificación, en el país de residencia del tercero que expide la factura. Ejemplo: `L74JF44L2` para una empresa de `DE`.
 
-        coupon_key:
-          $ref: "#/components/schemas/coupon_key"
+            rectificative_type_code:
+              $ref: "#/components/schemas/rectificative_type_key"
 
-        invoicing_agreement_registration_number:
-          type: string
-          description: |
-            Número de registro obtenido al enviar la autorización en materia de facturación o de libros registro a que se refiere la disposición adicional primera del Real Decreto que aprueba el Reglamento.
+            rectified_base_amount:
+              type: number
+              format: integer
+              description: |
+                Base imponible rectificada.  
+                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
+              example: 2500.55
 
-        sif_agreement_id:
-          type: string
-          description: |
-            Identificación del acuerdo (resolución) a que se refiere el artículo 5 del Reglamento.
+            rectified_quota:
+              type: number
+              format: integer
+              description: |
+                Cuota de impuesto rectificada.  
+                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
+              example: 42.30
+
+            rectified_equalization_tax_quota:
+              type: number
+              format: decimal
+              description: |
+                Cuota de recargo de equivalencia rectificada.  
+                Valor en céntimos con decimales. Ejemplo: Para 5.2€ el valor debería ser `520`.
+              example: 5.20
+
+            replaced_rectified_invoices:
+              type: array
+              description: |
+                Lista de facturas que se están rectificando.
+              items:
+                type: object
+                required:
+                  - tax_id_number
+                  - full_invoice_number
+                  - issue_date
+                properties:
+                  tax_id_number:
+                    type: string
+                    description: |
+                      NIF/CIF de la empresa emisora de la factura que quiere rectificar.
+                  full_invoice_number:
+                    type: string
+                    description: |
+                      Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
+                      Ejemplo: `2025-00001`.
+                  issue_date:
+                    type: string
+                    format: date
+                    description: |
+                      Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
+                      Ejemplo: `2025-02-26`.
+                    example: "2025-02-26"
+
+            substituted_invoices:
+              type: array
+              description: |
+                Lista de facturas que se quieren sustituir.
+                
+                Sólo podrá incluirse esta agrupación cuando el campo `invoice_type_key` sea `F3`.
+              items:
+                type: object
+                required:
+                  - tax_id_number
+                  - full_invoice_number
+                  - issue_date
+                properties:
+                  tax_id_number:
+                    type: string
+                    description: |
+                      NIF/CIF de la empresa emisora de la factura que quiere rectificar.
+                  full_invoice_number:
+                    type: string
+                    description: |
+                      Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
+                      Ejemplo: `2025-00001`.
+                  issue_date:
+                    type: string
+                    format: date
+                    description: |
+                      Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
+                      Ejemplo: `2025-02-26`.
+                    example: "2025-02-26"
+
+            lines:
+              type: array
+              description: |
+                Desglose de la factura con la lista de los conceptos facturados.
+              items:
+                type: object
+                required:
+                  - tax_type_key
+                  - vat_tax_regime_key
+                  - igic_tax_regime_key
+                  - operation_type_key
+                  - tax_base
+                properties:
+                  tax_type_key:
+                    $ref: "#/components/schemas/tax_type_key"
+                  vat_tax_regime_key:
+                    $ref: "#/components/schemas/vat_tax_regime_key"
+                  igic_tax_regime_key:
+                    $ref: "#/components/schemas/igic_tax_regime_key"
+                  operation_type_key:
+                    $ref: "#/components/schemas/operation_type_key"
+                  exemption_cause_key:
+                    $ref: "#/components/schemas/exemption_cause_key"
+                  tax_base:
+                    type: number
+                    format: decimal
+                    description: |
+                      Magnitud dineraria sobre la que se aplica el tipo impositivo/importe no sujeto.  
+                      Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `200.00`.
+                    example: 200.00
+                  tax_base_at_cost:
+                    type: number
+                    format: decimal
+                    description: |
+                      Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.  
+                      Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `100.00`.
+                  tax_rate:
+                    type: number
+                    format: decimal
+                    description: |
+                      Porcentaje aplicado sobre la base imponible para calcular la cuota.  
+                      Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `21.00`.
+                    example: 21.00
+                  tax_quota:
+                    type: number
+                    format: decimal
+                    description: |
+                      Cuota resultante de aplicar a la base imponible el tipo impositivo.  
+                      Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.00`.
+                    example: 42.00
+                  equalization_tax_rate:
+                    type: number
+                    format: decimal
+                    description: |
+                      Porcentaje asociado en función del impuesto y tipo impositivo.  
+                      Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
+                    example: 5.20
+                  equalization_tax_quota:
+                    type: number
+                    format: decimal
+                    description: |
+                      Cuota resultante de aplicar a la base imponible el tipo de recargo de equivalencia.  
+                      Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `10.40`.
+                    example: 10.40
+
+            total_quota:
+              type: number
+              format: integer
+              description: |
+                Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.  
+                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
+
+            total_amount:
+              type: number
+              format: integer
+              description: |
+                Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las líneas de detalle de desglose (agrupación `lines`).  
+                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
+
+          required:
+            - invoice_type_key
+            - fiscal_year
+            - series_code
+            - invoice_number
+            - invoice_datetime
+            - description
+            - lines
+            - total_quota
+            - total_amount
 
       required:
         - sif_id
         - certificate_password
-        - invoice_type_key
         - sender_data
-        - full_invoice_number
-        - fiscal_year
-        - issue_date
-        - operation_description
-        - lines
-        - total_quota
-        - total_amount
+        - invoice_data
 
     CreateInvoiceRecordResponse:
       type: object
