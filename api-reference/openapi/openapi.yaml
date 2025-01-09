@@ -464,13 +464,13 @@ components:
         representative_company_name:
           type: string
           description: |
-            Nombre/razón social del representante del obligado tributario.  
+            Nombre/razón social del representante del obligado tributario.
             A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
 
         representative_tax_id_number:
           type: string
           description: |
-            NIF del representante del obligado tributario.  
+            NIF del representante del obligado tributario.
             A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
 
         correction_key:
@@ -480,7 +480,7 @@ components:
         full_invoice_number:
           type: string
           description: |
-            Serie+Nº Factura que identifica a la factura emitida.  
+            Serie+Nº Factura que identifica a la factura emitida.
             Ejemplo: `2025-00001`.
           example: "2025-00001"
 
@@ -501,8 +501,8 @@ components:
           type: string
           format: date
           description: |
-            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición.  
-            Formato `yyyy-mm-dd`.  
+            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición.
+            Formato `yyyy-mm-dd`.
             Ejemplo: `2025-02-26`.
           example: "2025-02-26"
 
@@ -538,41 +538,41 @@ components:
                 type: number
                 format: decimal
                 description: |
-                  Magnitud dineraria sobre la que se aplica el tipo impositivo/importe no sujeto.  
+                  Magnitud dineraria sobre la que se aplica el tipo impositivo/importe no sujeto.
                   Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `200.00`.
                 example: 200.00
               tax_base_at_cost:
                 type: number
                 format: decimal
                 description: |
-                  Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.  
+                  Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.
                   Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `100.00`.
               tax_rate:
                 type: number
                 format: decimal
                 description: |
-                  Porcentaje aplicado sobre la base imponible para calcular la cuota.  
+                  Porcentaje aplicado sobre la base imponible para calcular la cuota.
                   Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `21.00`.
                 example: 21.00
               tax_quota:
                 type: number
                 format: decimal
                 description: |
-                  Cuota resultante de aplicar a la base imponible el tipo impositivo.  
+                  Cuota resultante de aplicar a la base imponible el tipo impositivo.
                   Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.00`.
                 example: 42.00
               equalization_tax_rate:
                 type: number
                 format: decimal
                 description: |
-                  Porcentaje asociado en función del impuesto y tipo impositivo.  
+                  Porcentaje asociado en función del impuesto y tipo impositivo.
                   Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
                 example: 5.20
               equalization_tax_quota:
                 type: number
                 format: decimal
                 description: |
-                  Cuota resultante de aplicar a la base imponible el tipo de recargo de equivalencia.  
+                  Cuota resultante de aplicar a la base imponible el tipo de recargo de equivalencia.
                   Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `10.40`.
                 example: 10.40
 
@@ -580,22 +580,22 @@ components:
           type: number
           format: decimal
           description: |
-            Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.  
+            Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.
             Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `33.57`.
 
         total_amount:
           type: number
           format: decimal
           description: |
-            Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las líneas de detalle de desglose (agrupación `lines`).  
+            Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las líneas de detalle de desglose (agrupación `lines`).
             Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2450.75`.
-        
+
         simplified_invoice_key:
           $ref: "#/components/schemas/simplified_invoice_key"
-        
+
         without_recipient_identification_key:
           $ref: "#/components/schemas/without_recipient_identification_key"
-        
+
         macrodata_key:
           $ref: "#/components/schemas/macrodata_key"
 
@@ -612,7 +612,7 @@ components:
           enum:
             - "T"
             - "D"
-        
+
         third_party_data:
           type: object
           description: Información del tercero que expide la factura.
@@ -634,7 +634,7 @@ components:
               type: string
               description: >
                 Número de identificación, en el país de residencia del tercero que expide la factura. Ejemplo: `L74JF44L2` para una empresa de `DE`.
-        
+
         rectificative_type_key:
           $ref: "#/components/schemas/rectificative_type_key"
 
@@ -642,7 +642,7 @@ components:
           type: number
           format: decimal
           description: |
-            Base imponible rectificada.  
+            Base imponible rectificada.
             Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2500.55`.
           example: 2500.55
 
@@ -650,7 +650,7 @@ components:
           type: number
           format: decimal
           description: |
-            Cuota de impuesto rectificada.  
+            Cuota de impuesto rectificada.
             Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.30`.
           example: 42.30
 
@@ -658,7 +658,7 @@ components:
           type: number
           format: decimal
           description: |
-            Cuota de recargo de equivalencia rectificada.  
+            Cuota de recargo de equivalencia rectificada.
             Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
           example: 5.20
 
@@ -680,21 +680,21 @@ components:
               full_invoice_number:
                 type: string
                 description: |
-                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
+                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.
                   Ejemplo: `2025-00001`.
               issue_date:
                 type: string
                 format: date
                 description: |
-                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
+                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.
                   Ejemplo: `2025-02-26`.
                 example: "2025-02-26"
-        
+
         substituted_invoices:
           type: array
           description: |
             Lista de facturas que se quieren sustituir.
-            
+
             Sólo podrá incluirse esta agrupación cuando el campo `invoice_type_key` sea `F3`.
           items:
             type: object
@@ -710,13 +710,13 @@ components:
               full_invoice_number:
                 type: string
                 description: |
-                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.  
+                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.
                   Ejemplo: `2025-00001`.
               issue_date:
                 type: string
                 format: date
                 description: |
-                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.  
+                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.
                   Ejemplo: `2025-02-26`.
                 example: "2025-02-26"
 
@@ -886,7 +886,7 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/sif"
-          
+
     sif:
       type: object
       properties:
@@ -930,19 +930,19 @@ components:
         only_verifactu_use_key:
           type: string
           description: |
-            Indica si el SIF es solo para uso de Veri*Factu.  
+            Indica si el SIF es solo para uso de Veri*Factu.
             Valores posibles: `S` (Sí), `N` (No).
           example: "S"
         multi_ot_key:
           type: string
           description: |
-            Indica si el SIF admite operaciones de registros de facturación de múltiples empresas.  
+            Indica si el SIF admite operaciones de registros de facturación de múltiples empresas.
             Valores posibles: `S` (Sí), `N` (No).
           example: "N"
         supporting_multiple_ots_key:
           type: string
           description: |
-            Indica si el SIF soporta actualmente el procesamiento de registros de facturación de múltiples empresas.  
+            Indica si el SIF soporta actualmente el procesamiento de registros de facturación de múltiples empresas.
             Valores posibles: `S` (Sí), `N` (No).
           example: "N"
 
@@ -973,7 +973,7 @@ components:
       type: string
       description: |
         Clave para identificar el tipo de documento del receptor de la factura. Los valores posibles son:
-        
+
         - `02`: **NIF-IVA**: Número de Identificación Fiscal para IVA.
         - `03`: **Pasaporte**: Documento oficial que acredita la identidad y nacionalidad del portador.
         - `04`: **Documento oficial de identificación expedido por el país o territorio de residencia**.
@@ -1008,9 +1008,9 @@ components:
       type: string
       description: |
         Factura simplificada Articulo 7.2 Y 7.3 RD 1619/2012.
-        
+
         Si no se informa este campo se entenderá que tiene valor `N`.
-        
+
         Sólo se podrá rellenar con `S` si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`.
 
         - `S`: Sí
@@ -1022,8 +1022,8 @@ components:
     without_recipient_identification_key:
       type: string
       description: |
-        Factura sin identificación del destinatario según el artículo 6.1.d del RD 1619/2012.  
-            
+        Factura sin identificación del destinatario según el artículo 6.1.d del RD 1619/2012.
+
         Si no se informa este campo, se entenderá que tiene valor `"N"`.
 
         Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `F2` o `R5`.
@@ -1033,12 +1033,12 @@ components:
       enum:
         - S
         - N
-    
+
     macrodata_key:
       type: string
       description: |
-        Identificador que especifica aquellas facturas con base o importe >= |100.000.000,00| (valor absoluto).  
-            
+        Identificador que especifica aquellas facturas con base o importe >= |100.000.000,00| (valor absoluto).
+
         Si no se informa este campo, se entenderá que tiene valor `"N"`.
 
         Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `F2` o `R5`.
@@ -1052,7 +1052,7 @@ components:
     coupon_key:
       type: string
       description: |
-        Identificador que especifica si tiene minoración de la base imponible por la concesión de cupones, bonificaciones o descuentos cuando solo se expide el original de la factura.  
+        Identificador que especifica si tiene minoración de la base imponible por la concesión de cupones, bonificaciones o descuentos cuando solo se expide el original de la factura.
         Si no se informa este campo, se entenderá que tiene valor `"N"`.
 
         Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `R5` o `R1`.
@@ -1200,11 +1200,11 @@ components:
       enum:
         - "S"
         - "I"
-    
+
     vf_post_status:
       type: string
       description: |
-        Este campo indica si la factura ha sido enviada a Veri*Factu, pero no indica si el registro ha sido aceptado.  
+        Este campo indica si la factura ha sido enviada a Veri*Factu, pero no indica si el registro ha sido aceptado.
         Los valores posibles son:
 
         - `success`: Se ha realizado el envío a Veri*Factu.
@@ -1241,18 +1241,10 @@ components:
             error:
               type: object
               properties:
-                code:
-                  type: string
-                  description: Código de error.
-                  example: "E-WRONGARGS"
                 message:
                   type: string
                   description: Mensaje general del error.
                   example: "The given data was invalid."
-                http_code:
-                  type: integer
-                  description: Código HTTP asociado al error.
-                  example: 422
                 errors:
                   type: object
                   additionalProperties:
@@ -1260,7 +1252,7 @@ components:
                     items:
                       type: string
                   description: |
-                    Lista de errores de validación organizados por campo.  
+                    Lista de errores de validación organizados por campo.
                     Cada clave es el nombre del campo asociado al error y contiene un array de mensajes.
                   example:
                     invoice_exists:
@@ -1323,4 +1315,4 @@ components:
       type: apiKey
       name: X-Qbikode-UserApiKey
       in: header
-  
+
