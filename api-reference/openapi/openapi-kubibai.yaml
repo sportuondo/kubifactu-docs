@@ -168,14 +168,14 @@ components:
             series_code:
               type: string
               description: |
-                Serie de la factura emitida.
+                Serie de la factura emitida. Sólo puedo contener caracteres ASCII del 32 a 126 (caracteres imprimibles).
                 Ejemplo: `2025`.
               example: "2025"
 
             invoice_number:
               type: string
               description: |
-                Nº Factura que identifica a la factura emitida.
+                Nº Factura que identifica a la factura emitida. Sólo puedo contener caracteres ASCII del 32 a 126 (caracteres imprimibles).
                 Ejemplo: `00021`.
               example: "00021"
 
@@ -184,6 +184,8 @@ components:
               format: date
               description: |
                 Fecha de expedición de la factura en formato `yyyy-mm-dd hh:mm:ss`. Ejemplo: `2025-02-26 12:35:44`.
+
+                La fecha de expedición de la factura (el día) debe coincidir con la fecha en la que la factura nos es remitida (lo cual supone la creación del **_registro de facturación_**).
               example: "2025-02-26 12:35:44"
 
             operation_date:
@@ -851,8 +853,9 @@ components:
                   properties:
                     request_id:
                       type: string
+                      format: uuid
                       description: Identificador único de la solicitud para rastreo.
-                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+                      example: "9ded9e2c-d59e-4432-a926-652cbcfac365"
 
     UnauthorizedApiKeyErrorResponse:
       type: object

@@ -480,7 +480,7 @@ components:
         full_invoice_number:
           type: string
           description: |
-            Serie+Nº Factura que identifica a la factura emitida.
+            Serie+Nº Factura que identifica a la factura emitida. Sólo puedo contener caracteres ASCII del 32 a 126 (caracteres imprimibles).
             Ejemplo: `2025-00001`.
           example: "2025-00001"
 
@@ -495,6 +495,8 @@ components:
           format: date
           description: |
             Fecha de expedición de la factura en formato `yyyy-mm-dd`. Ejemplo: `2025-02-26`.
+
+            La fecha de expedición de la factura debe coincidir con la fecha en la que la factura nos es remitida (lo cual supone la creación del **_registro de facturación_**).
           example: "2025-02-26"
 
         operation_date:
@@ -993,6 +995,17 @@ components:
       description: >
         Código del país en formato [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-2). Sólo es necesario rellenarlo **si el sujeto no es nacional**. El código de país debe ser `ES` si `other_tax_id_type_key` es `07 (no censado)`. Ejemplo: `DE`
 
+    affected_by_incidence_key:
+      type: string
+      description: |
+        Indicador que especifica si la remisión voluntaria del registro de facturación se ha visto afectada por algún tipo de incidencia técnica (ausencia de corriente eléctrica, problemas de conexión a Internet, fallo del sistema informático de facturación, etc.). Si no se informa este campo se entenderá que tiene valor “N”.
+
+        - `S`: Sí, la remisión de este registro de facturación se ha visto afectada por aglún tipo de incidencia.
+        - `N`: No
+      enum:
+        - S
+        - N
+
     correction_key:
       type: string
       description: |
@@ -1266,8 +1279,9 @@ components:
                   properties:
                     request_id:
                       type: string
+                      format: uuid
                       description: Identificador único de la solicitud para rastreo.
-                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+                      example: "9ded9e2c-d59e-4432-a926-652cbcfac365"
 
     UnauthorizedApiKeyErrorResponse:
       type: object
