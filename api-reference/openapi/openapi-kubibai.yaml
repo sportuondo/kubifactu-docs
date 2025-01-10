@@ -162,7 +162,7 @@ components:
             fiscal_year:
               type: integer
               description: |
-                Ejercicio fiscal en el que se emite la factura.
+                Ejercicio fiscal en el que se emite la factura. Aunque este dato no se envía a la AEAT, se utiliza junto con el `sif_id` para verificar que no se están duplicando los números de factura.
               example: 2025
 
             series_code:
