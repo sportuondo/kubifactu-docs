@@ -898,4 +898,13 @@ components:
       type: apiKey
       name: X-Qbikode-ClientApiKey
       in: header
+      description: |
+        API-KEY de la empresa que hace la petición. Este dato se puede consultar en el panel web, accediendo a la sección _Empresas_ y accediendo a la ficha de la empresa en cuestión.
+
+    owner_api_key:
+      type: apiKey
+      name: X-Qbikode-UserApiKey
+      in: header
+      description: |
+        API-KEY del intermediario que hace la petición. Este dato se puede consultar en el panel web, en la página de _Perfil de usuario_.
 
