@@ -106,7 +106,12 @@ components:
         sif_id:
           type: string
           format: uuid
-          description: "ID del SIF que se quiere utilizar para el envío de la factura. Los SIFs se pueden registrar en el panel web de KubiFACTU."
+          description: |
+            ID del SIF que se quiere utilizar para el envío de la factura. Los SIFs se pueden registrar en el panel web de KubiFACTU.
+
+            Un SIF puede procesar registros de facturación de diferentes empresas
+
+            Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado.
           example: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
 
         certificate_password:
