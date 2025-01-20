@@ -1,0 +1,20 @@
+---
+title: 'Diferencias con KubiBAI'
+description: 'Diferencias principales con respecto al funcionamiento de KubiBAI'
+---
+
+## Certificados de los emisores
+
+Cada emisor de facturas deberá proporcionar un certificado para firmar las comunicaciones con la AEAT. Entre los certificados aceptados por la AEAT se incluyen los propios, los de representación, los de apoderamiento y los de colaboración social.
+
+## Sistemas Informáticos de Facturación
+
+Consulta [Encadenamiento (trazabilidad) y SIFs](/basic-concepts#encadenamiento-trazabilidad-y-sifs).
+
+## Campos del JSON de registros de Facturación
+
+Aunque se ha tratado de mantener una estructura de JSON similar a la utilizada en KubiBAI, los requisitos de VeriFactu han obligado a añadir nuevos campos y modificar algunos de los ya existentes.
+
+Una de las estructuras que más cambios ha sufrido es la que especifica los conceptos (`lines`), que en VeriFactu, además de ser obligatoria, presenta requisitos muy diferentes a los de TicketBAI.
+
+Recomendamos consultar detenidamente la sección [API desde KubiBAI](/openapi-kubibai-reference/enviar-registro-de-facturación) de esta documentación para identificar los campos que se conservan (y sus valores aceptados) y los que son nuevos con respecto a KubiBAI.
