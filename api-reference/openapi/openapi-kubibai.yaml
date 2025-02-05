@@ -441,14 +441,14 @@ components:
               format: integer
               description: |
                 Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.
-                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
+                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `25436`.
 
             total_amount:
               type: number
               format: integer
               description: |
                 Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las líneas de detalle de desglose (agrupación `lines`).
-                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
+                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `25436`.
 
           required:
             - invoice_type_key
