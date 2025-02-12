@@ -18,6 +18,15 @@ paths:
       summary: "Enviar registro de facturación"
       description: "Generación de un nuevo registro de facturación."
       operationId: "createInvoiceRecord"
+      parameters:
+        - name: Accept
+          in: header
+          description: Identificador único de la solicitud
+          required: true
+          schema:
+            type: string
+            enum:
+              - application/json
       requestBody:
         required: true
         content:
@@ -61,6 +70,14 @@ paths:
           required: true
           schema:
             type: string
+        - name: Accept
+          in: header
+          description: Identificador único de la solicitud
+          required: true
+          schema:
+            type: string
+            enum:
+              - application/json
       requestBody:
         required: true
         content:
