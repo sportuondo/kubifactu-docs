@@ -520,12 +520,12 @@ components:
               type: string
               nullable: true
               format: uri
-              description: URL que debe mostrarse en el QR de las facturas procesadas con Veri*Factu. Esta URL sirve para que el receptor de la factura pueda validar que esta ha sido correctamente enviada a Veri*Factu.
+              description: URL que debe mostrarse en el QR de las facturas procesadas con Veri*Factu. Esta URL sirve para que el receptor de la factura pueda validar que esta ha sido correctamente enviada a Veri*Factu. Este campo será `null` cuando Veri*Factu rechace el registro de facturación.
             qr_image:
               type: string
               nullable: true
               format: byte
-              description: Imagen del QR (PNG) en formato Base64.
+              description: Imagen del QR (PNG) en formato Base64. Este campo será `null` cuando Veri*Factu rechace el registro de facturación.
 
     CancelInvoiceRecordResponse:
       type: object
