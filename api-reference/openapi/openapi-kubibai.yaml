@@ -518,10 +518,12 @@ components:
               description: Cadena con la descripción de los errores devueltos por Veri*Factu.
             qr_value:
               type: string
+              nullable: true
               format: uri
               description: URL que debe mostrarse en el QR de las facturas procesadas con Veri*Factu. Esta URL sirve para que el receptor de la factura pueda validar que esta ha sido correctamente enviada a Veri*Factu.
             qr_image:
               type: string
+              nullable: true
               format: byte
               description: Imagen del QR (PNG) en formato Base64.
 
