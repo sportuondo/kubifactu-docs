@@ -17,7 +17,6 @@ Este ejemplo muestra de la remisión de una factura ordinaria por un total de `1
 ```json Body
 {
   "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
-  "certificate_password": "xxxxxxx",
   "invoice_type_key": "F1", // Factura (art. 6, 7.2 y 7.3 del RD 1619/2012)
   "sender_data": {
     "company_name": "Empresa emisora de ejemplo",
@@ -55,7 +54,6 @@ curl -X "POST" "https://kubifactu.kubicode.test/api/invoices" \
      -H 'X-Qbikode-ClientApiKey: API-KEY de la empresa' \
      -d $'{
   "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
-  "certificate_password": "xxxxxx",
   "invoice_type_key": "F1",
   "sender_data": {
     "company_name": "Empresa emisora de ejemplo",

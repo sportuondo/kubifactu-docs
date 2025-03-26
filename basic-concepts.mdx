@@ -14,10 +14,7 @@ Las URL base de los servidores de producción y de pruebas son las siguientes:
 
 ## Autentificación
 
-Para poder procesar registros de facturación, nuestra API requiere que se identifique a la empresa emisora mediante dos elementos:
-
-1. **API-KEY**: se trata de una clave que es necesario incluir en los encabezados HTTP de las peticiones. Esta clave se puede encontrar en nuestro panel dentro de la ficha de cada empresa. Consulta la [referencia de la API](/openapi-reference/enviar-registro-de-facturación) para saber cómo incluir el encabezado HTTP de identificación de la empresa.
-2. **Certificado digital**: cada empresa debe tener cargado su ciertificado digital en nuestra plataforma para poder firmar las comunicaciones con la AEAT. El certificado digital se puede cargar desde la ficha de empresa de nuestro panel.
+Para poder procesar registros de facturación, nuestra API requiere que se identifique a la empresa emisora mediante **API-KEY**: se trata de una clave que es necesario incluir en los encabezados HTTP de las peticiones. Esta clave se puede encontrar en nuestro panel dentro de la ficha de cada empresa. Consulta la [referencia de la API](/openapi-reference/enviar-registro-de-facturación) para saber cómo incluir el encabezado HTTP de identificación de la empresa.
 
 Las empresas se pueden dar de alta bien desde el panel web (sección *Empresas*) o bien [vía API](/openapi-reference/crear-una-nueva-empresa).
 
