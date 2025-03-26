@@ -3,6 +3,12 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2025-03-26" description="v1.1.0beta">
+  Ya no es necesario gestionar certificados por cada empresa cliente. KubiFactu hace las veces de intermediario con lo que ya no es necesario enviar la contraseña de certificado en las peticiones.
+
+  Los endpoints de actualización de datos de empresas han sido actualizados para obviar la información referente al certificado.
+</Update>
+
 <Update label="2025-03-25" description="v1.0.1beta">
   En la respuesta del endpoint _**Enviar registro de facturación**_ los campos `qr_value` y `qr_image` pueden ser `null`. Esto ocurre cuando la factura ha sido rechazada por Verifactu.
 </Update>

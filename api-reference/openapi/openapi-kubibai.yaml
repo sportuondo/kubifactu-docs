@@ -58,7 +58,7 @@ paths:
         - client_api_key: []
 
   /api/invoicing/invoices/{invoiceId}/cancel:
-    post:
+    get:
       summary: "Anular registro de facturación"
       description: "Anulación de un registro de facturación."
       operationId: "cancelInvoiceRecord"
@@ -78,12 +78,6 @@ paths:
             type: string
             enum:
               - application/json
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CancelInvoiceRecordRequest"
       responses:
         '200':
           description: "Factura enviada con éxito."
@@ -109,14 +103,6 @@ paths:
         - client_api_key: []
 components:
   schemas:
-    CancelInvoiceRecordRequest:
-      type: object
-      properties:
-        certificate_password:
-          type: string
-          description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
-          example: "passwd"
-
     CreateInvoiceRecordRequest:
       type: object
       properties:
@@ -130,11 +116,6 @@ components:
 
             Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado.
           example: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
-
-        certificate_password:
-          type: string
-          description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
-          example: "passwd"
 
         sender_data:
           type: object
@@ -480,7 +461,6 @@ components:
 
       required:
         - sif_id
-        - certificate_password
         - sender_data
         - invoice_data
 

@@ -58,7 +58,7 @@ paths:
         - client_api_key: []
 
   /api/invoices/{invoiceId}/cancel:
-    post:
+    get:
       summary: "Anular registro de facturación"
       description: "Anulación de un registro de facturación."
       operationId: "cancelInvoiceRecord"
@@ -78,15 +78,9 @@ paths:
             type: string
             enum:
               - application/json
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CancelInvoiceRecordRequest"
       responses:
         '200':
-          description: "Factura enviada con éxito."
+          description: "Factura anulada con éxito."
           content:
             application/json:
               schema:
@@ -125,7 +119,7 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               $ref: "#/components/schemas/CreateClientCompanyRequest"
       responses:
@@ -176,7 +170,7 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               $ref: "#/components/schemas/UpdateClientCompanyRequest"
       responses:
@@ -206,7 +200,8 @@ paths:
   /api/clientcompanies/{companyId}/certificate:
     post:
       summary: "Actualizar certificado empresa"
-      description: "Actualización del certificado de una empresa."
+      deprecated: true
+      description: "**DEPRECATED**. Actualización del certificado de una empresa."
       operationId: "updateClientCompanyCertificate"
       parameters:
         - name: companyId
@@ -343,14 +338,6 @@ paths:
         - owner_api_key: []
 components:
   schemas:
-    CancelInvoiceRecordRequest:
-      type: object
-      properties:
-        certificate_password:
-          type: string
-          description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
-          example: "passwd"
-
     CreateClientCompanyRequest:
       type: object
       properties:
@@ -367,14 +354,6 @@ components:
           format: email
           description: Correo electrónico de la empresa.
           example: "empresa@prueba.net"
-        certificate_file:
-          type: string
-          format: binary
-          description: Certificado digital de la empresa en formato archivo.
-        certificate_password:
-          type: string
-          description: Contraseña del certificado digital.
-          example: "passwd"
       required:
         - company_name
         - tax_id_number
@@ -396,14 +375,6 @@ components:
           format: email
           description: Correo electrónico de la empresa.
           example: "empresa@prueba.net"
-        certificate_file:
-          type: string
-          format: binary
-          description: Certificado digital de la empresa en formato archivo.
-        certificate_password:
-          type: string
-          description: Contraseña del certificado digital.
-          example: "passwd"
       required:
         - company_name
         - tax_id_number
@@ -912,32 +883,6 @@ components:
               type: string
               description: API Key generada para la empresa.
               example: "Xxv3en85OJOtI7Q6XFNGuA3FPwDNsnhk1kbtlQ5RgRSAdoo47eSGGYbgfLs8Qf2obGJluvY28a0tIqeM1UjzdbHDSDp1Q0fNX9sz"
-            certificate_data:
-              type: object
-              description: Detalles del certificado digital asociado a la empresa.
-              properties:
-                issuer:
-                  type: string
-                  description: Datos del emisor del certificado.
-                  example: "C=ES, ST=Barcelona, L=Sant Cugat del Vallès, O=TechNova Solutions, S.L., OU=Innovación, CN=TechNova Solutions, S.L., emailAddress=contacto@technova.com"
-                subject:
-                  type: string
-                  description: Datos del sujeto del certificado.
-                  example: "C=ES, ST=Madrid, L=Alcobendas, O=InnovaTec Solutions, S.L., OU=Tecnología, CN=InnovaTec Solutions, S.L., emailAddress=contacto@innovatec.com"
-                valid_from:
-                  type: string
-                  format: date-time
-                  description: Fecha de inicio de validez del certificado.
-                  example: "2024-12-24T08:01:48+00:00"
-                valid_to:
-                  type: string
-                  format: date-time
-                  description: Fecha de vencimiento del certificado.
-                  example: "2025-12-24T08:01:48+00:00"
-                serial_number:
-                  type: string
-                  description: Número de serie del certificado.
-                  example: "6D46F6AA446F3C9359A698D91F57C583F4CEC73B"
 
     GetSIFsResponse:
       type: object
