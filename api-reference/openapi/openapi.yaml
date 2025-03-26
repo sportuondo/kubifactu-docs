@@ -80,7 +80,7 @@ paths:
               - application/json
       responses:
         '200':
-          description: "Factura anulada con éxito."
+          description: "Factura enviada con éxito."
           content:
             application/json:
               schema:
@@ -201,7 +201,7 @@ paths:
     post:
       summary: "Actualizar certificado empresa"
       deprecated: true
-      description: "**DEPRECATED**. Actualización del certificado de una empresa."
+      description: "**DEPRECATED: ya no es necesario utilizar certificados para cada empresa**. Actualización del certificado de una empresa."
       operationId: "updateClientCompanyCertificate"
       parameters:
         - name: companyId
@@ -448,11 +448,6 @@ components:
 
             Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado.
           example: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
-
-        certificate_password:
-          type: string
-          description: "Contraseña del certificado de la empresa emisora de la factura. No almacenamos esta contraseña en nuestro servidor, pero es necesario para firmar la comunicación con la AEAT."
-          example: "passwd"
 
         invoice_type_key:
           $ref: "#/components/schemas/invoice_type_key"
@@ -883,6 +878,32 @@ components:
               type: string
               description: API Key generada para la empresa.
               example: "Xxv3en85OJOtI7Q6XFNGuA3FPwDNsnhk1kbtlQ5RgRSAdoo47eSGGYbgfLs8Qf2obGJluvY28a0tIqeM1UjzdbHDSDp1Q0fNX9sz"
+            certificate_data:
+              type: object
+              description: Detalles del certificado digital asociado a la empresa.
+              properties:
+                issuer:
+                  type: string
+                  description: Datos del emisor del certificado.
+                  example: "C=ES, ST=Barcelona, L=Sant Cugat del Vallès, O=TechNova Solutions, S.L., OU=Innovación, CN=TechNova Solutions, S.L., emailAddress=contacto@technova.com"
+                subject:
+                  type: string
+                  description: Datos del sujeto del certificado.
+                  example: "C=ES, ST=Madrid, L=Alcobendas, O=InnovaTec Solutions, S.L., OU=Tecnología, CN=InnovaTec Solutions, S.L., emailAddress=contacto@innovatec.com"
+                valid_from:
+                  type: string
+                  format: date-time
+                  description: Fecha de inicio de validez del certificado.
+                  example: "2024-12-24T08:01:48+00:00"
+                valid_to:
+                  type: string
+                  format: date-time
+                  description: Fecha de vencimiento del certificado.
+                  example: "2025-12-24T08:01:48+00:00"
+                serial_number:
+                  type: string
+                  description: Número de serie del certificado.
+                  example: "6D46F6AA446F3C9359A698D91F57C583F4CEC73B"
 
     GetSIFsResponse:
       type: object
