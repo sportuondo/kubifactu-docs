@@ -3,16 +3,20 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
-<Update label="2025-03-26" description="v1.1.0beta">
+<Update label="2025-04-01" description="v0.1.1beta">
+  En las respuestas para los envíos de nuevos registros de facturación y  anulaciones de facturas se añaden los campos `next_request_waiting_time` y `next_request_datetime` para indicar el tiempo de espera desde la última petición y la fecha y hora a la que se puede realizar otro envío para la empresa cliente.
+</Update>
+
+<Update label="2025-03-26" description="v0.1.0beta">
   Ya no es necesario gestionar certificados por cada empresa cliente. KubiFactu hace las veces de intermediario con lo que ya no es necesario enviar la contraseña de certificado en las peticiones.
 
   Los endpoints de actualización de datos de empresas han sido actualizados para obviar la información referente al certificado.
 </Update>
 
-<Update label="2025-03-25" description="v1.0.1beta">
+<Update label="2025-03-25" description="v0.0.1beta">
   En la respuesta del endpoint _**Enviar registro de facturación**_ los campos `qr_value` y `qr_image` pueden ser `null`. Esto ocurre cuando la factura ha sido rechazada por Verifactu.
 </Update>
 
-<Update label="2025-01-08" description="v1.0.0beta">
+<Update label="2025-01-08" description="v0.0.1beta">
   Versión inicial de la documentación en fase Beta.
 </Update>

@@ -84,7 +84,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+                $ref: '#/components/schemas/CancelInvoiceRecordResponse'
         '422':
           description: "Errores de validación."
           content:
@@ -809,6 +809,14 @@ components:
             vf_error_descriptions:
               type: string
               description: Cadena con la descripción de los errores devueltos por Veri*Factu.
+            next_request_waiting_time:
+              type: integer
+              description: Tiempo que se debe esperar en segundos para que la empresa cliente pueda enviar una nueva petición.
+            next_request_datetime:
+              type: string
+              format: date-time
+              example: "1977-04-22T06:00:00Z"
+              description: Fecha y hora en la que la empresa cliente pueda enviar una nueva petición en formato ISO-8601 (ej.- 1977-04-22T06:00:00Z) con zona horaria UTC.
             qr_value:
               type: string
               nullable: true
@@ -849,6 +857,14 @@ components:
             vf_error_descriptions:
               type: string
               description: Cadena con la descripción de los errores devueltos por Veri*Factu.
+            next_request_waiting_time:
+              type: integer
+              description: Tiempo que se debe esperar en segundos para que la empresa cliente pueda enviar una nueva petición.
+            next_request_datetime:
+              type: string
+              format: date-time
+              example: "1977-04-22T06:00:00Z"
+              description: Fecha y hora en la que la empresa cliente pueda enviar una nueva petición en formato ISO-8601 (ej.- 1977-04-22T06:00:00Z) con zona horaria UTC.
 
     CreateClientCompanyResponse:
       type: object
