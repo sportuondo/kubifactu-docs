@@ -320,7 +320,7 @@ components:
                 required:
                   - tax_id_number
                   - full_invoice_number
-                  - issue_date
+                  - invoice_date
                 properties:
                   tax_id_number:
                     type: string
