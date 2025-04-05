@@ -331,7 +331,7 @@ components:
                     description: |
                       Serie+Nº Factura que identifica a la factura que se quiere rectificar.
                       Ejemplo: `2025-00001`.
-                  issue_date:
+                  invoice_date:
                     type: string
                     format: date
                     description: |
@@ -350,7 +350,7 @@ components:
                 required:
                   - tax_id_number
                   - full_invoice_number
-                  - issue_date
+                  - invoice_date
                 properties:
                   tax_id_number:
                     type: string
@@ -361,7 +361,7 @@ components:
                     description: |
                       Serie+Nº Factura que identifica a la factura que se quiere rectificar.
                       Ejemplo: `2025-00001`.
-                  issue_date:
+                  invoice_date:
                     type: string
                     format: date
                     description: |
