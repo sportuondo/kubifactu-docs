@@ -18,17 +18,34 @@ Para poder procesar registros de facturación, nuestra API requiere que se ident
 
 Las empresas se pueden dar de alta bien desde el panel web (sección *Empresas*) o bien [vía API](/openapi-reference/crear-una-nueva-empresa).
 
+## Certificados
+
+La firma de las comunicaciones con la AEAT debe firmarse con un certificado autorizado. Nosotros hacemos las veces de intermediarios, con lo que no es necesario tener un certificado para cada empresa cliente que emite registros de facturación a la AEAT. Además, **cada intermediario puede optar por usar su propio certificado** (en lugar del nuestro) para la firma de las comunicaciones. Para ello, el intermediario debe estar registrado como **apoderado o colborador social** en la AEAT.
+
 ## Los registros de facturación
 
 Los registros de facturación son los envíos que se hacen a Veri*Factu (AEAT) para el **alta, subsanación y anulación de facturas**.
 
 ## Obligatoriedad del envío de las facturas a Veri*Factu
 
-El **registro de facturación** se genera en el momento en que la los datos de la factura son remitidos a nuestro sistema. Tras la generación del registro de facturación este se envía a Veri*Factu (AEAT) para su validación y registro.
+Salvo en el caso de los [registros de facturación diferidos](#registros-de-facturacion-diferidos), el **registro de facturación** se genera en el momento en que la los datos de la factura son remitidos a nuestro sistema. Tras la generación del registro de facturación este se envía a Veri*Factu (AEAT) para su validación y registro.
 
 La **fecha de expedición** de la factura debe coincidir con la de generación del registro de facturación, es decir, la factura debe sernos enviada en la misma fecha en que es expedida. Además, la factura debe ser entregada al receptor (ya sea en versión impresa o digital) con un **QR de cotejo** que le permita verificar que la factura ha sido correctamente remitida a la AEAT.
 
 <Info>El QR de cotejo lo genera nuestro servicio una vez recibida y procesada la factura adecuadamente.</Info>
+
+## Registros de facturación diferidos
+
+La Agencia Estatal de Administración Tributaria (AEAT) impone ciertos límites al número de solicitudes que un obligado tributario (un CIF/NIF de empresa) puede realizar en un período de tiempo determinado. Actualmente, el límite predeterminado es de una solicitud cada 60 segundos. Para gestionar esto, proporcionamos dos campos de respuesta, `next_request_waiting_time` y `next_request_datetime`, que indican el tiempo de espera necesario antes de enviar otra solicitud. En caso de que se emitan múltiples registros de facturación en el margen de tiempo especificado, ofrecemos una función de **envío de registros de facturación en diferido**. En tales casos, nuestro sistema genera los datos mínimos esenciales requeridos, como códigos QR y otros elementos necesarios, para los registros de facturación. Sin embargo, en lugar de enviarlos inmediatamente a la AEAT, espera hasta que hayan transcurrido los márgenes de tiempo especificados por la AEAT para el emisor respectivo.
+
+El envío de registros de facturación en diferido se realiza utilizando los mismos datos que en los registros de facturación no-diferidos, pero apuntando a URLs diferentes. Por ejemplo:
+
+- URL de **alta** de facturas **no-diferidas**: `…/api/invoices`
+- URL de **alta** de facturas **diferidas**: `…/api/invoices/deferred`
+- URL de **anulación** de facturas **no-diferidas**: `…/api/invoices/{ID}/cancel`
+- URL de **anulación** de facturas **diferidas**: `…/api/invoices/{ID}/deferredcancel`
+
+Una vez el registro se ha enviado y se ha obtenido la respuesta de la AEAT, se envía la información de respuesta en formato JSON a la URL indicada en el campo `callback_url` indicado en la petición de alta o anulación de registro de facturación. Para más información consulta las correspondientes APIs de envíos y anulaciones de facturas.
 
 ## Encadenamiento (trazabilidad) y SIFs
 
@@ -38,6 +55,6 @@ Los registros de facturación se encadenan de forma independiente dentro de cada
 
 <Note>Un SIF puede procesar registros de facturación de diferentes empresas.</Note>
 
-<Tip>Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado.</Tip>
+<Tip>Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado, pero **no es obligatorio hacerlo**.</Tip>
 
 <Info>Nuestro sistema se encarga de generar los datos de encadenamiento de forma automática en base a las facturas previamente procesadas para los correspondientes SIFs y empresas.</Info>
