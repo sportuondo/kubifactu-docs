@@ -47,6 +47,10 @@ El envío de registros de facturación en diferido se realiza utilizando los mis
 
 Una vez el registro se ha enviado y se ha obtenido la respuesta de la AEAT, se envía la información de respuesta en formato JSON a la URL indicada en el campo `callback_url` indicado en la petición de alta o anulación de registro de facturación. Para más información consulta las correspondientes APIs de envíos y anulaciones de facturas.
 
+<Warning>En el caso de un registro de facturación "normal" se obtiene el resultado de aceptación por parte de la AEAT **de forma inmediata**, mientras que para un registro de facturación en diferido **se debe esperar** a que nuestro sistema haga el envío y se procese la respuesta de la AEAT. En este punto el registro puede ser *aceptado*, *aceptado con errores* o *rechazado*.</Warning>
+
+<Tip>Si la empresa cliente no necesita emitir registros de facturación por debajo de los márgenes de tiempo indicados por la AEAT (por defecto, un registro cada 60 segundos), es más simple y directo emitir registros de facturación "normales", es decir, NO DIFERIDOS, ya que la validación por parte de la AEAT se realiza de forma directa, sin esperas ni procesos de callback.</Tip>
+
 ## Encadenamiento (trazabilidad) y SIFs
 
 La trazabilidad se refiere a que se pueda garantizar que no hay "huecos" o "saltos" en la secuencia de generación de los registros de facturación correspondientes a las facturas expedidas utilizando un determinado **Sistema Informático de Facturación (SIF)**, así como que dicha secuencia se corresponde con la de la fecha y hora de generación empleadas.
