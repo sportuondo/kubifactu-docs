@@ -637,6 +637,10 @@ components:
             NIF del representante del obligado tributario.
             A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
 
+        previous_rejection_key:
+          $ref: "#/components/schemas/previous_rejection_key"
+          example: "N"
+
         correction_key:
           $ref: "#/components/schemas/correction_key"
           example: "N"
@@ -1188,6 +1192,17 @@ components:
 
         - `S`: Sí, la remisión de este registro de facturación se ha visto afectada por aglún tipo de incidencia.
         - `N`: No
+      enum:
+        - S
+        - N
+
+    previous_rejection_key:
+      type: string
+      description: |
+        Indicador que especifica que se está generando —para volverlo a remitir— un nuevo registro de facturación de alta subsanado tras haber sido rechazado en su remisión inmediatamente anterior, es decir, en el último envío que contenía ese registro de facturación de alta rechazado. Si no se informa este campo se entenderá que tiene valor "N".
+
+        - `S`: Sí, se está generando un nuevo registro de facturación de alta subsanado tras haber sido rechazado en su remisión inmediatamente anterior.
+        - `N`: No, se trata de un alta normal/inicial.
       enum:
         - S
         - N

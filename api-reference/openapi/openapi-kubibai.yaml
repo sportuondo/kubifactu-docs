@@ -331,6 +331,10 @@ components:
                 NIF del representante del obligado tributario.
                 A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
 
+            previous_rejection_key:
+              $ref: "#/components/schemas/previous_rejection_key"
+              example: "N"
+
             correction_key:
               $ref: "#/components/schemas/correction_key"
               example: "N"
@@ -719,6 +723,17 @@ components:
       type: string
       description: >
         Código del país en formato [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-2). Sólo es necesario rellenarlo **si el sujeto no es nacional**. El código de país debe ser `ES` si `other_tax_id_type_key` es `07 (no censado)`. Ejemplo: `DE`
+
+    previous_rejection_key:
+      type: string
+      description: |
+        Indicador que especifica que se está generando —para volverlo a remitir— un nuevo registro de facturación de alta subsanado tras haber sido rechazado en su remisión inmediatamente anterior, es decir, en el último envío que contenía ese registro de facturación de alta rechazado. Si no se informa este campo se entenderá que tiene valor "N".
+
+        - `S`: Sí, se está generando un nuevo registro de facturación de alta subsanado tras haber sido rechazado en su remisión inmediatamente anterior.
+        - `N`: No, se trata de un alta normal/inicial.
+      enum:
+        - S
+        - N
 
     correction_key:
       type: string
