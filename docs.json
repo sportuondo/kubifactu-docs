@@ -22,12 +22,6 @@
               "kubibai-differences",
               "changelog"
             ]
-          },
-          {
-            "group": "API de KubiFACTU",
-            "openapi": {
-              "source": "/api-reference/openapi/openapi.yaml"
-            }
           }
         ]
       },
