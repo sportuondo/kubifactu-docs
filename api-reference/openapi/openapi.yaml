@@ -50,7 +50,7 @@ paths:
 
   /api/invoices/deferred:
     post:
-      summary: "Enviar registro de facturación diferido"
+      summary: "Enviar registro de facturacion diferido"
       description: "Generación de un nuevo registro de facturación diferido."
       operationId: "createDeferredInvoiceRecord"
       requestBody:
@@ -85,7 +85,7 @@ paths:
 
   /api/invoices/{invoiceId}/cancel:
     post:
-      summary: "Anular registro de facturación"
+      summary: "Anular registro de facturacion"
       description: "Anulación de un registro de facturación."
       operationId: "cancelInvoiceRecord"
       parameters:
@@ -122,7 +122,7 @@ paths:
 
   /api/invoices/{invoiceId}/deferredcancel:
     post:
-      summary: "Anular registro de facturación en diferido"
+      summary: "Anular registro de facturacion en diferido"
       description: "Anulación de un registro de facturación en diferido."
       operationId: "cancelInvoiceRecordDeferred"
       parameters:
