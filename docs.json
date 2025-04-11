@@ -1,0 +1,93 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "KubiFactu Docs",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#07C983",
+    "dark": "#0D9373"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Inicio",
+        "groups": [
+          {
+            "group": "Empieza",
+            "pages": [
+              "introduction",
+              "basic-concepts",
+              "quickstart",
+              "kubibai-differences",
+              "changelog"
+            ]
+          },
+          {
+            "group": "API de KubiFACTU",
+            "openapi": {
+              "source": "/api-reference/openapi/openapi.yaml"
+            }
+          }
+        ]
+      },
+      {
+        "tab": "Referencia de la API",
+        "openapi": {
+          "source": "/api-reference/openapi/openapi.yaml",
+          "directory": "openapi-reference"
+        }
+      },
+      {
+        "tab": "API desde KubiBAI",
+        "openapi": {
+          "source": "/api-reference/openapi/openapi-kubibai.yaml",
+          "directory": "openapi-kubibai-reference"
+        }
+      },
+      {
+        "tab": "Ejemplos",
+        "groups": [
+          {
+            "group": "Ejemplos",
+            "pages": [
+              "api-reference/facturas/examples/basic",
+              "api-reference/facturas/examples/basic-foreign",
+              "api-reference/facturas/examples/correction",
+              "api-reference/facturas/examples/simplified",
+              "api-reference/facturas/examples/simplified-substitution",
+              "api-reference/facturas/examples/rectificative-substitution",
+              "api-reference/facturas/examples/rectificative-differences"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "styling": {
+    "codeblocks": "dark"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    },
+    "mdx": {
+      "server": [
+        "https://api.kubifactu.com",
+        "https://devapi.kubifactu.com"
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Soporte",
+        "href": "mailto:info@kubicode.com"
+      }
+    ]
+  }
+}

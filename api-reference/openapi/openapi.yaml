@@ -17,7 +17,6 @@ paths:
     post:
       summary: "Enviar registro de facturacion"
       description: "Generación de un nuevo registro de facturacion."
-      operationId: "createInvoiceRecord"
       requestBody:
         required: true
         content:
