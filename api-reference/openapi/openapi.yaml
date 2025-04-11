@@ -18,15 +18,6 @@ paths:
       summary: "Enviar registro de facturación"
       description: "Generación de un nuevo registro de facturación."
       operationId: "createInvoiceRecord"
-      parameters:
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       requestBody:
         required: true
         content:
@@ -62,15 +53,6 @@ paths:
       summary: "Enviar registro de facturación diferido"
       description: "Generación de un nuevo registro de facturación diferido."
       operationId: "createDeferredInvoiceRecord"
-      parameters:
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       requestBody:
         required: true
         content:
@@ -114,14 +96,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       responses:
         '200':
           description: "Factura enviada con éxito."
@@ -159,14 +133,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       requestBody:
         required: false
         content:
@@ -222,15 +188,6 @@ paths:
       summary: "Crear una nueva empresa"
       description: "Registro de una nueva empresa en el sistema."
       operationId: "createClientCompany"
-      parameters:
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       requestBody:
         required: true
         content:
@@ -274,14 +231,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       requestBody:
         required: true
         content:
@@ -326,14 +275,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       requestBody:
         required: true
         content:
@@ -377,14 +318,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       responses:
         '200':
           description: "Empresa creada con éxito."
@@ -414,14 +347,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: Accept
-          in: header
-          description: Identificador único de la solicitud
-          required: true
-          schema:
-            type: string
-            enum:
-              - application/json
       requestBody:
         required: true
         content:
@@ -639,11 +564,9 @@ components:
 
         previous_rejection_key:
           $ref: "#/components/schemas/previous_rejection_key"
-          example: "N"
 
         correction_key:
           $ref: "#/components/schemas/correction_key"
-          example: "N"
 
         full_invoice_number:
           type: string
