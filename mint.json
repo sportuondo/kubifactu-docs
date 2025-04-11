@@ -30,7 +30,7 @@
   },
   "primaryTab": {
     "name": "Inicio"
-    },
+  },
   "tabs": [
     {
       "name": "Referencia de la API",
@@ -109,9 +109,7 @@
     },
     "request": {
         "example": {
-            "languages_BAK": [
-
-              ]
+            "languages_BAK": []
         }
     }
   }
