@@ -1,6 +1,6 @@
 ---
-title: 'Factura básica'
-description: 'Generación de un nuevo registro de facturación'
+title: 'Factura básica en diferido'
+description: 'Generación de un nuevo registro de facturación en diferido'
 ---
 
 import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
@@ -11,11 +11,14 @@ import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
 
 ## Cuerpo JSON de la petición
 
-Se trata de la remisión de un registro de facturación de alta de una factura ordinaria por un total de `121.00€`, con un concepto por valor de `100.00€` + IVA del `21.00%`.
+Se trata de la remisión de un registro de facturación de alta en modo DFERIDO de una factura ordinaria por un total de `121.00€`, con un concepto por valor de `100.00€` + IVA del `21.00%`.
+
+La petición se debe hacer a la URL `…/api/invoices/deferred`.
 
 <CodeGroup>
 ```json JSON
 {
+  "callback_url": "https://www.miservidor.com/kubifactu/callbacks/invoiceresult", // URL que apunta a tu servidor
   "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
   "invoice_type_key": "F1", // Factura (art. 6, 7.2 y 7.3 del RD 1619/2012)
   "sender_data": {
