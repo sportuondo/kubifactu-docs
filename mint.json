@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "KubiFactu",
+  "name": "KubiFactu Docs",
   "codeBlock": {
     "mode": "dark"
   },
