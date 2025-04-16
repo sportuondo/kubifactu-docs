@@ -83,6 +83,36 @@ paths:
       security:
         - client_api_key: []
 
+  /api/invoicing/invoices/{invoiceId}:
+    get:
+      summary: Obtener registro de facturacion
+      description: "Obtener información sobre un registro de facturacion."
+      parameters:
+        - name: invoiceId
+          in: path
+          description: |
+            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación. También se peude obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Factura enviada con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
   /api/invoicing/invoices/{invoiceId}/cancel:
     post:
       summary: "Anular registro de facturacion"
@@ -158,6 +188,7 @@ paths:
                     - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
                     - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
                     - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
+                    - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
                   example: "https://www.tuempresa.com/kubifactu/callback"
       responses:
         '200':
@@ -188,6 +219,27 @@ components:
     CreateInvoiceRecordRequest:
       type: object
       properties:
+        callback_url:
+          type: string
+          format: url
+          description: |
+            Sólo aplicable a facturas diferidas. URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
+
+            Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
+
+            - `id`: `string`. Identificador de KubiFACTU para el registro de facturación.
+            - `record_type`: `string (creation|cancellation)`. Tipo de registro de facturación.
+            - `sender_company_name`: `string`. Nombre de la empresa emisira.
+            - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
+            - `full_invoice_number`: `string`. Número de factura.
+            - `fingerprint`: `string`. Huella del registro de facturación.
+            - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
+            - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
+            - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
+            - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
+            - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
+          example: "https://www.tuempresa.com/kubifactu/callback"
+
         sif_id:
           type: string
           format: uuid
@@ -600,6 +652,11 @@ components:
               nullable: true
               format: byte
               description: Imagen del QR (PNG) en formato Base64. Este campo será `null` cuando Veri*Factu rechace el registro de facturación.
+            xml_contents:
+              type: string
+              nullable: true
+              format: byte
+              description: XML del registro de facturación en formato Base64. Cuando la factura sea enviada *en diferido* este campo será `null`, ya que la generación del XML se realiza cuando llegue el momento de enviar el registro a VeriFactu. Además, si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
 
     CancelInvoiceRecordResponse:
       type: object
