@@ -559,7 +559,7 @@ components:
                     type: number
                     format: decimal
                     description: |
-                      Porcentaje asociado en función del impuesto y tipo impositivo.
+                      Tipo de recargo de equivalencia asociado en función del impuesto y tipo impositivo.
                       Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
                     example: 5.20
                   equalization_tax_quota:
