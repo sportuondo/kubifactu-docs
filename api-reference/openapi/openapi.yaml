@@ -837,6 +837,8 @@ components:
               format: uuid
               description: |
                 Identificador (ID) de la factura en el sistema de **KubiFACTU**. Se utiliza para hacer referencia al registro de facturación desde otros endpoints como, por ejemplo, el de anulación de facturas.
+            record_type:
+              $ref: "#/components/schemas/record_type"
             request_id:
               type: string
               description: Identificador de la petición como referencia para el soporte técnico.
@@ -1336,6 +1338,17 @@ components:
         - "not_registered"
         - "cancelled"
         - "unknown"
+
+    record_type:
+      type: string
+      description: |
+        Tipo de registro de facturación:
+
+        - `creation`: Se trata de un registro de alta.
+        - `cancellation`: Se trata de un registro de anulación.
+      enum:
+        - "creation"
+        - "cancellation"
 
     ValidationErrorResponse:
       type: object
