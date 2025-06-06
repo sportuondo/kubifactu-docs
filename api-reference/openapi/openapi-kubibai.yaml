@@ -116,7 +116,10 @@ paths:
   /api/invoicing/invoices/{invoiceId}/cancel:
     post:
       summary: "Anular registro de facturacion"
-      description: "Anulación de un registro de facturación."
+      description: |
+        Anulación de un registro de facturación.
+
+        Si se considera que "toda la factura" en sí misma está mal o no debería haberse emitido, siempre que para solucionarlo no deba emplearse algún procedimiento (de rectificativa u otro) previsto en el Reglamento de Obligaciones de Facturación (ROF), se podrá anular, generando para ello un registro de facturación de anulación.
       operationId: "cancelInvoiceRecord"
       parameters:
         - name: invoiceId
