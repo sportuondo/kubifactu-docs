@@ -15,8 +15,8 @@ servers:
 paths:
   /api/invoices:
     post:
-      summary: Enviar registro de facturacion
-      description: Generación de un nuevo registro de facturación.
+      summary: "Enviar registro de facturación"
+      description: Generación de un nuevo registro de facturacion.
       requestBody:
         required: true
         content:
