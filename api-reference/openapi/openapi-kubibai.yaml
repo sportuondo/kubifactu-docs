@@ -847,7 +847,7 @@ components:
     vat_tax_regime_key:
       type: string
       description: |
-        Clave que identificará el tipo de régimen del impuesto o una operación con trascendencia tributaria en el contexto del IVA. Este campo no debe incluirse si se está incluyendo `igic_tax_regime_key` o `tax_type_key` tiene el valor `01` ó `03`. Los valores posibles son:
+        Clave que identificará el tipo de régimen del impuesto o una operación con trascendencia tributaria en el contexto del IVA. Este campo no debe incluirse si se está incluyendo `igic_tax_regime_key` o `tax_type_key` tiene un valor diferente de `01`. Los valores posibles son:
 
         - `01`: Operación de régimen general.
         - `02`: Exportación.
