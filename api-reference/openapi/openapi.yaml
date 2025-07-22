@@ -435,6 +435,14 @@ components:
           type: string
           description: NIF/CIF de la empresa.
           example: "S6271969E"
+        other_country_code:
+          $ref: "#/components/schemas/other_country_code"
+        other_tax_id_type_key:
+          $ref: "#/components/schemas/other_tax_id_type_key"
+        other_tax_id_number:
+          type: string
+          description: >
+            Número de identificación en el país de residencia del sujeto. Ejemplo: `L74JF44L2` para una empresa de `DE`.
         name:
           type: string
           description: Nombre del SIF.
@@ -1058,7 +1066,7 @@ components:
     other_tax_id_type_key:
       type: string
       description: |
-        Clave para identificar el tipo de documento del receptor de la factura. Los valores posibles son:
+        Clave para identificar el tipo de documento. Los valores posibles son:
 
         - `02`: **NIF-IVA**: Número de Identificación Fiscal para IVA.
         - `03`: **Pasaporte**: Documento oficial que acredita la identidad y nacionalidad del portador.
