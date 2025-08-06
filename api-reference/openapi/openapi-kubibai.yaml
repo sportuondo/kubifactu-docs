@@ -15,7 +15,7 @@ servers:
 paths:
   /api/invoicing/invoices:
     post:
-      summary: "Enviar registro de facturacion"
+      summary: "Enviar registro de facturación"
       description: "Generación de un nuevo registro de facturación."
       operationId: "createInvoiceRecord"
       requestBody:
@@ -50,7 +50,7 @@ paths:
 
   /api/invoicing/invoices/deferred:
     post:
-      summary: "Enviar registro de facturacion en diferido"
+      summary: "Enviar registro de facturación en diferido"
       description: "Generación de un nuevo registro de facturación en diferido."
       operationId: "createDeferredInvoiceRecord"
       requestBody:
@@ -85,8 +85,8 @@ paths:
 
   /api/invoicing/invoices/{invoiceId}:
     get:
-      summary: Obtener registro de facturacion
-      description: "Obtener información sobre un registro de facturacion."
+      summary: Obtener registro de facturación
+      description: "Obtener información sobre un registro de facturación."
       parameters:
         - name: invoiceId
           in: path
@@ -115,7 +115,7 @@ paths:
 
   /api/invoicing/invoices/{invoiceId}/cancel:
     post:
-      summary: "Anular registro de facturacion"
+      summary: "Anular registro de facturación"
       description: |
         Anulación de un registro de facturación.
 
@@ -155,7 +155,7 @@ paths:
 
   /api/invoicing/invoices/{invoiceId}/deferredcancel:
     post:
-      summary: "Anular registro de facturacion en diferido"
+      summary: "Anular registro de facturación en diferido"
       description: "Anulación de un registro de facturación en diferido."
       operationId: "cancelInvoiceRecordDeferred"
       parameters:
@@ -177,7 +177,7 @@ paths:
                   type: string
                   format: url
                   description: |
-                    Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturacion-diferidos). URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
+                    Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos). URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
 
                     Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
 
