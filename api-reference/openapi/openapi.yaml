@@ -115,7 +115,8 @@ paths:
   /api/invoices/{invoiceId}/query:
     get:
       summary: Consultar registro de facturación con Veri*Factu
-      description: "Obtiene el estado de un registro de facturación haciendo previamente una consulta a Veri*Factu."
+      description: |
+        Obtiene el estado de un registro de facturación haciendo previamente una consulta a Veri*Factu. Se llama a la URL de callback del registro si se incluyó en el momento de su alta. [Ver formato de la llamada de callback](enviar-registro-de-facturación#body-callback-url).
       parameters:
         - name: invoiceId
           in: path
