@@ -97,7 +97,37 @@ paths:
             type: string
       responses:
         '200':
-          description: "Factura enviada con éxito."
+          description: "Datos de la factura."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
+  /api/invoicing/invoices/{invoiceId}/query:
+    get:
+      summary: Consultar registro de facturación con Veri*Factu
+      description: "Obtiene el estado de un registro de facturación haciendo previamente una consulta a Veri*Factu."
+      parameters:
+        - name: invoiceId
+          in: path
+          description: |
+            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación. También se peude obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Datos de la factura tras haber sido actualizada con el estado registrado en Veri*Factu."
           content:
             application/json:
               schema:
