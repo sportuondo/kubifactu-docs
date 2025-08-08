@@ -88,7 +88,8 @@ paths:
       summary: "Enviar registros de facturación en lote"
       description: |
         **Este endpoint sólo está disponible en el entorno de pruebas.**
-        Generación de nuevos registros de facturación en lote que serán procesados en diferido.
+
+        Generación de nuevos registros de facturación en lote que **serán procesados en diferido**.
       operationId: "createBatchOfInvoiceRecords"
       requestBody:
         required: true
