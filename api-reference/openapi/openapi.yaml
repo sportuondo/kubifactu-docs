@@ -7,16 +7,18 @@ info:
     email: soporte@kubifactu.com
     name: Soporte KubiFACTU
     url: https://apidocs.kubifactu.com
+
 servers:
   - url: https://api.kubifactu.com
     description: Servidor de producción
   - url: https://devapi.kubifactu.com
     description: Servidor de pruebas
+
 paths:
   /api/invoices:
     post:
-      summary: "Enviar registro de facturacion"
-      description: Generación de un nuevo registro de facturacion.
+      summary: "Enviar registro de facturación"
+      description: Generación de un nuevo registro de facturación.
       requestBody:
         required: true
         content:
@@ -49,7 +51,7 @@ paths:
 
   /api/invoices/deferred:
     post:
-      summary: "Enviar registro de facturacion diferido"
+      summary: "Enviar registro de facturación diferido"
       description: "Generación de un nuevo registro de facturación diferido."
       operationId: "createDeferredInvoiceRecord"
       requestBody:
@@ -60,7 +62,45 @@ paths:
               $ref: "#/components/schemas/CreateInvoiceRecordRequest"
       responses:
         '200':
-          description: "Factura enviada con éxito."
+          description: "Factura recibida con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
+  /api/invoices/batch:
+    post:
+      summary: "Enviar registros de facturación en lote"
+      description: |
+        **Este endpoint sólo está disponible en el entorno de pruebas.**
+
+        Generación de nuevos registros de facturación en lote que **serán procesados en diferido**.
+      operationId: "createBatchOfInvoiceRecords"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBatchIfInvoicesRecordsRequest"
+      responses:
+        '200':
+          description: "Facturas recibidas con éxito."
           content:
             application/json:
               schema:
@@ -84,8 +124,10 @@ paths:
 
   /api/invoices/{invoiceId}:
     get:
-      summary: Obtener registro de facturacion
-      description: "Obtener información sobre un registro de facturacion."
+      summary: Obtener registro de facturación
+      description: |
+        Obtener información sobre un registro de facturación.
+        > Este endpoint **no hace consulta a Veri*Factu**; los datos se devuelven directamente desde nuestra base de datos.
       parameters:
         - name: invoiceId
           in: path
@@ -96,7 +138,40 @@ paths:
             type: string
       responses:
         '200':
-          description: "Factura enviada con éxito."
+          description: "Datos de la factura."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
+  /api/invoices/{invoiceId}/query:
+    get:
+      summary: Consultar registro de facturación con Veri*Factu
+      description: |
+        Obtiene el estado de un registro de facturación haciendo previamente una consulta a Veri*Factu. Se llama a la URL de callback del registro si se incluyó en el momento de su alta. [Ver formato de la llamada de callback](enviar-registro-de-facturación#body-callback-url).
+
+        La respuesta de este endpoint contiene el estado de la factura actualizado correspondiente al que hay registrado en la AEAT.
+      parameters:
+        - name: invoiceId
+          in: path
+          description: |
+            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación. También se peude obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Datos de la factura tras haber sido actualizada con el estado registrado en Veri*Factu."
           content:
             application/json:
               schema:
@@ -114,7 +189,7 @@ paths:
 
   /api/invoices/{invoiceId}/cancel:
     post:
-      summary: "Anular registro de facturacion"
+      summary: "Anular registro de facturación"
       description: |
         Anulación de un registro de facturación.
 
@@ -154,7 +229,7 @@ paths:
 
   /api/invoices/{invoiceId}/deferredcancel:
     post:
-      summary: "Anular registro de facturacion en diferido"
+      summary: "Anular registro de facturación en diferido"
       description: "Anulación de un registro de facturación en diferido."
       operationId: "cancelInvoiceRecordDeferred"
       parameters:
@@ -176,7 +251,7 @@ paths:
                   type: string
                   format: url
                   description: |
-                    Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturacion-diferidos). URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
+                    Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos). URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
 
                     Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
 
@@ -471,6 +546,16 @@ components:
         - sif_id
         - version
         - installation_number
+
+    CreateBatchIfInvoicesRecordsRequest:
+      type: object
+      properties:
+        invoices:
+          type: array
+          description: |
+            Array de registros de facturación con la misma estructura que la del endpoint de **Enviar registro de facturación**.
+          items:
+            $ref: '#/components/schemas/CreateInvoiceRecordRequest'
 
     CreateInvoiceRecordRequest:
       type: object
@@ -1449,4 +1534,3 @@ components:
       in: header
       description: |
         API-KEY del intermediario que hace la petición. Este dato se puede consultar en el panel web, en la página de _Perfil de usuario_.
-
