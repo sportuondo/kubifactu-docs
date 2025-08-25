@@ -560,6 +560,16 @@ components:
     CreateInvoiceRecordRequest:
       type: object
       properties:
+        use_batched_callbacks:
+          type: boolean
+          description: |
+            Sólo aplicable a facturas diferidas. En lugar de recibir una llamada de callback por cada factura, se hace una única llamada que incluye todas las facturas en un mismo envío en forma de `array`: `[{ factura1 }, { factura2 }, ... ]`. Ver formato del JSON de cada factura en la [info del parámetro callback_url](enviar-registro-de-facturación#body-callback-url).
+
+            EL valor por defecto es `false`.
+
+            Este parámetro **desaparecerá a partir a partir del 15 de octubre de 2025** y todas las peticiones se asumirán como `use_batched_callbacks: true`.
+          example: true
+
         callback_url:
           type: string
           format: url
