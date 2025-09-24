@@ -713,13 +713,30 @@ components:
               type: string
               description: Identificador de la petición como referencia para el soporte técnico.
               example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+            fiscal_year:
+              type: integer
+              description: Año fiscal de la factura.
             full_invoice_number:
               type: string
               description: Número de la factura registrada.
+            issue_date:
+              type: string
+              format: date
+              example: "2025-09-15"
+              description: Fecha de expedición del registro de facturación.
+            created_at:
+              type: string
+              format: date-time
+              example: "2025-09-15T07:35:24.992854Z"
+              description: Fecha y hora de creación de la factura en nuestro sistema.
             fingerprint:
               nullable: true
               type: string
-              description: Huella SHA-256 de la factura registrada.
+              description: Huella SHA-256 del registro de facturación registrado.
+            csv:
+              nullable: true
+              type: string
+              description: Código Seguro de Verificación del registro de facturación.
             vf_post_status:
               $ref: "#/components/schemas/vf_post_status"
             vf_record_registration_status:
