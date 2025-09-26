@@ -290,45 +290,6 @@ paths:
       security:
         - client_api_key: []
 
-  /api/id-query?nif={nif}&name={name}:
-    get:
-      summary: Consultar la validez de un NIF/CIF
-      description: |
-        Hace un consulta al **Web Service de Calidad de datos identificativos** de la AEAT para validar la existencia de un NIF/CIF.
-      parameters:
-        - name: nif
-          in: query
-          description: NIF/CIF sobre el que se quiere hace la consulta.
-          required: true
-          schema:
-            type: string
-            example: "42439999P"
-        - name: name
-          in: query
-          description: |
-            Nombre de la persona jurídica o física que se quiere consultar. Este campo sólo es obligatorio si la consulta es sobre un **persona física**.
-          required: false
-          schema:
-            type: string
-            example: "ANTONIO LÓPEZ JUSTO"
-      responses:
-        '200':
-          description: Respuesta del Web Service de Calidad de datos identificativos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentificationDocumentQueryResponse'
-        '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
-        '500':
-          description: "Error interno del servidor."
-      security:
-        - client_api_key: []
-
 components:
   schemas:
     CreateBatchIfInvoicesRecordsRequest:
@@ -851,37 +812,6 @@ components:
               format: date-time
               example: "1977-04-22T06:00:00Z"
               description: Fecha y hora en la que la empresa cliente pueda enviar una nueva petición en formato ISO-8601 (ej.- 1977-04-22T06:00:00Z) con zona horaria UTC.
-
-    IdentificationDocumentQueryResponse:
-      type: object
-      properties:
-        data:
-          $ref: "#/components/schemas/IdentificationDocumentResponse"
-
-    IdentificationDocumentResponse:
-      type: object
-      properties:
-        nif:
-          type: string
-          description: NIF/CIF.
-          example: "42439999P"
-        name:
-          type: string
-          description: Nombre de la persona física/jurídica asociada al NIF/CIF.
-          example: "ANTONIO LÓPEZ JUSTO"
-        result:
-          $ref: "#/components/schemas/IdentificationDocumentQueryResult"
-
-    IdentificationDocumentQueryResult:
-      type: string
-      description: |
-        Estado de registro en el censo de la AEAT para los datos de la consulta. Valores posibles:
-
-        - `identificado`
-        - `no-identificado`
-      enum:
-        - identificado
-        - no-identificado
 
     invoice_type_key:
       type: string
