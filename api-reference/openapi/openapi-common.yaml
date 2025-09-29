@@ -77,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IdentificationDocumentQueryResponse'
+                $ref: '#/components/schemas/IdentificationDocumentResponse'
         '403':
           description: "No autorizado. La API-KEY proporcionada no es válida."
           content:
@@ -94,16 +94,19 @@ components:
     IdentificationDocumentResponse:
       type: object
       properties:
-        nif:
-          type: string
-          description: NIF/CIF.
-          example: "42439999P"
-        name:
-          type: string
-          description: Nombre de la persona física/jurídica asociada al NIF/CIF.
-          example: "ANTONIO LÓPEZ JUSTO"
-        result:
-          $ref: "#/components/schemas/IdentificationDocumentQueryResult"
+        data:
+          type: object
+          properties:
+            nif:
+              type: string
+              description: NIF/CIF.
+              example: "42439999P"
+            name:
+              type: string
+              description: Nombre de la persona física/jurídica asociada al NIF/CIF.
+              example: "ANTONIO LÓPEZ JUSTO"
+            result:
+              $ref: "#/components/schemas/IdentificationDocumentQueryResult"
 
     IdentificationDocumentQueryResult:
       type: string
@@ -115,6 +118,41 @@ components:
       enum:
         - identificado
         - no-identificado
+
+    UnauthorizedApiKeyErrorResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: Código de error que indica el tipo de problema.
+                  example: "E-UNAUTH-APIKEY"
+                message:
+                  type: string
+                  description: Mensaje detallado del error.
+                  example: "No client with API-KEY '5tVySMGJOpq8HfMgIX28Qz6kF0dFOoq37x55PLZcWsGeGeYkNgJyAcRTlFJ5NbVoDRm8qtCywEoiN3A9JkBanMBXYmxiqR3BItxgxx' was found."
+                http_code:
+                  type: integer
+                  description: Código HTTP asociado al error.
+                  example: 403
+                errors:
+                  type: object
+                  nullable: true
+                  description: |
+                    Detalles adicionales del error. Puede ser `null` si no hay información específica.
+                  example: null
+                details:
+                  type: object
+                  properties:
+                    request_id:
+                      type: string
+                      description: Identificador único de la solicitud para rastreo.
+                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
 
   securitySchemes:
     client_api_key:
