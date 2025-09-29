@@ -1,0 +1,132 @@
+openapi: 3.0.0
+info:
+  title: Kubifactu API
+  description: API para el procesamiento y gestión de facturas de Veri*Factu
+  version: 1.0.0
+  contact:
+    email: soporte@kubifactu.com
+    name: Soporte KubiFACTU
+    url: https://apidocs.kubifactu.com
+
+servers:
+  - url: https://api.kubifactu.com
+    description: Servidor de producción
+  - url: https://devapi.kubifactu.com
+    description: Servidor de pruebas
+
+paths:
+  /api/invoices/search?fiscal_year={fiscal_year}&full_invoice_number={full_invoice_number}:
+    get:
+      summary: Buscar registros de facturación
+      description: |
+        Obtiene una lista de registros de facturación que cumplan con los criterios indicados en los parámetros.
+      parameters:
+        - name: fiscal_year
+          in: query
+          description: Año fiscal.
+          required: true
+          schema:
+            type: integer
+            example: 2025
+        - name: full_invoice_number
+          in: query
+          description: Número de factura completa.
+          required: true
+          schema:
+            type: string
+            example: "2025-00001"
+      responses:
+        '200':
+          description: |
+            Array de registros de facturación ordenados de más reciente a más antiguo (según la fecha de creación en nuestro sistema), con el mismo esquema que se obtiene en la [creación de nuevos registros](enviar-registro-de-facturaci%C3%B3n#response-data).
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
+  /api/id-query?nif={nif}&name={name}:
+    get:
+      summary: Consultar la validez de un NIF/CIF
+      description: |
+        Hace un consulta al **Web Service de Calidad de datos identificativos** de la AEAT para validar la existencia de un NIF/CIF.
+      parameters:
+        - name: nif
+          in: query
+          description: NIF/CIF sobre el que se quiere hace la consulta.
+          required: true
+          schema:
+            type: string
+            example: "42439999P"
+        - name: name
+          in: query
+          description: |
+            Nombre de la persona jurídica o física que se quiere consultar. Este campo sólo es obligatorio si la consulta es sobre un **persona física**.
+          required: false
+          schema:
+            type: string
+            example: "ANTONIO LÓPEZ JUSTO"
+      responses:
+        '200':
+          description: Respuesta del Web Service de Calidad de datos identificativos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentificationDocumentQueryResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
+components:
+  schemas:
+    IdentificationDocumentResponse:
+      type: object
+      properties:
+        nif:
+          type: string
+          description: NIF/CIF.
+          example: "42439999P"
+        name:
+          type: string
+          description: Nombre de la persona física/jurídica asociada al NIF/CIF.
+          example: "ANTONIO LÓPEZ JUSTO"
+        result:
+          $ref: "#/components/schemas/IdentificationDocumentQueryResult"
+
+    IdentificationDocumentQueryResult:
+      type: string
+      description: |
+        Estado de registro en el censo de la AEAT para los datos de la consulta. Valores posibles:
+
+        - `identificado`
+        - `no-identificado`
+      enum:
+        - identificado
+        - no-identificado
+
+  securitySchemes:
+    client_api_key:
+      type: apiKey
+      name: X-Qbikode-ClientApiKey
+      in: header
+      description: |
+        API-KEY de la empresa que hace la petición. Este dato se puede consultar en el panel web, accediendo a la sección _Empresas_ y accediendo a la ficha de la empresa en.
+
+    owner_api_key:
+      type: apiKey
+      name: X-Qbikode-UserApiKey
+      in: header
+      description: |
+        API-KEY del intermediario que hace la petición. Este dato se puede consultar en el panel web, en la página de _Perfil de usuario_.

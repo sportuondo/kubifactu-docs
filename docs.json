@@ -40,6 +40,13 @@
         }
       },
       {
+        "tab": "Endpoints comunes",
+        "openapi": {
+          "source": "/api-reference/openapi/openapi-common.yaml",
+          "directory": "openapi-common"
+        }
+      },
+      {
         "tab": "Ejemplos",
         "groups": [
           {

@@ -187,41 +187,6 @@ paths:
       security:
         - client_api_key: []
 
-  /api/invoices/search?fiscal_year={fiscal_year}&full_invoice_number={full_invoice_number}:
-    get:
-      summary: Buscar registros de facturación
-      description: |
-        Obtiene una lista de registros de facturación que cumplan con los criterios indicados en los parámetros.
-      parameters:
-        - name: fiscal_year
-          in: query
-          description: Año fiscal.
-          required: true
-          schema:
-            type: integer
-            example: 2025
-        - name: full_invoice_number
-          in: query
-          description: Número de factura completa.
-          required: true
-          schema:
-            type: string
-            example: "2025-00001"
-      responses:
-        '200':
-          description: |
-            Array de registros de facturación ordenados de más reciente a más antiguo (según la fecha de creación en nuestro sistema), con el mismo esquema que se obtiene en la [creación de nuevos registros](enviar-registro-de-facturaci%C3%B3n#response-data).
-        '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
-        '500':
-          description: "Error interno del servidor."
-      security:
-        - client_api_key: []
-
   /api/invoices/{invoiceId}/cancel:
     post:
       summary: "Anular registro de facturación"
@@ -475,6 +440,7 @@ paths:
           description: "Error interno del servidor."
       security:
         - owner_api_key: []
+
 components:
   schemas:
     CreateClientCompanyRequest:
