@@ -1,0 +1,50 @@
+---
+title: 'Paso a producción'
+description: 'Pasos a seguir para pasar al entorno de producción'
+---
+
+Este documento detalla los pasos necesarios para pasar del **entorno de pruebas** al **entorno de producción** en la plataforma **KubiFACTU**, conforme a la normativa de la AEAT y a la *Resolución de 18 de diciembre de 2024 (BOE-A-2024-27600)*.
+
+## Declaración responsable
+
+Se recomienda ofrecer a vuestros clientes una **declaración responsable** que confirme el cumplimiento de los requisitos técnicos y legales exigidos por la AEAT.
+
+> **Nota:**
+> El modelo oficial de declaración responsable publicado por la AEAT se puede descargar desde [ESTE ENLACE](https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/IVA/Verifactu/EjemplosDeclaracionResponsable(V0.5.1).pdf).
+> Este documento no requiere presentación previa, pero debe conservarse a disposición de la Agencia Tributaria en caso de requerimiento.
+
+## Otorgamiento de representación
+
+### Si se usa el certificado de KubiFACTU (Qbikode Solutions, S.L.)
+
+Si vais a utilizar **nuestro certificado de colaborador social** para la presentación de registros de facturación ante la AEAT, cada uno de vuestros clientes deberá:
+
+1. Firmar [el documento de otorgamiento de representación](https://api.kubifactu.com/storage/representacion.pdf) (modelo oficial de la AEAT).
+2. Adjuntar una copia de su documento identificativo (DNI, CIF o equivalente).
+3. Remitirnos ambos documentos a [soporte@kubifactu.com](mailto:soporte@kubifactu.com).
+
+> **Importante:**
+> El modelo oficial **no puede ser modificado**, salvo para completar los datos identificativos solicitados.
+> Se trata de un documento normalizado aprobado por la AEAT, y su alteración invalidaría la autorización.
+
+### Uso de vuestro propio certificado
+
+Si optáis por actuar con **vuestro propio certificado de colaborador social**, deberéis obtener de vuestros clientes una **autorización equivalente**, pero indicando **vuestros datos** como representantes en el modelo.
+
+## Alta en el entorno de producción
+
+Acceded a la URL [https://api.kubifactu.com/](https://api.kubifactu.com/).
+
+1. Registrad vuestra cuenta en el entorno de producción.
+2. Completad los **datos de domiciliación SEPA**, necesarios para la emisión de las facturas mensuales correspondientes al uso del servicio.
+
+## Consideraciones sobre el entorno de producción
+
+El entorno de producción parte **desde cero**, por lo que:
+
+- Las **API Keys** y **SIFs** serán **nuevos**.
+- No se conservarán los datos del entorno de pruebas.
+
+## Soporte
+
+Para cualquier duda o asistencia técnica, contactad con el equipo de soporte de **KubiFACTU** a través de [soporte@kubifactu.com](mailto:soporte@kubifactu.com).
