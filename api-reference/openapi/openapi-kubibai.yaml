@@ -305,25 +305,13 @@ components:
     CreateInvoiceRecordRequest:
       type: object
       properties:
-        use_batched_callbacks:
-          type: boolean
-          description: |
-            Sólo aplicable a facturas diferidas. En lugar de recibir una llamada de callback por cada factura, se hace una única llamada que incluye todas las facturas en un mismo envío en forma de `array`: `[{ factura1 }, { factura2 }, ... ]`. Ver formato del JSON de cada factura en la [info del parámetro callback_url](enviar-registro-de-facturación#body-callback-url).
-
-            Para activar esta funcionalidad ponte en contacto con nosotros en **soporte@kubifactu.com**.
-
-            El valor por defecto es `false`.
-
-            Este parámetro **desaparecerá a partir a partir del 15 de octubre de 2025** y todas las peticiones se asumirán como `use_batched_callbacks: true`.
-          example: true
-
         callback_url:
           type: string
           format: url
           description: |
             Sólo aplicable a facturas diferidas. URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
 
-            Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
+            Se hará una petición POST a esta URL y se enviarán un array en formato JSON con los datos de las facturas procesadas cuyos ítems contendrán los siguientes campos:
 
             - `id`: `string`. Identificador de KubiFACTU para el registro de facturación.
             - `record_type`: `string (creation|cancellation)`. Tipo de registro de facturación.
