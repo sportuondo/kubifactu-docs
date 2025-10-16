@@ -132,7 +132,7 @@ paths:
         - name: invoiceId
           in: path
           description: |
-            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación. También se peude obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
+            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación o puede usarse el identificador único de la factura **dentro del sistema del cliente** si en la creación del registro de facturación se hizo uso del campo `client_invoice_id`. El ID también se puede obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
           required: true
           schema:
             type: string
@@ -165,7 +165,7 @@ paths:
         - name: invoiceId
           in: path
           description: |
-            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación. También se peude obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
+            ID de la factura. Este ID se obtiene en la respuesta a las altas de registros de facturación o puede usarse el identificador único de la factura **dentro del sistema del cliente** si en la creación del registro de facturación se hizo uso del campo `client_invoice_id`. El ID también se puede obtener desde el panel web, acediendo a la factura en el campo **ID DE KUBIFACTU**.
           required: true
           schema:
             type: string
@@ -561,6 +561,13 @@ components:
     CreateInvoiceRecordRequest:
       type: object
       properties:
+        client_invoice_id:
+          type: string
+          format: uuid
+          description: |
+            Identificador único de la factura **dentro del sistema del cliente**. Si se envía y ya existe una factura con ese mismo `client_invoice_id` para la empresa actual, no se generará una nueva factura: el sistema devolverá directamente la factura existente.
+          example: "96f2044008d7"
+
         callback_url:
           type: string
           format: url
