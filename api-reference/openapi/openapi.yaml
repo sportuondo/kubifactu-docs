@@ -368,6 +368,41 @@ paths:
           description: "Error interno del servidor."
       security:
         - owner_api_key: []
+    get:
+      summary: "Obtener datos de empresa"
+      description: "Devuelve los datos de la empresa."
+      operationId: "showClientCompany"
+      parameters:
+        - name: companyId
+          in: path
+          description: |
+            ID de la empresa a editar.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Datos de la empresa."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateClientCompanyResponse'
+        '404':
+          description: "No encontrado. La empresa con el ID indicado no ha sido encontrada."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
 
   /api/clientcompanies/{companyId}/sifs:
     get:
@@ -1530,6 +1565,33 @@ components:
                   type: integer
                   description: Código HTTP asociado al error.
                   example: 403
+                errors:
+                  type: object
+                  nullable: true
+                  description: |
+                    Detalles adicionales del error. Puede ser `null` si no hay información específica.
+                  example: null
+                details:
+                  type: object
+                  properties:
+                    request_id:
+                      type: string
+                      description: Identificador único de la solicitud para rastreo.
+                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+
+    NotFoundErrorResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            error:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Mensaje detallado del error.
+                  example: "Client Company with id [0195fa87-a315-710a-8aa2-25e1d690f6tr] not found."
                 errors:
                   type: object
                   nullable: true
