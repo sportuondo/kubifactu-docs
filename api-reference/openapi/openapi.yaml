@@ -16,6 +16,73 @@ servers:
 
 paths:
   /api/invoices:
+    get:
+      summary: "Listar registros de facturación entre fechas"
+      description: |
+        Por el momento, este endpoint sólo esta disponible en el **entorno de pruebas**.
+
+        Obtiene un listado **paginado** de registros de facturación pertenecientes a la empresa autenticada. La información de cada registro de facturación en una **versión reducida** de la que se obtiene en consultas individuales o cuando se crean nuevos registros de facturación.
+
+        Además se devuelve una sección `meta` para la gestión de la paginación.
+
+        El valor devuelto en `meta.next_page_cursor` sirve para solicitar la siguiente página y `meta.prev_page_cursor` para retroceder. Si `meta.has_more` es `false`, no hay más elementos.
+      operationId: "listInvoices"
+      parameters:
+        - name: date_from
+          in: query
+          required: true
+          description: Fecha de inicio del rango de creación de las facturas (incluida). Formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: date_to
+          in: query
+          required: true
+          description: Fecha de fin del rango de creación de las facturas (incluida). Debe ser igual o posterior a `date_from`.
+          schema:
+            type: string
+            format: date
+            example: "2025-01-31"
+        - name: per_page
+          in: query
+          required: false
+          description: Número de elementos por página (máximo 50). Valor por defecto 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            example: 25
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor para la paginación basada en cursor. Use el valor devuelto en `meta.next_page_cursor`.
+          schema:
+            type: string
+            example: "eyJpZCI6IjE5NzctMDQtMjJUMDY6MDA6MDBaIn0"
+      responses:
+        '200':
+          description: "Listado paginado de registros de facturación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListInvoicesResponse'
+        '422':
+          description: "Errores de validación."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
     post:
       summary: "Enviar registro de facturación"
       description: Generación de un nuevo registro de facturación.
@@ -1081,6 +1148,91 @@ components:
               format: date-time
               example: "1977-04-22T06:00:00Z"
               description: Fecha y hora en la que la empresa cliente pueda enviar una nueva petición en formato ISO-8601 (ej.- 1977-04-22T06:00:00Z) con zona horaria UTC.
+
+    InvoiceLite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador (ID) de la factura en el sistema de KubiFACTU.
+        client_invoice_id:
+          type: string
+          nullable: true
+          description: Identificador único de la factura dentro del sistema del cliente.
+        record_type:
+          $ref: "#/components/schemas/record_type"
+        request_id:
+          type: string
+          description: Identificador de la petición como referencia para el soporte técnico.
+          example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+        fiscal_year:
+          type: integer
+          description: Año fiscal de la factura.
+          example: 2025
+        full_invoice_number:
+          type: string
+          description: Número de la factura registrada.
+          example: "F23-0000123"
+        issue_date:
+          type: string
+          format: date
+          example: "2025-09-15"
+          description: Fecha de expedición del registro de facturación.
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-15T07:35:24.992854Z"
+          description: Fecha y hora de creación de la factura en nuestro sistema.
+        fingerprint:
+          nullable: true
+          type: string
+          description: Huella SHA-256 del registro de facturación registrado.
+        csv:
+          nullable: true
+          type: string
+          description: Código Seguro de Verificación del registro de facturación.
+        vf_post_status:
+          $ref: "#/components/schemas/vf_post_status"
+        vf_record_registration_status:
+          $ref: "#/components/schemas/vf_record_registration_status"
+        has_warnings:
+          type: boolean
+          description: Indica si el registro contiene errores que deban ser subsanados.
+          example: false
+        vf_error_descriptions:
+          nullable: true
+          type: string
+          description: Cadena con la descripción de los errores devueltos por Veri*Factu.
+
+    ListInvoicesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceLite"
+        meta:
+          type: object
+          properties:
+            per_page:
+              type: integer
+              description: Número de elementos por página en la respuesta.
+              example: 50
+            next_page_cursor:
+              type: string
+              nullable: true
+              description: Cursor para obtener la siguiente página de resultados. Será `null` si no hay más páginas.
+              example: "eyJpZCI6IjE5NzctMDQtMjJUMDY6MDA6MDBaIn0"
+            prev_page_cursor:
+              type: string
+              nullable: true
+              description: Cursor para obtener la página anterior de resultados. Puede ser `null`.
+              example: "ffN6eRJ0i2YPRA7C51eYNkLt8HIubpW9RDrFk77"
+            has_more:
+              type: boolean
+              description: Indica si hay más resultados para seguir paginando.
+              example: true
 
     CreateClientCompanyResponse:
       type: object
