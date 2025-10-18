@@ -17,7 +17,7 @@ servers:
 paths:
   /api/invoices:
     get:
-      summary: "Listar registros de facturación entre fechas"
+      summary: "Listar registros de facturación con filtros"
       description: |
         Por el momento, este endpoint sólo esta disponible en el **entorno de pruebas**.
 
@@ -44,6 +44,33 @@ paths:
             type: string
             format: date
             example: "2025-01-31"
+        - name: sif_id
+          in: query
+          required: false
+          description: ID del SIF emisor sobre el que se quieren buscar registros de facturación.
+          schema:
+            type: string
+            example: "A3DEAECE-8698-4E3D-A0A3-A17B523B9703"
+        - name: vf_post_status
+          in: query
+          required: false
+          description: |
+            Filtrar registros de facturación por el estado de envío a Veri*Factu.
+
+            Ver valores posibles para `vf_post_status` en la [respuesta de envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación#response-data-vf-post-status).
+          schema:
+            type: string
+            example: "failure"
+        - name: vf_record_registration_status
+          in: query
+          required: false
+          description: |
+            Filtrar registros de facturación por el estado del registro reportado por Veri*Factu.
+
+            Ver valores posibles para `vf_record_registration_status` en la [respuesta de envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación#response-data-vf-record-registration-status).
+          schema:
+            type: string
+            example: "accepted_with_errors"
         - name: per_page
           in: query
           required: false
