@@ -105,6 +105,8 @@ components:
               type: string
               description: Nombre de la persona física/jurídica asociada al NIF/CIF.
               example: "ANTONIO LÓPEZ JUSTO"
+            document_type:
+              $ref: "#/components/schemas/IdentificationDocumentType"
             result:
               $ref: "#/components/schemas/IdentificationDocumentQueryResult"
 
@@ -118,6 +120,18 @@ components:
       enum:
         - identificado
         - no-identificado
+
+    IdentificationDocumentType:
+      nullable: true
+      type: string
+      description: |
+        Indica si el documento de identificación es de persona física o de persona jurídica:
+
+        - `legal_entity`: persona jurídica.
+        - `natural_person`: persona física.
+      enum:
+        - "legal_entity"
+        - "natural_person"
 
     UnauthorizedApiKeyErrorResponse:
       type: object
