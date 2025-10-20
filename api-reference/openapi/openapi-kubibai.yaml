@@ -410,7 +410,7 @@ components:
               description: |
                 Fecha de expedición de la factura en formato `yyyy-mm-dd hh:mm:ss`. Ejemplo: `2025-02-26 12:35:44`.
 
-                La fecha de expedición de la factura (el día) debe coincidir con la fecha en la que la factura nos es remitida (lo cual supone la creación del **_registro de facturación_**).
+                La fecha de expedición de la factura (el día) debe coincidir con la fecha en la que la factura nos es remitida (lo cual supone la creación del **_registro de facturación_**), salvo que el campo `previous_rejection_key` tenga el valor `X` (reenvío por rechazo previo) y se respete la fecha original de emisión de la factura.
               example: "2025-02-26 12:35:44"
 
             operation_date:
@@ -716,11 +716,6 @@ components:
             full_invoice_number:
               type: string
               description: Número de la factura registrada.
-            issue_date:
-              type: string
-              format: date
-              example: "2025-09-15"
-              description: Fecha de expedición del registro de facturación.
             created_at:
               type: string
               format: date-time
@@ -865,12 +860,12 @@ components:
     previous_rejection_key:
       type: string
       description: |
-        Indicador que especifica que se está generando —para volverlo a remitir— un nuevo registro de facturación de alta subsanado tras haber sido rechazado en su remisión inmediatamente anterior, es decir, en el último envío que contenía ese registro de facturación de alta rechazado. Si no se informa este campo se entenderá que tiene valor "N".
+        Indica si el registro que se envía corresponde a una **subsanación de un envío anterior rechazado por la AEAT**.
 
-        - `S`: Sí, se está generando un nuevo registro de facturación de alta subsanado tras haber sido rechazado en su remisión inmediatamente anterior.
+        - `X`: El registro se reenvía porque el envío anterior fue rechazado (no llegó a registrarse en la AEAT). Solo puede informarse cuando `Subsanacion = S`. Se utiliza al **reenviar una factura previamente rechazada** para que la AEAT la procese como una corrección del intento fallido, sin alterar los datos originales de emisión ni generar una nueva factura.
         - `N`: No, se trata de un alta normal/inicial.
       enum:
-        - S
+        - X
         - N
 
     correction_key:
