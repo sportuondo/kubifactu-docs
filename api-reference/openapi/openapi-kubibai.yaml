@@ -256,6 +256,7 @@ paths:
 
                     - `id`: `string`. Identificador de KubiFACTU para el registro de facturación.
                     - `record_type`: `string (creation|cancellation)`. Tipo de registro de facturación.
+                    - `sif_id`: `string`. ID del SIF utilizado para la creación del registro.
                     - `sender_company_name`: `string`. Nombre de la empresa emisira.
                     - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
                     - `full_invoice_number`: `string`. Número de factura.
@@ -315,6 +316,7 @@ components:
 
             - `id`: `string`. Identificador de KubiFACTU para el registro de facturación.
             - `record_type`: `string (creation|cancellation)`. Tipo de registro de facturación.
+            - `sif_id`: `string`. ID del SIF utilizado para la creación del registro.
             - `sender_company_name`: `string`. Nombre de la empresa emisira.
             - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
             - `full_invoice_number`: `string`. Número de factura.
@@ -703,6 +705,11 @@ components:
               type: string
               description: Identificador de la petición como referencia para el soporte técnico.
               example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+            sif_id:
+              type: string
+              description: ID del SIF utilizado para la creación del registro.
+              format: uuid
+              example: "0995C42C-6708-44FB-BFBF-B363A5FE873E"
             fiscal_year:
               type: integer
               description: Año fiscal de la factura.
@@ -778,6 +785,11 @@ components:
               type: string
               description: Identificador de la petición como referencia para el soporte técnico.
               example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+            sif_id:
+              type: string
+              description: ID del SIF utilizado para la creación del registro.
+              format: uuid
+              example: "0995C42C-6708-44FB-BFBF-B363A5FE873E"
             fingerprint:
               nullable: true
               type: string
