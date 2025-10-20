@@ -862,7 +862,7 @@ components:
       description: |
         Indica si el registro que se envía corresponde a una **subsanación de un envío anterior rechazado por la AEAT**.
 
-        - `X`: El registro se reenvía porque el envío anterior fue rechazado (no llegó a registrarse en la AEAT). Solo puede informarse cuando `Subsanacion = S`. Se utiliza al **reenviar una factura previamente rechazada** para que la AEAT la procese como una corrección del intento fallido, sin alterar los datos originales de emisión ni generar una nueva factura.
+        - `X`: El registro se reenvía porque el envío anterior fue rechazado (no llegó a registrarse en la AEAT). Solo puede informarse cuando `correction_key = S`. Se utiliza al **reenviar una factura previamente rechazada** para que la AEAT la procese como una corrección del intento fallido, sin alterar los datos originales de emisión ni generar una nueva factura.
         - `N`: No, se trata de un alta normal/inicial.
       enum:
         - X
