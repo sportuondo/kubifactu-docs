@@ -57,6 +57,7 @@
               "api-reference/facturas/examples/basic-deferred",
               "api-reference/facturas/examples/basic-foreign",
               "api-reference/facturas/examples/correction",
+              "api-reference/facturas/examples/correction-no-previous",
               "api-reference/facturas/examples/simplified",
               "api-reference/facturas/examples/simplified-substitution",
               "api-reference/facturas/examples/rectificative-substitution",

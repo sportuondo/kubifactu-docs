@@ -1,0 +1,51 @@
+---
+title: 'Subsanación con registro previo rechazado'
+description: 'Generación de un nuevo registro de subsanación cuando un registro anterior ha sido rechazado (por rechazo de Veri*Factu o por problemas técnicos en el envío)'
+---
+
+import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
+
+## Encabezados HTTP
+
+<ClientDefaultHeaders />
+
+## Cuerpo JSON de la petición
+
+Para subsanar un registro que ha sido rechazado anteriormente (por rechazo de Veri*Factu o por problemas técnicos en el envío) debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original, **incluyendo la fecha de emisión** (`issue_date`), que, en este caso, puede ser anterior a la actual. Este registro pasará a ser considerado el correcto.
+
+<CodeGroup>
+```json JSON
+{
+  "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
+  "invoice_type_key": "F1",
+  "correction_key": "S",
+  "previous_rejection_key": "X",
+  "sender_data": {
+    "company_name": "Empresa emisora de ejemplo",
+    "tax_id_number": "J27290840"
+  },
+  "recipients": [
+    {
+      "company_name": "Empresa receptora de ejemplo",
+      "tax_id_number": "B99014037"
+    }
+  ],
+  "full_invoice_number": "2024-000018",
+  "fiscal_year": 2025,
+  "issue_date": "2025-01-03",
+  "operation_description": "Factura ordinaria por entrega de mercancías.",
+  "total_quota": 21.00,
+  "total_amount": 121.00,
+  "lines": [
+    {
+      "tax_type_key": "01",
+      "vat_tax_regime_key": "01",
+      "operation_type_key": "S1",
+      "tax_base": 100.00,
+      "tax_rate": 21.00,
+      "tax_quota": 21.00
+    }
+  ]
+}
+```
+</CodeGroup>
