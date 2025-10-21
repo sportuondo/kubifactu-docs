@@ -357,6 +357,7 @@ paths:
                     - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
                     - `full_invoice_number`: `string`. Número de factura.
                     - `fingerprint`: `string`. Huella del registro de facturación.
+                    - `csv`: `string`. Código Seguro de Verificación del registro de facturación.
                     - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
                     - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
                     - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
