@@ -818,9 +818,9 @@ components:
           type: string
           format: date
           description: |
-            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición.
+            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición. Determina el ejercicio y periodo fiscal al que pertenece la operación."
+
             Formato `yyyy-mm-dd`.
-            Ejemplo: `2025-02-26`.
           example: "2025-02-26"
 
         operation_description:
