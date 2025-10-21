@@ -412,7 +412,7 @@ components:
               description: |
                 Fecha de expedición de la factura en formato `yyyy-mm-dd hh:mm:ss`. Ejemplo: `2025-02-26 12:35:44`.
 
-                La fecha de expedición de la factura (el día) debe coincidir con la fecha en la que la factura nos es remitida (lo cual supone la creación del **_registro de facturación_**), salvo que el campo `previous_rejection_key` tenga el valor `X` (reenvío por rechazo previo) y se respete la fecha original de emisión de la factura.
+                No puede ser una fecha futura.
               example: "2025-02-26 12:35:44"
 
             operation_date:

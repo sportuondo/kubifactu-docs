@@ -811,7 +811,8 @@ components:
           example: "2025-09-15"
           description: |
             Fecha de expedición del registro de facturación.
-            No puede ser posterior a la fecha actual salvo que el campo `previous_rejection_key` tenga el valor `X` (reenvío por rechazo previo) y se respete la fecha original de emisión de la factura.
+
+            No puede ser una fecha futura.
 
         operation_date:
           type: string
