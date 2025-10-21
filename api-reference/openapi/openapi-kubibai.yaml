@@ -255,6 +255,7 @@ paths:
                     Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
 
                     - `id`: `string`. Identificador de KubiFACTU para el registro de facturación.
+                    - `client_invoice_id`: `string`. Identificador del cliente para el registro de facturación.
                     - `record_type`: `string (creation|cancellation)`. Tipo de registro de facturación.
                     - `sif_id`: `string`. ID del SIF utilizado para la creación del registro.
                     - `sender_company_name`: `string`. Nombre de la empresa emisira.
