@@ -73,3 +73,9 @@ Los registros de facturación se encadenan de forma independiente dentro de cada
 4. Si se considera que "toda la factura" en sí misma está mal o no debería haberse emitido, siempre que para solucionarlo no deba emplearse algún procedimiento (de rectificativa u otro) previsto en el ROF, se podrá "anular" generando para ello un RF de anulación.
 
 Con carácter general, todas las facturas emitidas, en la medida en que respondan a operaciones realmente efectuadas (como es el caso habitual) **no pueden anularse**. En el caso de que exista alguna diferencia entre lo facturado y la realidad, por ejemplo, que por un defecto de cantidades o de calidades, o por otras razones, y se deba modificar su importe, procederá la emisión de una factura rectificativa, en los términos que establece el ROF (Reglamento de Obligaciones de Facturación, aprobado por el Real Decreto 1619/2012) y la Ley y Reglamento del IVA. Esa rectificación, con carácter general, puede realizarse por medio de la sustitución de la factura inicial por una nueva factura o bien por la modificación de la factura inicial.
+
+## ¿Qué debo hacer si no puedo enviar un registro por problemas técnicos o porque Veri*Factu me lo ha rechazado?
+
+En estos casos hay que emitir una [subsanación con registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).
+
+Para subsanar un registro que ha sido rechazado anteriormente (por rechazo de Veri*Factu o por problemas técnicos en el envío) debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original, **incluyendo la fecha de emisión** (`issue_date`), que en este caso, puede ser anterior a la actual. Este registro pasará a ser considerado el correcto.
