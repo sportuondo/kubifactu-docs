@@ -11,7 +11,7 @@ import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
 
 ## Cuerpo JSON de la petición
 
-Para subsanar un registro que ha sido rechazado anteriormente (por rechazo de Veri*Factu o por problemas técnicos en el envío) debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original, **incluyendo la fecha de emisión** (`issue_date`), que en este caso, puede ser anterior a la actual. Este registro pasará a ser considerado el correcto.
+Para subsanar un registro que ha sido rechazado anteriormente (por rechazo de Veri*Factu o por problemas técnicos en el envío) debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original.
 
 <CodeGroup>
 ```json JSON
