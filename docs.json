@@ -56,6 +56,7 @@
               "api-reference/facturas/examples/basic",
               "api-reference/facturas/examples/basic-deferred",
               "api-reference/facturas/examples/basic-foreign",
+              "api-reference/facturas/examples/basic-foreign-non-eu",
               "api-reference/facturas/examples/correction",
               "api-reference/facturas/examples/correction-no-previous",
               "api-reference/facturas/examples/simplified",

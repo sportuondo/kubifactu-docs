@@ -1,6 +1,6 @@
 ---
-title: 'Factura básica a extranjero UE'
-description: 'Generación de un nuevo registro de facturación a una empresa extranjera de la UE'
+title: 'Factura básica a extranjero fuera de la UE'
+description: 'Generación de un nuevo registro de facturación a una empresa extranjera de fuera de la UE'
 ---
 
 import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
@@ -11,7 +11,7 @@ import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
 
 ## Cuerpo JSON de la petición
 
-Se trata de la remisión de un registro de facturación de alta de factura ordinaria por un total de `100.00€`, con un concepto por valor de `100.00€` exento por el artículo 21 a una empresa extranjera de la UE.
+Se trata de la remisión de un registro de facturación de alta de factura ordinaria por un total de `100.00€`, con un concepto por valor de `100.00€` exento por el artículo 25 a una empresa extranjera de fuera de la UE.
 
 <CodeGroup>
 ```json JSON
@@ -25,9 +25,9 @@ Se trata de la remisión de un registro de facturación de alta de factura ordin
   "recipients": [
     {
       "company_name": "Empresa extranjera de prueba",
-      "other_country_code": "DE",
+      "other_country_code": "CL",
       "other_tax_id_type_key": "03",
-      "other_tax_id_number": "L74JF44L2"
+      "other_tax_id_number": "76123456K"
     }
   ],
   "full_invoice_number": "2024-000022",
@@ -40,7 +40,7 @@ Se trata de la remisión de un registro de facturación de alta de factura ordin
     {
       "tax_type_key": "01", // Impuesto sobre el Valor Añadido (IVA)
       "vat_tax_regime_key": "02", // Exportación
-      "exemption_cause_key": "E2", // Exenta por el artículo 21
+      "exemption_cause_key": "E5", // Exenta por el artículo 25
       "tax_base": 100.00
     }
   ]
