@@ -387,6 +387,43 @@ paths:
         - client_api_key: []
 
   /api/clientcompanies:
+    get:
+      summary: "Obtener lista de empresas"
+      description: "Devuelve un listado de empresas con posibilidad de aplicar filtros."
+      operationId: "listClientCompanies"
+      parameters:
+        - name: tax_id_number
+          in: query
+          description: |
+            Filtrar empresas por NIF completo o parcial.
+          required: false
+          schema:
+            type: string
+        - name: company_name
+          in: query
+          description: |
+            Filtrar empresas por nombre (razón social) completo o parcial.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Datos de la empresa."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListClientCompaniesResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+
     post:
       summary: "Crear una nueva empresa"
       description: "Registro de una nueva empresa en el sistema."
@@ -482,6 +519,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateClientCompanyResponse'
+        '404':
+          description: "No encontrado. La empresa con el ID indicado no ha sido encontrada."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+
+  /api/clientcompanies/{companyId}/requests:
+    get:
+      summary: "Obtener operaciones de una empresa"
+      description: "Devuelve el número de operaciones realizadas por una empresa en un año y mes determinados."
+      operationId: "showClientCompany"
+      parameters:
+        - name: year
+          in: query
+          description: |
+            Año sobre el que hacer la consulta. Por defecto, el año en curso.
+          required: false
+          schema:
+            type: integer
+            example: 2025
+        - name: month
+          in: query
+          description: |
+            Mes sobre el que hacer la consulta (1 = Enero, 12 = Diciembre). Por defecto, el mes en curso.
+          required: false
+          schema:
+            type: integer
+            example: 11
+      responses:
+        '200':
+          description: "Datos de la empresa."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      client_company_id:
+                        type: string
+                        format: uuid
+                        description: Identificador único de la empresa.
+                        example: "9dcccd85-496d-4ed8-8f78-edfacac68964"
+                      requests_count:
+                        type: integer
+                        description: Número de operaciones realizadas por la empresa en el periodo solicitado.
+                        example: 258
         '404':
           description: "No encontrado. La empresa con el ID indicado no ha sido encontrada."
           content:
@@ -1272,6 +1368,14 @@ components:
               type: boolean
               description: Indica si hay más resultados para seguir paginando.
               example: true
+
+    ListClientCompaniesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateClientCompanyResponse'
 
     CreateClientCompanyResponse:
       type: object
