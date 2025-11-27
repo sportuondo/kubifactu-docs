@@ -925,8 +925,35 @@ components:
 
         lines:
           type: array
+          maxItems: 12
           description: |
-            Desglose de la factura con la lista de los conceptos facturados.
+            Desglose de la factura con la lista de los conceptos facturados **agrupados por condición fiscal completa**. El número máximo de líneas es de 12.
+
+            El desglose debe agruparse por condición fiscal completa: `tax_rate` + `vat_tax_regime_key` o `igic_tax_regime_key` + `equalization_tax_rate` (si aplica). Esta agrupación responde a la condición fiscal de la operación, y no puede realizarse únicamente por tipo impositivo.
+
+            A modo de ejemplo, indicar lo siguiente:
+
+            ### Caso 1: Factura con todas las líneas al 21%
+            Si las líneas al 21% se acogen a regímenes diferentes, deben generarse múltiples agrupaciones en el desglose, cada una con su combinación única de `tax_rate` + `vat_tax_regime_key` o `igic_tax_regime_key` + `equalization_tax_rate` (si aplica).
+
+            Ejemplo válido:
+            - Línea 1: 21%, régimen general
+            - Línea 2: 21%, régimen criterio de caja
+            El desglose debe contener dos entradas distintas, ambas con tipo 21%, pero con claves de régimen diferentes.
+
+            ### Caso 2: Factura con líneas al 21% y al 10%
+
+            Se pueden informar más de una clave de régimen por cada tipo impositivo, siempre que existan líneas que lo justifiquen.
+
+            Ejemplo válido:
+            - Línea 1: 21%, régimen general
+            - Línea 2: 21%, régimen especial agencias
+            - Línea 3: 10%, régimen general
+
+            El desglose incluirá tres agrupaciones:
+            1. 21% + régimen general
+            2. 21% + régimen especial agencias
+            3. 10% + régimen general
           items:
             type: object
             required:
