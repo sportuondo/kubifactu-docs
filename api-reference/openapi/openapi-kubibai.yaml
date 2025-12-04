@@ -610,6 +610,7 @@ components:
                 Ejemplo válido:
                 - Línea 1: 21%, régimen general
                 - Línea 2: 21%, régimen criterio de caja
+
                 El desglose debe contener dos entradas distintas, ambas con tipo 21%, pero con claves de régimen diferentes.
 
                 ### Caso 2: Factura con líneas al 21% y al 10%
