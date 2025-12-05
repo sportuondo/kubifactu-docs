@@ -667,6 +667,52 @@ paths:
       security:
         - owner_api_key: []
 
+  /api/sifs/{sifId}:
+    delete:
+      summary: "Eliminar SIF"
+      description: "Eliminación de un Sistema Informático de Facturación."
+      operationId: "deleteSif"
+      parameters:
+        - name: sifId
+          in: path
+          description: |
+            ID del SIF a eliminar.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: "SIF eliminado con éxito."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Mensaje de confirmación de eliminación.
+                        example: "SIF deleted successfully."
+        '404':
+          description: "No encontrado. El SIF con el ID indicado no existe o no pertenece al usuario autenticado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+
 components:
   schemas:
     CreateClientCompanyRequest:
