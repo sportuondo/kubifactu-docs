@@ -15,6 +15,14 @@ En estos casos hay que emitir una [subsanación con registro previo rechazado](/
 
 Para subsanar un registro que ha sido rechazado anteriormente por rechazo de Veri*Factu debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original.
 
+## ¿Qué debo hacer si no puedo enviar un registro porque Veri*Factu tiene problemas técnicos de conexión?
+
+Si el envío falla por un problema técnico de conexión (timeout, error del servidor o falta de respuesta), **no debes modificar la factura ni generar un nuevo registro**.
+
+En estos casos debes **reenviar el mismo registro de facturación** haciendo uso de nuestro [endpoint de reenvío de registros de facturación](openapi-reference/reenviar-registro-de-facturación) que envía de nuevo el registro sin regeneración del mismo, manteniendo la huella y el encadenamiento originales.
+
+Solo debe utilizarse la subsanación cuando la AEAT haya rechazado explícitamente el registro.
+
 ## Hay un límite de 12 líneas (conceptos) para las facturas. ¿Qué debo hacer si un cliente emite facturas con más de 12 líneas?
 
 La lista de los conceptos facturados deben agruparse por **condición fiscal completa**. En ese sentido, el número máximo de líneas es de 12.

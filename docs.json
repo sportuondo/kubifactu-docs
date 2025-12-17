@@ -35,14 +35,14 @@
         }
       },
       {
-        "tab": "API desde KubiBAI",
+        "tab": "Endpoints de KubiBAI",
         "openapi": {
           "source": "/api-reference/openapi/openapi-kubibai.yaml",
           "directory": "openapi-kubibai-reference"
         }
       },
       {
-        "tab": "Endpoints comunes",
+        "tab": "Otros endpoints",
         "openapi": {
           "source": "/api-reference/openapi/openapi-common.yaml",
           "directory": "openapi-common"
