@@ -374,6 +374,7 @@ paths:
                     - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
                     - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
                     - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
+                    - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
                     - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
                   example: "https://www.tuempresa.com/kubifactu/callback"
       responses:
@@ -874,6 +875,7 @@ components:
             - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
             - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
             - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
+            - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
             - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
           example: "https://www.tuempresa.com/kubifactu/callback"
 
@@ -1327,6 +1329,11 @@ components:
               nullable: true
               format: byte
               description: XML del registro de facturación en formato Base64. Cuando la factura sea enviada *en diferido* este campo será `null`, ya que la generación del XML se realiza cuando llegue el momento de enviar el registro a VeriFactu. Además, si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
+            vf_response_body:
+              type: string
+              nullable: true
+              format: byte
+              description: Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación. Este campo será `null` para facturas en diferido que aún no han sido procesadas o cuando no se haya recibido respuesta de Veri*Factu.
 
     CancelInvoiceRecordResponse:
       type: object
@@ -1854,7 +1861,7 @@ components:
         Los valores posibles son:
 
         - `success`: Se ha realizado el envío a Veri*Factu.
-        - `failure`: No se ha podido hacer el envío a Veri*Factu.
+        - `failure`: No se ha podido hacer el envío a Veri*Factu o Veri*Factu ha respondido con un error.
       enum:
         - "success"
         - "failure"
