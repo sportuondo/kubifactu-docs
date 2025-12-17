@@ -3,6 +3,12 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2025-12-18" description="v1.1.8">
+  - Se ha añadido un nuevo endpoint para [reenviar facturas](openapi-reference/reenviar-registro-de-facturación). Este endpoint es útil para registros que fallaron **por un problema técnico de conexión** (timeout, error del servidor o falta de respuesta) en el envío inicial. Se puede leer más al respecto en [nuestra FAQ](/faq#¿qué-debo-hacer-si-no-puedo-enviar-un-registro-porque-veri-factu-tiene-problemas-técnicos-de-conexión).
+  - Las respuestas de los registros de facturación incluyen el campo `vf_response_body` con la respuesta devuelta por Veri*factu.
+  - El endpoint para [listar registros de facturación con filtros](openapi-reference/listar-registros-de-facturación-con-filtros) acepta un nuevo parámetro boolean `with_problems` para filtrar registros de facturación que hayan tenido cualquier tipo de problema en el registro de Veri*Factu.
+</Update>
+
 <Update label="2025-12-12" description="v1.1.7">
   - Se ha añadido un nuevo endpoint para [eliminar SIFs](/openapi-reference/eliminar-sif).
 </Update>
