@@ -736,6 +736,38 @@ paths:
       security:
         - owner_api_key: []
 
+  /api/verifactu/health:
+    get:
+      summary: "Estado del servicio Veri*Factu"
+      description: |
+        Obtiene el estado actual del servicio Veri*Factu de la AEAT.
+
+        Este endpoint devuelve información sobre la disponibilidad del servicio, incluyendo el código de estado HTTP de la última comprobación y cualquier mensaje de error si el servicio no está disponible.
+      operationId: "getVerifactuHealthStatus"
+      responses:
+        '200':
+          description: "Estado del servicio Veri*Factu."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifactuHealthCheckResponse'
+        '404':
+          description: "No hay registros de health check disponibles."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
   /api/sifs/{sifId}:
     delete:
       summary: "Eliminar SIF"
@@ -2022,6 +2054,38 @@ components:
                       type: string
                       description: Identificador único de la solicitud para rastreo.
                       example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+
+    VerifactuHealthCheckResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            available:
+              type: boolean
+              description: Indica si el servicio Veri*Factu está disponible.
+              example: true
+            http_status_code:
+              type: integer
+              nullable: true
+              description: Código de estado HTTP devuelto por el servicio Veri*Factu en la última comprobación.
+              example: 200
+            error_message:
+              type: string
+              nullable: true
+              description: Mensaje de error si el servicio no está disponible o ha fallado la comprobación.
+              example: null
+            environment:
+              type: string
+              description: |
+                Entorno de Veri*Factu sobre el que se ha realizado la comprobación.
+                Valores posibles: `PROD`, `DEV`.
+              example: "PROD"
+            checked_at:
+              type: string
+              format: date-time
+              description: Fecha y hora de la última comprobación en formato ISO 8601.
+              example: "2025-01-15T10:30:00+00:00"
 
     NotFoundErrorResponse:
       type: object
