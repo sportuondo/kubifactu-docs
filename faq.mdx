@@ -9,7 +9,7 @@ La factura debe ser entregada al receptor (ya sea en versión impresa o digital)
 
 Junto al QR deberá aparecer la frase **«Factura verificable en la sede electrónica de la AEAT»** o **«VERI*FACTU»**, que deberá tener un tipo de letra y tamaño bien visibles, similares a los del resto de datos de la factura. El código QR deberá tener un tamaño entre **30x30 y 40x40 milímetros**.
 
-## ¿Qué debo hacer si cuando Veri*Factu "rechaza" una mis facturas?
+## ¿Qué debo hacer si cuando Veri*Factu "rechaza" una de mis facturas?
 
 En estos casos hay que emitir una [subsanación CON registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).
 
@@ -23,7 +23,7 @@ Dado la secuencia de facturas F4 → F5 → F6, donde cada factura se genera enc
 - F5: **Recibida, pero rechazada** (no queda registrada en la AEAT). Encadenada a F4.
 - F6: **Aceptada**. Encadenada a F5.
 
-F6 apunta a F5, aunque F5 no exista en la AEAT. Esto es válido y está contemplado por el sistema, ya que la AEAT entiende que F5 existió pero fue rechazada y que se ha subsanado o se va a subsanar como indicamos a continuación.
+F6 apunta a F5, aunque F5 no exista en la AEAT como registro válido, al haber sido rechazado. Esto es válido y está contemplado por el sistema, ya que la AEAT entiende que F5 existió pero fue rechazada y que se ha subsanado o se va a subsanar como indicamos a continuación.
 
 En este punto hay que generar un **registro de subsanación por rechazo previo** de F5 con:
 
@@ -32,7 +32,7 @@ En este punto hay que generar un **registro de subsanación por rechazo previo**
 
 El registro de subsanación de F5 se encadena al último registro válido del emisor, existente en el SIF en ese momento. En este ejemplo sería F6.
 
-## ¿Qué debo hacer cuando Veri*Factu "acepta con errores" una mis facturas?
+## ¿Qué debo hacer cuando Veri*Factu "acepta con errores" una de mis facturas?
 
 En estos casos hay que emitir una subsanación ordinaria, es decir, una [subsanación SIN registro previo rechazado](/api-reference/facturas/examples/correction).
 
