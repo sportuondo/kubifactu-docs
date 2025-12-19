@@ -9,19 +9,58 @@ La factura debe ser entregada al receptor (ya sea en versión impresa o digital)
 
 Junto al QR deberá aparecer la frase **«Factura verificable en la sede electrónica de la AEAT»** o **«VERI*FACTU»**, que deberá tener un tipo de letra y tamaño bien visibles, similares a los del resto de datos de la factura. El código QR deberá tener un tamaño entre **30x30 y 40x40 milímetros**.
 
-## ¿Qué debo hacer si no puedo enviar un registro porque Veri*Factu me lo ha rechazado?
+## ¿Qué debo hacer si cuando Veri*Factu "rechaza" una mis facturas?
 
-En estos casos hay que emitir una [subsanación con registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).
+En estos casos hay que emitir una [subsanación CON registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).
 
-Para subsanar un registro que ha sido rechazado anteriormente por rechazo de Veri*Factu debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original.
+Para subsanar un registro que ha sido **_rechazado_** anteriormente por Veri*Factu debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. También deberán modificarse los campos que deban ser corregidos.
+
+### Caso de ejemplo
+
+Dado la secuencia de facturas F4 → F5 → F6, donde cada factura se genera encadenada a la anterior. El resultado del envío es:
+
+- F4: **Aceptada**, encadenada a la factura del emisor anteriormente procesada por el SIF. Probablemente la F3.
+- F5: **Recibida, pero rechazada** (no queda registrada en la AEAT). Encadenada a F4.
+- F6: **Aceptada**. Encadenada a F5.
+
+F6 apunta a F5, aunque F5 no exista en la AEAT. Esto es válido y está contemplado por el sistema, ya que la AEAT entiende que F5 existió pero fue rechazada y que se ha subsanado o se va a subsanar como indicamos a continuación.
+
+En este punto hay que generar un **registro de subsanación por rechazo previo** de F5 con:
+
+- `previous_rejection_key = X`
+- `correction_key = S`
+
+El registro de subsanación de F5 se encadena al último registro válido del emisor, existente en el SIF en ese momento. En este ejemplo sería F6.
+
+## ¿Qué debo hacer cuando Veri*Factu "acepta con errores" una mis facturas?
+
+En estos casos hay que emitir una subsanación ordinaria, es decir, una [subsanación SIN registro previo rechazado](/api-reference/facturas/examples/correction).
+
+Para subsanar un registro que ha sido **_aceptado con errores_** por Veri*Factu debemos enviar el campo `correction_key` con el valor `S` y **hay que obviar** el campo `previous_rejection_key`. También deberán modificarse los campos que deban ser corregidos.
+
+### Caso de ejemplo
+
+Dado la secuencia de facturas F4 → F5 → F6, donde cada factura se genera encadenada a la anterior. El resultado del envío es:
+
+- F4: **Aceptada**, encadenada a la factura del emisor anteriormente procesada por el SIF. Probablemente la F3.
+- F5: **Aceptada con errores** (queda registrada en la AEAT). Encadenada a F4.
+- F6: **Aceptada**. Encadenada a F5.
+
+En este punto hay que generar un **registro de subsanación** de F5 con:
+
+- `correction_key = S`
+
+El registro de subsanación de F5 **es un registro independiente del de alta** y se encadena al último registro válido del emisor, existente en el SIF en ese momento. En este ejemplo sería F6.
 
 ## ¿Qué debo hacer si no puedo enviar un registro porque Veri*Factu tiene problemas técnicos de conexión?
 
-Si el envío falla por un problema técnico de conexión (timeout, error del servidor o falta de respuesta), **no debes modificar la factura ni generar un nuevo registro**.
+Si el envío falla por un problema técnico de conexión **con el servidor de Veri*Factu** (timeout, error del servidor o falta de respuesta), **no debes modificar la factura ni generar un nuevo registro**.
 
-En estos casos debes **reenviar el mismo registro de facturación** haciendo uso de nuestro [endpoint de reenvío de registros de facturación](openapi-reference/reenviar-registro-de-facturación) que envía de nuevo el registro sin regeneración del mismo, manteniendo la huella y el encadenamiento originales.
+<Tip>Los fallos de conexión con el servidor de Veri*factu se identifican porque la respuesta de nuestra API incluye el campo `"vf_post_status": "failure"`</Tip>
 
-Solo debe utilizarse la subsanación cuando la AEAT haya rechazado explícitamente el registro.
+En estos casos debes **reenviar el mismo registro de facturación** haciendo uso de nuestro [endpoint de reenvío de registros de facturación](openapi-reference/reenviar-registro-de-facturación), que envía de nuevo el registro sin regeneración del mismo, manteniendo la huella y el encadenamiento originales.
+
+<Warning>Solo debe utilizarse la subsanación cuando la AEAT haya **_rechazado_** o **_aceptado con errores_** el registro de forma explícita. Ver [valores posible para `vf_record_registration_status`](/openapi-reference/enviar-registro-de-facturación#response-data-vf-record-registration-status-one-of-0).</Warning>
 
 ## Hay un límite de 12 líneas (conceptos) para las facturas. ¿Qué debo hacer si un cliente emite facturas con más de 12 líneas?
 
