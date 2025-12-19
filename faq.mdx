@@ -56,7 +56,7 @@ El registro de subsanación de F5 **es un registro independiente del de alta** y
 
 Si el envío falla por un problema técnico de conexión **con el servidor de Veri*Factu** (timeout, error del servidor o falta de respuesta), **no debes modificar la factura ni generar un nuevo registro**.
 
-<Tip>Los fallos de conexión con el servidor de Veri*factu se identifican porque la respuesta de nuestra API incluye el campo `"vf_post_status": "failure"`</Tip>
+<Tip>Los fallos de conexión con el servidor de Veri*factu se identifican porque la respuesta de nuestra API incluye el campo `"vf_post_status": "failure"`.</Tip>
 
 En estos casos debes **reenviar el mismo registro de facturación** haciendo uso de nuestro [endpoint de reenvío de registros de facturación](openapi-reference/reenviar-registro-de-facturación), que envía de nuevo el registro sin regeneración del mismo, manteniendo la huella y el encadenamiento originales.
 
