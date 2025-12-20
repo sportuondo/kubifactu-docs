@@ -300,7 +300,7 @@ paths:
       description: |
         Reenvía un registro de facturación a Veri*Factu sin volver a generarlo. Este endpoint es útil para registros que fallaron **por un problema técnico de conexión** (timeout, error del servidor o falta de respuesta) en el envío inicial.
 
-        Sólo deben reenviarse registros que no hayan podido enviarse por problemas técnicos en los servidores de Veri*Factu que hayan impedido procesar el registro.
+        Sólo deben reenviarse registros que no hayan podido enviarse por problemas técnicos en los servidores de Veri*Factu que hayan impedido procesar el registro. [Leer más al respecto](/faq#¿qué-debo-hacer-si-no-puedo-enviar-un-registro-porque-veri-factu-tiene-problemas-técnicos-de-conexión).
       operationId: "resubmitInvoiceRecord"
       parameters:
         - name: invoiceId
