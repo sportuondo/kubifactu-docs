@@ -494,7 +494,7 @@ components:
               type: object
               description: Información del tercero que expide la factura.
               required:
-                  - company_name
+                - company_name
               properties:
                 company_name:
                   type: string
@@ -1184,7 +1184,7 @@ components:
                     Cada clave es el nombre del campo asociado al error y contiene un array de mensajes.
                   example:
                     invoice_exists:
-                      - "A correctly sent invoice already exists with the indicated invoice number and fiscal for the provided SIF. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                      - "An invoice already exists with the indicated invoice number and fiscal for the provided SIF. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
                     incorrect_total_quota:
                       - "The total quota of the invoice does not match the total tax quota and equalization_tax_quota of the lines. Calculated total quota: [26.25]."
                     incorrect_total_amount:
