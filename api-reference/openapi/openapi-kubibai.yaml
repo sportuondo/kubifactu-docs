@@ -248,7 +248,7 @@ paths:
                   type: string
                   format: url
                   description: |
-                    Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos). URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
+                    Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos) o reenvíos de regitros de facturación. URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
 
                     Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
 
@@ -311,7 +311,7 @@ components:
           type: string
           format: url
           description: |
-            Sólo aplicable a facturas diferidas. URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
+            Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos) o reenvíos de regitros de facturación. URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
 
             Se hará una petición POST a esta URL y se enviarán un array en formato JSON con los datos de las facturas procesadas cuyos ítems contendrán los siguientes campos:
 
@@ -896,9 +896,13 @@ components:
     previous_rejection_key:
       type: string
       description: |
-        Indica si el registro que se envía corresponde a una **subsanación de un envío anterior rechazado por la AEAT**.
+        Indica si el registro que se envía corresponde a una subsanación de un envío anterior **_rechazado_** por la AEAT.
 
-        - `X`: El registro se reenvía porque el envío anterior fue rechazado (no llegó a registrarse en la AEAT). Solo puede informarse cuando `correction_key = S`. Se utiliza al **reenviar una factura previamente rechazada** para que la AEAT la procese como una corrección del intento fallido, sin alterar los datos originales de emisión ni generar una nueva factura.
+        Este campo **solo debe utilizarse cuando la AEAT haya rechazado explícitamente el registro** y lo haya indicado en su respuesta.
+
+        Un rechazo **no debe confundirse con un error técnico en el envío** (timeout, error de red, fallo del servicio, ausencia de respuesta, error SOAP, etc.) que tendrá el campo `vf_post_status = failure`. En esos casos **el registro no se considera rechazado**, y debe **reenviarse exactamente igual**, **sin modificar datos** y **sin informar** `correction_key` ni `previous_rejection_key`. [Ver más información al respecto](/faq#¿qué-debo-hacer-si-no-puedo-enviar-un-registro-porque-veri-factu-tiene-problemas-técnicos-de-conexión).
+
+        - `X`: El registro se reenvía porque el envío anterior fue **rechazado**. Solo puede informarse cuando `correction_key = S`. Se utiliza para **subsanar un rechazo**, modificando los datos necesarios.
         - `N`: No, se trata de un alta normal/inicial.
       enum:
         - X
@@ -907,7 +911,7 @@ components:
     correction_key:
       type: string
       description: |
-        Indicador que especifica que se trata de una subsanación de un registro de facturación de alta previamente generado y exitente en la AEAT. El contenido de este nuevo registro de facturación es el correcto y el que deberá tenerse en cuenta. Si no se informa este campo, se entenderá que tiene valor `N` (alta normal/inicial).
+        Indicador que especifica que se trata de una subsanación de un registro de facturación de alta previamente generado y exitente en la AEAT. El contenido de este nuevo registro de facturación es el correcto y el que deberá tenerse en cuenta. Si no se informa este campo, se entenderá que tiene valor `N` (alta normal/inicial). [Ver más información al respecto](/faq#¿qué-debo-hacer-cuando-veri-factu-“acepta-con-errores”-una-de-mis-facturas).
 
         - `S`: Sí, se trata de una subsanación de un registro de facturación anterior que existe en la AEAT.
         - `N`: No, se trata de un alta normal/inicial.
