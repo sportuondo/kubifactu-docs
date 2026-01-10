@@ -940,7 +940,7 @@ components:
           type: string
           maxLength: 50
           description: |
-            Identificador único de la factura **dentro del sistema del cliente**. Si se envía y ya existe una factura con ese mismo `client_invoice_id` para la empresa actual, no se generará una nueva factura: el sistema devolverá directamente la factura existente.
+            Identificador único de la factura **dentro del sistema del cliente**.
           example: "96f2044008d7iujfd78jspo4"
 
         callback_url:
