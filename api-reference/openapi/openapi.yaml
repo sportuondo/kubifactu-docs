@@ -432,6 +432,8 @@ paths:
                     - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
                     - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
                     - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
+                    - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
+                    - `qr_image`: `string|null`. Imagen del código QR en formato Base64 (png). Será `null` si el registro fue rechazado o no aplica mostrar QR.
                   example: "https://www.tuempresa.com/kubifactu/callback"
       responses:
         '200':
@@ -613,6 +615,13 @@ paths:
       description: "Devuelve el número de operaciones realizadas por una empresa en un año y mes determinados."
       operationId: "showClientCompanyRequests"
       parameters:
+        - name: companyId
+          in: path
+          description: |
+            ID de la empresa.
+          required: true
+          schema:
+            type: string
         - name: year
           in: query
           description: |
@@ -965,6 +974,8 @@ components:
             - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
             - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
             - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
+            - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
+            - `qr_image`: `string|null`. Imagen del código QR en formato Base64 (png). Será `null` si el registro fue rechazado o no aplica mostrar QR.
           example: "https://www.tuempresa.com/kubifactu/callback"
 
         sif_id:
