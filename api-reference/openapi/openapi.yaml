@@ -747,6 +747,63 @@ paths:
       security:
         - owner_api_key: []
 
+  /api/clientcompanies/{companyId}/authorization-documents:
+    post:
+      summary: "Subir documentos de autorización"
+      description: |
+        Sube documentos de autorización y/o identidad para una empresa cliente.
+
+        Este endpoint permite subir uno o ambos documentos simultáneamente:
+        - Solo documento de autorización
+        - Solo documento de identidad
+        - Ambos documentos a la vez
+
+        **Nota:** Este endpoint solo está disponible para intermediarios que NO usen su propio certificado digital.
+      operationId: "uploadAuthorizationDocuments"
+      parameters:
+        - name: companyId
+          in: path
+          description: ID de la empresa cliente.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadAuthorizationDocumentsRequest"
+      responses:
+        '200':
+          description: "Documento(s) subido(s) con éxito."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadAuthorizationDocumentsResponse'
+        '422':
+          description: |
+            Errores de validación. Posibles causas:
+            - La empresa no existe o no pertenece al owner
+            - No se proporcionó ningún documento
+            - El archivo excede 10MB
+            - Tipo de archivo no permitido (solo pdf, jpg, jpeg, png)
+            - El owner usa su propio certificado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - owner_api_key: []
+
   /api/verifactu/health:
     get:
       summary: "Estado del servicio Veri*Factu"
@@ -883,6 +940,45 @@ components:
       required:
         - certificate_file
         - certificate_password
+
+    UploadAuthorizationDocumentsRequest:
+      type: object
+      properties:
+        authorization_document:
+          type: string
+          format: binary
+          description: |
+            Documento de autorización firmado. Formatos permitidos: PDF, JPG, JPEG, PNG.
+            Tamaño máximo: 10MB.
+        identity_document:
+          type: string
+          format: binary
+          description: |
+            Documento de identidad del representante legal. Formatos permitidos: PDF, JPG, JPEG, PNG.
+            Tamaño máximo: 10MB.
+      description: |
+        Al menos uno de los dos documentos es requerido.
+
+    UploadAuthorizationDocumentsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Mensaje de confirmación.
+              example: "Documents uploaded successfully."
+            authorization_document:
+              type: string
+              nullable: true
+              description: Nombre del archivo de autorización guardado.
+              example: "auth_20260129153045.pdf"
+            identity_document:
+              type: string
+              nullable: true
+              description: Nombre del archivo de identidad guardado.
+              example: "identity_20260129153046.jpg"
 
     CreateClientCompanySifRequest:
       type: object
