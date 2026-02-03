@@ -786,7 +786,7 @@ paths:
             Errores de validación. Posibles causas:
             - La empresa no existe o no pertenece al owner
             - No se proporcionó ningún documento
-            - El archivo excede 10MB
+            - El archivo excede 25MB
             - Tipo de archivo no permitido (solo pdf, jpg, jpeg, png)
             - El owner usa su propio certificado
           content:
@@ -949,13 +949,13 @@ components:
           format: binary
           description: |
             Documento de autorización firmado. Formatos permitidos: PDF, JPG, JPEG, PNG.
-            Tamaño máximo: 10MB.
+            Tamaño máximo: 25MB.
         identity_document:
           type: string
           format: binary
           description: |
             Documento de identidad del representante legal. Formatos permitidos: PDF, JPG, JPEG, PNG.
-            Tamaño máximo: 10MB.
+            Tamaño máximo: 25MB.
       description: |
         Al menos uno de los dos documentos es requerido.
 
