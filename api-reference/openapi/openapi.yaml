@@ -958,7 +958,7 @@ components:
           type: string
           format: binary
           description: |
-            Documento de identidad del representante legal. Formatos permitidos: PDF, JPG, JPEG, PNG.
+            Documento de identidad del representante legal. Sólo necesario si el documento de autorización no está firmado digitalmente por el cliente. Formatos permitidos: PDF, JPG, JPEG, PNG.
             Tamaño máximo: 25MB.
         authorization_document_has_digital_signature:
           type: boolean
