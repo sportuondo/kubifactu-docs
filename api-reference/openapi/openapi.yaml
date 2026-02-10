@@ -757,6 +757,10 @@ paths:
         - Solo documento de autorización
         - Solo documento de identidad
         - Ambos documentos a la vez
+        - Documento de autorización con indicador de firma digital del cliente (`authorization_document_has_digital_signature`)
+
+        El campo `authorization_document_has_digital_signature` puede enviarse junto con `authorization_document`.
+        Si se sube solo `identity_document`, este indicador no aplica.
 
         **Nota:** Este endpoint solo está disponible para intermediarios que NO usen su propio certificado digital.
       operationId: "uploadAuthorizationDocuments"
@@ -956,8 +960,14 @@ components:
           description: |
             Documento de identidad del representante legal. Formatos permitidos: PDF, JPG, JPEG, PNG.
             Tamaño máximo: 25MB.
+        authorization_document_has_digital_signature:
+          type: boolean
+          description: |
+            Indicador de que el documento de autorización está firmado digitalmente con el certificado digital del cliente.
+            Solo se tiene en cuenta cuando se envía `authorization_document`.
       description: |
         Al menos uno de los dos documentos es requerido.
+        El campo `authorization_document_has_digital_signature` permite indicar firma digital en el documento de autorización y, en ese caso, considerar opcional el documento de identidad para la lógica de completitud.
 
     UploadAuthorizationDocumentsResponse:
       type: object
