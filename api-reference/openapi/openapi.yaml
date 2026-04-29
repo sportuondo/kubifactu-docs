@@ -67,7 +67,7 @@ paths:
 
             Ver valores posibles para `vf_record_registration_status` en la [respuesta de envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación#response-data-vf-record-registration-status).
 
-            **Nota:** Este parámetro se ignora si `with_problems` está presente y es `true`.
+            **Nota:** Este parámetro se ignora si `with_problems` está presente y es `1`.
           schema:
             type: string
             example: "accepted_with_errors"
@@ -75,14 +75,14 @@ paths:
           in: query
           required: false
           description: |
-            Filtrar registros de facturación con problemas de registro. Cuando este parámetro es `true`, se devuelven únicamente los registros cuyo `vf_record_registration_status` no es correcto o anulado.
+            Filtrar registros de facturación con problemas de registro. Cuando este parámetro es `1`, se devuelven únicamente los registros cuyo `vf_record_registration_status` no es correcto o anulado.
 
             Este filtro es útil para obtener facturas que requieren atención: `failed` (Incorrecto), `accepted_with_errors` (Aceptado con Errores), `not_registered` (No Registrado) y `unknown` (Desconocido).
 
-            **Este parámetro tiene prioridad sobre `vf_record_registration_status`**: si `with_problems=true`, el valor de `vf_record_registration_status` será ignorado.
+            **Este parámetro tiene prioridad sobre `vf_record_registration_status`**: si `with_problems=1`, el valor de `vf_record_registration_status` será ignorado.
           schema:
             type: boolean
-            example: true
+            example: 1
         - name: per_page
           in: query
           required: false
