@@ -3,6 +3,10 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2026-05-18" description="v1.1.10">
+  - Nuevos endpoints para [descargar el XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación) y [descargar la imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Las respuestas de registros de facturación y callbacks incluyen los campos `xml_url` y `qr_image_url` para acceder a estos recursos usando el header `X-Qbikode-ClientApiKey`.
+</Update>
+
 <Update label="2026-02-03" description="v1.1.9">
   - Nuevo endpoint para [subir documentos de autorización e identidad](/openapi-reference/subir-documentos-de-autorización) de empresas cliente. Este endpoint permite a los intermediarios que no usan su propio certificado digital subir documentos de autorización firmados y documentos de identidad del representante legal.
 </Update>
