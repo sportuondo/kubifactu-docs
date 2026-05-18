@@ -260,6 +260,88 @@ paths:
       security:
         - client_api_key: []
 
+  /api/invoices/{invoiceId}/xml:
+    get:
+      summary: Descargar XML del registro de facturación
+      description: |
+        Descarga el XML del registro de facturación indicado por el campo `xml_url` de las respuestas de factura y callbacks.
+
+        La petición debe hacerse con el header HTTP `X-Qbikode-ClientApiKey`.
+      operationId: "downloadInvoiceRecordXml"
+      parameters:
+        - name: invoiceId
+          in: path
+          description: |
+            ID de la factura en KubiFACTU o identificador único de la factura dentro del sistema del cliente (`client_invoice_id`) si se informó al crear el registro de facturación.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: XML del registro de facturación.
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '404':
+          description: "No encontrado. La factura no existe para la empresa autenticada o el XML aún no está disponible."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
+  /api/invoices/{invoiceId}/qr-image:
+    get:
+      summary: Descargar imagen QR del registro de facturación
+      description: |
+        Descarga la imagen PNG del código QR indicada por el campo `qr_image_url` de las respuestas de factura y callbacks.
+
+        La petición debe hacerse con el header HTTP `X-Qbikode-ClientApiKey`.
+      operationId: "downloadInvoiceRecordQrImage"
+      parameters:
+        - name: invoiceId
+          in: path
+          description: |
+            ID de la factura en KubiFACTU o identificador único de la factura dentro del sistema del cliente (`client_invoice_id`) si se informó al crear el registro de facturación.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Imagen PNG del código QR.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: "No autorizado. La API-KEY proporcionada no es válida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '404':
+          description: "No encontrado. La factura no existe para la empresa autenticada o el estado del registro no permite mostrar QR."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+        '500':
+          description: "Error interno del servidor."
+      security:
+        - client_api_key: []
+
   /api/invoices/{invoiceId}/query:
     get:
       summary: Consultar registro de facturación con Veri*Factu
@@ -432,8 +514,10 @@ paths:
                     - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
                     - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
                     - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
+                    - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
                     - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
                     - `qr_image`: `string|null`. Imagen del código QR en formato Base64 (png). Será `null` si el registro fue rechazado o no aplica mostrar QR.
+                    - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
                   example: "https://www.tuempresa.com/kubifactu/callback"
       responses:
         '200':
@@ -1080,8 +1164,10 @@ components:
             - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
             - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
             - `xml_contents`: `string|null`. XML del registro de facturación enviado a Veri*Factu en formato Base64. Si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
+            - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
             - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
             - `qr_image`: `string|null`. Imagen del código QR en formato Base64 (png). Será `null` si el registro fue rechazado o no aplica mostrar QR.
+            - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
           example: "https://www.tuempresa.com/kubifactu/callback"
 
         sif_id:
@@ -1528,11 +1614,21 @@ components:
               nullable: true
               format: byte
               description: Imagen del QR (PNG) en formato Base64. Este campo será `null` cuando Veri*Factu rechace el registro de facturación.
+            qr_image_url:
+              type: string
+              nullable: true
+              format: uri
+              description: URL para descargar la imagen PNG del QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). La petición debe incluir el header `X-Qbikode-ClientApiKey`. Este campo será `null` cuando Veri*Factu rechace el registro de facturación o no aplique mostrar QR.
             xml_contents:
               type: string
               nullable: true
               format: byte
               description: XML del registro de facturación en formato Base64. Cuando la factura sea enviada *en diferido* este campo será `null`, ya que la generación del XML se realiza cuando llegue el momento de enviar el registro a VeriFactu. Además, si el registro de facturación forma parte de un envío en diferido, el XML puede contener información sobre otros registros de facturación incluidos en el envío.
+            xml_url:
+              type: string
+              nullable: true
+              format: uri
+              description: URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación). La petición debe incluir el header `X-Qbikode-ClientApiKey`. Este campo será `null` cuando el XML aún no esté disponible, por ejemplo en registros de facturación en diferido pendientes de procesar.
             vf_response_body:
               type: string
               nullable: true
