@@ -3,6 +3,10 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2026-06-30" description="v1.1.11">
+  - Las respuestas actuales de registros de facturación y callbacks dejan de incluir los campos inline/Base64 `qr_image` y `xml_contents`. Para acceder a la imagen QR y al XML del registro de facturación deben usarse los campos `qr_image_url` y `xml_url`.
+</Update>
+
 <Update label="2026-05-18" description="v1.1.10">
   - Nuevos endpoints para [descargar el XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación) y [descargar la imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Las respuestas de registros de facturación y callbacks incluyen los campos `xml_url` y `qr_image_url` para acceder a estos recursos usando el header `X-Qbikode-ClientApiKey`.
 </Update>
