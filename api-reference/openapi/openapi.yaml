@@ -195,7 +195,11 @@ paths:
     post:
       summary: "Enviar registros de facturación en lote"
       description: |
-        Generación de nuevos registros de facturación en lote que **serán procesados en diferido**.
+        Registra entre 1 y 500 registros de facturación que **serán procesados en diferido**.
+
+        La respuesta confirma la recepción del lote, pero no incluye los identificadores ni el resultado individual de los registros. Tampoco confirma su aceptación por Veri*Factu. El resultado de cada registro se obtiene posteriormente mediante la URL indicada en su campo `callback_url` o consultando el registro de facturación.
+
+        Si algún registro no supera la validación, la respuesta contiene los errores indexados según su posición en el array, por ejemplo, `invoices.0.sif_id`.
       operationId: "createBatchOfInvoiceRecords"
       requestBody:
         required: true
@@ -205,11 +209,11 @@ paths:
               $ref: "#/components/schemas/CreateBatchOfInvoicesRecordsRequest"
       responses:
         '200':
-          description: "Facturas recibidas con éxito."
+          description: "Lote recibido para su procesamiento diferido."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+                $ref: '#/components/schemas/CreateBatchOfInvoiceRecordsResponse'
         '422':
           description: "Errores de validación."
           content:
@@ -1122,9 +1126,13 @@ components:
 
     CreateBatchOfInvoicesRecordsRequest:
       type: object
+      required:
+        - invoices
       properties:
         invoices:
           type: array
+          minItems: 1
+          maxItems: 500
           description: |
             Array de registros de facturación con la misma estructura que la del endpoint de **Enviar registro de facturación**.
           items:
@@ -1533,6 +1541,21 @@ components:
         - lines
         - total_quota
         - total_amount
+
+    CreateBatchOfInvoiceRecordsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - response
+          properties:
+            response:
+              type: string
+              description: Confirmación de que el lote se ha registrado para su procesamiento diferido.
+              example: "Batch of invoice records processed for deferred submission to Veri*Factu."
 
     CreateInvoiceRecordResponse:
       type: object
