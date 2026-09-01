@@ -200,6 +200,39 @@ paths:
         La respuesta confirma la recepción del lote, pero no incluye los identificadores ni el resultado individual de los registros. Tampoco confirma su aceptación por Veri*Factu. El resultado de cada registro se obtiene posteriormente mediante la URL indicada en su campo `callback_url` o consultando el registro de facturación.
 
         Si algún registro no supera la validación, la respuesta contiene los errores indexados según su posición en el array, por ejemplo, `invoices.0.sif_id`.
+
+        ### Resultado mediante callback
+
+        El campo `callback_url` se configura individualmente en cada elemento de `invoices`. Cuando los registros han sido procesados, KubiFACTU agrupa los resultados de una misma empresa cliente y URL de callback, y realiza una petición `POST` con contenido `application/json`.
+
+        El cuerpo del callback siempre es un array y puede contener uno o varios registros. Un callback no tiene por qué corresponder exactamente con el lote original, por lo que la integración debe correlacionar cada resultado mediante `id` o `client_invoice_id`, sin depender de su posición en el array.
+
+        ```json
+        [
+          {
+            "id": "7d76c4a6-6603-4fc6-946a-8b9ffcc93480",
+            "client_invoice_id": "FACTURA-2026-0042",
+            "record_type": "creation",
+            "sif_id": "0995c42c-6708-44fb-bfbf-b363a5fe873e",
+            "sender_company_name": "Ferretería Ejemplo, S.L.",
+            "sender_tax_id_number": "B12345678",
+            "fiscal_year": 2026,
+            "full_invoice_number": "F-2026-0042",
+            "fingerprint": "8f3d7aa5530f5f6c3a96a5c8a9516a7fd9ce90b9bf3b60375682d8b45ca72867",
+            "csv": "CSV-DE-EJEMPLO",
+            "vf_post_status": "success",
+            "vf_record_registration_status": "success",
+            "has_warnings": false,
+            "vf_error_descriptions": null,
+            "vf_response_body": "PHhtbD5SZXNwdWVzdGEgZGUgZWplbXBsbzwveG1sPg==",
+            "qr_value": "https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?nif=B12345678&numserie=F-2026-0042&fecha=01-09-2026&importe=121.00",
+            "qr_image_url": "https://api.kubifactu.com/api/invoices/7d76c4a6-6603-4fc6-946a-8b9ffcc93480/qr-image",
+            "xml_url": "https://api.kubifactu.com/api/invoices/7d76c4a6-6603-4fc6-946a-8b9ffcc93480/xml"
+          }
+        ]
+        ```
+
+        El contrato completo de cada elemento se detalla en el campo `callback_url` de la petición. Este callback es independiente de la respuesta HTTP inmediata del endpoint.
       operationId: "createBatchOfInvoiceRecords"
       requestBody:
         required: true
@@ -1162,10 +1195,12 @@ components:
             - `sif_id`: `string`. ID del SIF utilizado para la creación del registro.
             - `sender_company_name`: `string`. Nombre de la empresa emisora.
             - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
+            - `fiscal_year`: `integer`. Año fiscal del registro de facturación.
             - `full_invoice_number`: `string`. Número de factura.
-            - `fingerprint`: `string`. Huella del registro de facturación.
-            - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
-            - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
+            - `fingerprint`: `string|null`. Huella del registro de facturación.
+            - `csv`: `string|null`. Código Seguro de Verificación del registro de facturación.
+            - `vf_post_status`: `string|null`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
+            - `vf_record_registration_status`: `string|null`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
             - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
             - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
             - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
