@@ -3,6 +3,10 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2026-09-02" description="v1.1.12">
+  - `tax_breakdown` pasa a ser el nombre canónico del desglose fiscal en los envíos normales y diferidos, en cada factura de los lotes (`invoices.*.tax_breakdown`) y en los endpoints KubiBAI (`invoice_data.tax_breakdown`). El nombre anterior, `lines`, continúa admitiéndose como alias de retrocompatibilidad, pero las nuevas integraciones deben utilizar `tax_breakdown`.
+</Update>
+
 <Update label="2026-06-30" description="v1.1.11">
   - Las respuestas actuales de registros de facturación y callbacks dejan de incluir los campos inline/Base64 `qr_image` y `xml_contents`. Para acceder a la imagen QR y al XML del registro de facturación deben usarse los campos `qr_image_url` y `xml_url`. Este cambio NO afecta a usuarios registrados antes de junio de 2026 y que se hayan mantenido activos en el sistema.
 </Update>
