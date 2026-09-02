@@ -639,10 +639,14 @@ components:
                       Ejemplo: `2025-02-26`.
                     example: "2025-02-26"
 
-            lines:
+            tax_breakdown:
               type: array
               description: |
+                Anteriormente, este campo se denominaba `lines`. Este nombre sigue siendo válido como alias de retrocompatibilidad, pero las nuevas integraciones deben utilizar `tax_breakdown`.
+
                 Desglose de la factura con la lista de los conceptos facturados **agrupados por condición fiscal completa**. El número máximo de líneas es de 12.
+
+                Esta es la propiedad canónica para el desglose fiscal y su ruta completa es `invoice_data.tax_breakdown`. Los errores de validación se devuelven usando la clave incluida en la petición. Si no se incluye ninguna clave compatible para el desglose, el error se devuelve en `invoice_data.tax_breakdown`.
 
                 El desglose debe agruparse por condición fiscal completa: `tax_rate` + `vat_tax_regime_key` o `igic_tax_regime_key` + `equalization_tax_rate` (si aplica). Esta agrupación responde a la condición fiscal de la operación, y no puede realizarse únicamente por tipo impositivo.
 
@@ -742,7 +746,7 @@ components:
               type: number
               format: integer
               description: |
-                Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las líneas de detalle de desglose (agrupación `lines`).
+                Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las entradas de `invoice_data.tax_breakdown`.
                 Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `25436`.
 
           required:
@@ -752,7 +756,7 @@ components:
             - invoice_number
             - invoice_datetime
             - description
-            - lines
+            - tax_breakdown
             - total_quota
             - total_amount
 
@@ -1228,9 +1232,9 @@ components:
                     invoice_exists:
                       - "An invoice already exists with the indicated invoice number and fiscal for the provided SIF. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
                     incorrect_total_quota:
-                      - "The total quota of the invoice does not match the total tax quota and equalization_tax_quota of the lines. Calculated total quota: [26.25]."
+                      - "The total quota of the invoice does not match the total tax quota and equalization_tax_quota of the tax breakdown. Calculated total quota: [26.25]."
                     incorrect_total_amount:
-                      - "The total amount of the invoice does not match the total tax base of the lines. Calculated total amount: [151.25]."
+                      - "The total amount of the invoice does not match the total tax base of the tax breakdown. Calculated total amount: [151.25]."
                 details:
                   type: object
                   properties:
