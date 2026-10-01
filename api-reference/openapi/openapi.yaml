@@ -33,7 +33,7 @@ paths:
           schema:
             type: string
             format: date
-            example: "2025-01-01"
+            example: "2026-01-01"
         - name: date_to
           in: query
           required: true
@@ -41,7 +41,7 @@ paths:
           schema:
             type: string
             format: date
-            example: "2025-01-31"
+            example: "2026-01-31"
         - name: sif_id
           in: query
           required: false
@@ -753,7 +753,7 @@ paths:
           required: false
           schema:
             type: integer
-            example: 2025
+            example: 2026
         - name: month
           in: query
           description: |
@@ -1288,19 +1288,19 @@ components:
           type: string
           description: |
             Serie+Nº Factura que identifica a la factura emitida. Sólo puedo contener caracteres ASCII del 32 a 126 (caracteres imprimibles).
-            Ejemplo: `2025-00001`.
-          example: "2025-00001"
+            Ejemplo: `2026-00001`.
+          example: "2026-00001"
 
         fiscal_year:
           type: integer
           description: |
             Ejercicio fiscal en el que se emite la factura. Aunque este dato no se envía a la AEAT, se utiliza junto con el `sif_id` para verificar que no se están duplicando los números de factura.
-          example: 2025
+          example: 2026
 
         issue_date:
           type: string
           format: date
-          example: "2025-09-15"
+          example: "2026-09-15"
           description: |
             Fecha de expedición del registro de facturación.
 
@@ -1313,7 +1313,7 @@ components:
             Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición. Determina el ejercicio y periodo fiscal al que pertenece la operación."
 
             Formato `yyyy-mm-dd`.
-          example: "2025-02-26"
+          example: "2026-02-26"
 
         operation_description:
           type: string
@@ -1524,14 +1524,14 @@ components:
                 type: string
                 description: |
                   Serie+Nº Factura que identifica a la factura que se quiere rectificar.
-                  Ejemplo: `2025-00001`.
+                  Ejemplo: `2026-00001`.
               issue_date:
                 type: string
                 format: date
                 description: |
                   Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.
-                  Ejemplo: `2025-02-26`.
-                example: "2025-02-26"
+                  Ejemplo: `2026-02-26`.
+                example: "2026-02-26"
 
         substituted_invoices:
           type: array
@@ -1554,14 +1554,14 @@ components:
                 type: string
                 description: |
                   Serie+Nº Factura que identifica a la factura que se quiere rectificar.
-                  Ejemplo: `2025-00001`.
+                  Ejemplo: `2026-00001`.
               issue_date:
                 type: string
                 format: date
                 description: |
                   Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.
-                  Ejemplo: `2025-02-26`.
-                example: "2025-02-26"
+                  Ejemplo: `2026-02-26`.
+                example: "2026-02-26"
 
         coupon_key:
           $ref: "#/components/schemas/coupon_key"
@@ -1634,12 +1634,12 @@ components:
             issue_date:
               type: string
               format: date
-              example: "2025-09-15"
+              example: "2026-09-15"
               description: Fecha de expedición del registro de facturación.
             created_at:
               type: string
               format: date-time
-              example: "2025-09-15T07:35:24.992854Z"
+              example: "2026-09-15T07:35:24.992854Z"
               description: Fecha y hora de creación de la factura en nuestro sistema.
             fingerprint:
               nullable: true
@@ -1755,20 +1755,20 @@ components:
         fiscal_year:
           type: integer
           description: Año fiscal de la factura.
-          example: 2025
+          example: 2026
         full_invoice_number:
           type: string
           description: Número de la factura registrada.
-          example: "F23-0000123"
+          example: "F2026-0000123"
         issue_date:
           type: string
           format: date
-          example: "2025-09-15"
+          example: "2026-09-15"
           description: Fecha de expedición del registro de facturación.
         created_at:
           type: string
           format: date-time
-          example: "2025-09-15T07:35:24.992854Z"
+          example: "2026-09-15T07:35:24.992854Z"
           description: Fecha y hora de creación de la factura en nuestro sistema.
         fingerprint:
           nullable: true

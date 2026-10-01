@@ -27,14 +27,14 @@ paths:
           required: true
           schema:
             type: integer
-            example: 2025
+            example: 2026
         - name: full_invoice_number
           in: query
           description: Número de factura completa.
           required: true
           schema:
             type: string
-            example: "2025-00001"
+            example: "2026-00001"
       responses:
         '200':
           description: |
