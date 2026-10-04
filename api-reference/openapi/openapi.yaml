@@ -1992,24 +1992,26 @@ components:
     previous_rejection_key:
       type: string
       description: |
-        Indica si el registro que se envía corresponde a una subsanación de un envío anterior **_rechazado_** por la AEAT.
+        Indicador de rechazo previo que, en las subsanaciones, distingue si la factura **ya está registrada en la AEAT** o si se subsana **sin registro previo**.
 
-        Este campo **solo debe utilizarse cuando la AEAT haya rechazado explícitamente el registro** y lo haya indicado en su respuesta.
+        En una subsanación se informa `correction_key = S` y se utiliza el valor de `previous_rejection_key` que corresponda a la situación de la factura en la AEAT.
 
         Un rechazo **no debe confundirse con un error técnico en el envío** (timeout, error de red, fallo del servicio, ausencia de respuesta, error SOAP, etc.) que tendrá el campo `vf_post_status = failure`. En esos casos **el registro no se considera rechazado**, y debe **reenviarse exactamente igual**, **sin modificar datos** y **sin informar** `correction_key` ni `previous_rejection_key`. [Ver más información al respecto](/faq#¿qué-debo-hacer-si-no-puedo-enviar-un-registro-porque-veri-factu-tiene-problemas-técnicos-de-conexión).
 
-        - `X`: El registro se reenvía porque el envío anterior fue **rechazado**. Solo puede informarse cuando `correction_key = S`. Se utiliza para **subsanar un rechazo**, modificando los datos necesarios.
-        - `N`: No, se trata de un alta normal/inicial.
+        - `X`: El alta inicial fue **rechazada** y la factura **no está registrada en la AEAT**. También corresponde a las operativas especiales de **subsanación sin registro previo**. Solo puede informarse cuando `correction_key = S`; **no significa simplemente que el último envío fue rechazado**.
+        - `S`: La factura **ya está registrada en la AEAT**, pero una subsanación posterior fue **rechazada**. Solo puede informarse cuando `correction_key = S`.
+        - `N` u omitido: En una subsanación habitual de una factura **ya registrada en la AEAT**, se informa `correction_key = S`. También corresponde a un alta normal/inicial, sin subsanación.
       enum:
         - X
+        - S
         - N
 
     correction_key:
       type: string
       description: |
-        Indicador que especifica que se trata de una subsanación de un registro de facturación de alta previamente generado y exitente en la AEAT. El contenido de este nuevo registro de facturación es el correcto y el que deberá tenerse en cuenta. Si no se informa este campo, se entenderá que tiene valor `N` (alta normal/inicial). [Ver más información al respecto](/faq#¿qué-debo-hacer-cuando-veri-factu-“acepta-con-errores”-una-de-mis-facturas).
+        Indicador que especifica que se trata de una subsanación de un registro de facturación de alta previamente generado, con o sin registro previo en la AEAT según el valor de `previous_rejection_key`. El contenido de este nuevo registro de facturación es el correcto y el que deberá tenerse en cuenta. Si no se informa este campo, se entenderá que tiene valor `N` (alta normal/inicial). [Ver más información al respecto](/faq#¿qué-debo-hacer-cuando-veri-factu-“acepta-con-errores”-una-de-mis-facturas).
 
-        - `S`: Sí, se trata de una subsanación de un registro de facturación anterior que existe en la AEAT.
+        - `S`: Sí, se trata de una subsanación; debe utilizarse con el valor de `previous_rejection_key` que corresponda.
         - `N`: No, se trata de un alta normal/inicial.
       enum:
         - S
