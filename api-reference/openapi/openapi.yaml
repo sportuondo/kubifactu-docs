@@ -124,7 +124,10 @@ paths:
         - client_api_key: []
     post:
       summary: "Enviar registro de facturación"
-      description: Generación de un nuevo registro de facturación.
+      description: |
+        Generación y envío síncrono de un nuevo registro de facturación.
+
+        Antes de crear el registro, la API comprueba la cadena de la misma empresa cliente y el mismo SIF. Si existe un registro anterior pendiente de envío o de resolver su resultado, devuelve HTTP `409` con el código `E-INVOICE-SUBMISSION-BLOCKED`. El nuevo registro no se crea, no se envía a AEAT y no queda en cola.
       operationId: "createInvoiceRecord"
       x-mint:
         content: |
@@ -144,6 +147,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateInvoiceRecordResponse'
+        '409':
+          description: |
+            Un registro anterior de la misma empresa cliente y el mismo SIF bloquea la cadena. Consulta o recupera el registro identificado por `blocking_invoice_id` mediante los endpoints existentes y vuelve a solicitar el nuevo registro cuando deje de bloquear la cadena. Un rechazo explícito definitivo de AEAT no bloquea por sí solo nuevos registros.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceSubmissionBlockedErrorResponse'
+              example:
+                data:
+                  error:
+                    code: E-INVOICE-SUBMISSION-BLOCKED
+                    message: "Invoice submission is blocked by record 9db6bb78-6799-4abb-b9a0-22d127c543ed (unresolved_submission)."
+                    errors:
+                      reason: unresolved_submission
+                      blocking_invoice_id: "9db6bb78-6799-4abb-b9a0-22d127c543ed"
+                    details: null
         '422':
           description: "Errores de validación."
           content:
@@ -2257,6 +2276,47 @@ components:
       enum:
         - "creation"
         - "cancellation"
+
+    InvoiceSubmissionBlockedErrorResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [error]
+          properties:
+            error:
+              type: object
+              required: [code, message, errors, details]
+              properties:
+                code:
+                  type: string
+                  enum: [E-INVOICE-SUBMISSION-BLOCKED]
+                  description: Código de bloqueo del envío por un registro anterior de la cadena.
+                message:
+                  type: string
+                  description: Mensaje descriptivo del bloqueo.
+                errors:
+                  type: object
+                  required: [reason, blocking_invoice_id]
+                  properties:
+                    reason:
+                      type: string
+                      enum: [pending_submission, unresolved_submission]
+                      description: |
+                        Motivo del bloqueo:
+                        - `pending_submission`: el registro anterior está pendiente de envío.
+                        - `unresolved_submission`: el envío anterior necesita resolverse, por ejemplo tras un timeout, un resultado desconocido o una reconciliación pendiente de un reenvío duplicado. También se aplica si se ha confirmado que el registro no está registrado y su envío sigue pendiente de resolver.
+                    blocking_invoice_id:
+                      type: string
+                      format: uuid
+                      description: ID en KubiFACTU del primer registro anterior que bloquea la cadena de la misma empresa cliente y el mismo SIF.
+                details:
+                  type: object
+                  nullable: true
+                  enum: [null]
+                  description: Siempre es `null` en esta respuesta.
+                  example: null
 
     ValidationErrorResponse:
       type: object

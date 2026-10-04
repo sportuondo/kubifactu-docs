@@ -68,6 +68,20 @@ En estos casos debes **reenviar el mismo registro de facturación (ya sea alta o
 
 <Warning>Solo debe utilizarse la subsanación cuando la AEAT haya **_rechazado_** o **_aceptado con errores_** el registro de forma explícita. Ver [valores posible para `vf_record_registration_status`](/openapi-reference/enviar-registro-de-facturación#response-data-vf-record-registration-status-one-of-0).</Warning>
 
+### ¿Qué ocurre si intento enviar el siguiente registro mientras el anterior sigue pendiente?
+
+Antes de crear un nuevo registro mediante `POST /api/invoices` (envío síncrono), KubiFACTU comprueba la cadena de la **misma empresa cliente y el mismo SIF**. Si un registro anterior está pendiente de envío o de confirmar su resultado, la API devuelve [HTTP `409` con el código `E-INVOICE-SUBMISSION-BLOCKED`](/openapi-reference/enviar-registro-de-facturación).
+
+Por ejemplo, en la secuencia A → B → C:
+
+- **A** ha sido aceptado por AEAT.
+- **B** se ha enviado, pero un timeout deja incierto si AEAT lo recibió.
+- El cliente intenta crear **C** mediante `POST /api/invoices`. La API devuelve `data.error.errors.reason = unresolved_submission` y `data.error.errors.blocking_invoice_id = ID de B`. **C no se crea, no se envía a AEAT y no queda en cola**.
+
+Usa el ID de B para [obtener sus datos](/openapi-reference/obtener-registro-de-facturación) (`GET /api/invoices/{invoiceId}`) y [consultar su estado en AEAT](/openapi-reference/consultar-registro-de-facturación-con-veri*factu) (`GET /api/invoices/{invoiceId}/query`). Si B no llegó a AEAT, completa el [reenvío del mismo registro](/openapi-reference/reenviar-registro-de-facturación) (`GET /api/invoices/{invoiceId}/resubmit`), conservando su identidad, huella y encadenamiento. Vuelve a solicitar C cuando B deje de bloquear la cadena.
+
+Si el registro anterior todavía no se ha enviado, el motivo es `pending_submission`. El bloqueo por `unresolved_submission` también se mantiene mientras esté pendiente la reconciliación de un reenvío duplicado. Un **rechazo explícito definitivo** de AEAT es distinto de un resultado incierto y no bloquea por sí solo todos los registros posteriores.
+
 ## Hay un límite de 12 líneas (conceptos) para las facturas. ¿Qué debo hacer si un cliente emite facturas con más de 12 líneas?
 
 La lista de los conceptos facturados deben agruparse por **condición fiscal completa**. En ese sentido, el número máximo de líneas es de 12.
