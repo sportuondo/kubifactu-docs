@@ -83,22 +83,20 @@ Important domain terms:
 
 This repo has no meaningful local `package.json` scripts; `package-lock.json` is effectively empty. Node is pinned in `.nvmrc`.
 
-Useful commands, depending on which Mintlify CLI is installed locally:
+This project uses the `mint` CLI (`npm install -g mint@latest`); do not use the legacy `mintlify` command. Useful commands:
 
 ```bash
 nvm use
-mintlify dev
-mintlify dev --port 3333
-mintlify broken-links
-mintlify install
+mint dev
+mint dev --port 3333
 mint dev --no-open
+mint broken-links
 mint validate
-mint openapi-check api-reference/openapi/openapi.yaml
-mint openapi-check api-reference/openapi/openapi-kubibai.yaml
-mint openapi-check api-reference/openapi/openapi-common.yaml
 ```
 
-Before finishing substantive docs changes, validate what is practical in the current environment. At minimum, inspect diffs carefully. For API reference changes, validate the touched OpenAPI file if the CLI is available.
+`mint validate` runs a strict build validation (it exits on warnings or errors) and also checks the OpenAPI specs; `mint openapi-check` is deprecated. `mint` is installed under Herd's nvm, so non-interactive shells may not find it on `PATH`; run it through an interactive shell (`zsh -ic 'mint validate'`).
+
+Before finishing substantive docs changes, validate what is practical in the current environment. At minimum, inspect diffs carefully. For API reference changes, run `mint validate` if the CLI is available.
 
 ## Common Pitfalls
 
