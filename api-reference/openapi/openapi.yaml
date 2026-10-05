@@ -19,7 +19,7 @@ paths:
     get:
       summary: "Listar registros de facturación con filtros"
       description: |
-        Obtiene un listado **paginado** de registros de facturación pertenecientes a la empresa autenticada. La información de cada registro de facturación en una **versión reducida** de la que se obtiene en consultas individuales o cuando se crean nuevos registros de facturación.
+        Obtiene un listado **paginado** de registros de facturación pertenecientes a la empresa autenticada. Cada elemento incluye una **versión reducida** de la información que se obtiene en consultas individuales o cuando se crean nuevos registros de facturación, con los totales almacenados y el desglose fiscal completo.
 
         Además se devuelve una sección `meta` para la gestión de la paginación.
 
@@ -1756,6 +1756,10 @@ components:
 
     InvoiceLite:
       type: object
+      required:
+        - total_quota
+        - total_amount
+        - tax_breakdown
       properties:
         id:
           type: string
@@ -1789,6 +1793,21 @@ components:
           format: date-time
           example: "2026-09-15T07:35:24.992854Z"
           description: Fecha y hora de creación de la factura en nuestro sistema.
+        total_quota:
+          type: number
+          format: decimal
+          description: Cuota total almacenada de la factura, incluida la cuota de recargo de equivalencia. Se devuelve como número JSON. En los registros de anulación es `0`.
+          example: 21.11
+        total_amount:
+          type: number
+          format: decimal
+          description: Importe total almacenado de la factura. Se devuelve como número JSON. En los registros de anulación es `0`.
+          example: 121.61
+        tax_breakdown:
+          type: array
+          description: Desglose fiscal completo almacenado del registro. Cada entrada incluye todas sus propiedades, con `null` en los campos sin valor. En los registros de anulación se devuelve un array vacío (`[]`).
+          items:
+            $ref: "#/components/schemas/InvoiceTaxBreakdown"
         fingerprint:
           nullable: true
           type: string
@@ -1809,6 +1828,91 @@ components:
           nullable: true
           type: string
           description: Cadena con la descripción de los errores devueltos por Veri*Factu.
+
+    InvoiceTaxBreakdown:
+      type: object
+      description: Entrada del desglose fiscal devuelto en el listado de registros de facturación.
+      required:
+        - tax_type_key
+        - vat_tax_regime_key
+        - igic_tax_regime_key
+        - operation_type_key
+        - exemption_cause_key
+        - tax_base
+        - tax_base_at_cost
+        - tax_rate
+        - tax_quota
+        - equalization_tax_rate
+        - equalization_tax_quota
+      properties:
+        tax_type_key:
+          $ref: "#/components/schemas/tax_type_key"
+        vat_tax_regime_key:
+          type: string
+          nullable: true
+          description: Clave del régimen de IVA almacenada. Es `null` cuando no tiene valor.
+          enum: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "14", "15", "17", "18", "19", "20", null]
+        igic_tax_regime_key:
+          type: string
+          nullable: true
+          description: Clave del régimen de IGIC almacenada. Es `null` cuando no tiene valor.
+          enum: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "14", "15", "17", "18", "19", null]
+        operation_type_key:
+          type: string
+          nullable: true
+          description: Clave del tipo de operación almacenada. Es `null` cuando no tiene valor, por ejemplo en operaciones exentas.
+          enum: ["S1", "S2", "N1", "N2", null]
+        exemption_cause_key:
+          type: string
+          nullable: true
+          description: Clave de la causa de exención almacenada. Es `null` cuando no tiene valor.
+          enum: ["E1", "E2", "E3", "E4", "E5", "E6", null]
+        tax_base:
+          type: number
+          format: decimal
+          description: Base imponible o importe no sujeto almacenado.
+          example: 100.50
+        tax_base_at_cost:
+          type: number
+          format: decimal
+          nullable: true
+          description: Base imponible a coste almacenada. Es `null` cuando no tiene valor.
+        tax_rate:
+          type: number
+          format: decimal
+          nullable: true
+          description: Tipo impositivo almacenado, expresado en porcentaje. Es `null` cuando no tiene valor.
+          example: 21.00
+        tax_quota:
+          type: number
+          format: decimal
+          nullable: true
+          description: Cuota del impuesto almacenada. Es `null` cuando no tiene valor.
+          example: 21.11
+        equalization_tax_rate:
+          type: number
+          format: decimal
+          nullable: true
+          description: Tipo de recargo de equivalencia almacenado, expresado en porcentaje. Es `null` cuando no tiene valor.
+          example: 5.20
+        equalization_tax_quota:
+          type: number
+          format: decimal
+          nullable: true
+          description: Cuota de recargo de equivalencia almacenada. Es `null` cuando no tiene valor.
+          example: 5.23
+      example:
+        tax_type_key: "01"
+        vat_tax_regime_key: "01"
+        igic_tax_regime_key: null
+        operation_type_key: "S1"
+        exemption_cause_key: null
+        tax_base: 100.50
+        tax_base_at_cost: null
+        tax_rate: 21.00
+        tax_quota: 21.11
+        equalization_tax_rate: null
+        equalization_tax_quota: null
 
     ListInvoicesResponse:
       type: object
