@@ -81,8 +81,6 @@ El reenvío web sigue disponible para **root, owner y cliente**, dentro de su á
 
 El flujo de dos clics pertenece al panel. La API mantiene su autenticación mediante `X-Qbikode-ClientApiKey` y sus operaciones de [consulta](/openapi-reference/consultar-registro-de-facturación-con-veri*factu) (`GET /api/invoices/{invoiceId}/query`) y [reenvío](/openapi-reference/reenviar-registro-de-facturación) (`GET /api/invoices/{invoiceId}/resubmit`). La API de reenvío no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente. Ante un resultado incierto, consulta el mismo registro antes de decidir reenviarlo. Los envíos iniciales directos conservan la consulta inmediata cuando un timeout deja el estado en `unknown`.
 
-La consulta se aplica al UUID solicitado: no modifica otro registro con el mismo emisor, número y fecha. La aceptación del alta original tampoco confirma que su anulación haya sido aceptada.
-
 ### ¿Qué significa conciliación obligatoria?
 
 Conciliar significa **comprobar qué recibió la AEAT antes de permitir otro envío**. Mientras esa comprobación esté pendiente, el reenvío manual queda bloqueado tanto en el panel como en la API. Se aplica cuando existe la marca interna `recovery_reconciliation_pending` o cuando un registro histórico tiene envío `success` y estado `unknown`. Los duplicados 3000/3001 y las respuestas inutilizables o desconocidas pueden exigir esta conciliación.
