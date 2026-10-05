@@ -410,6 +410,8 @@ paths:
         Obtiene el estado de un registro de facturación haciendo previamente una consulta a Veri*Factu. Se llama a la URL de callback del registro si se incluyó en el momento de su alta. [Ver formato de la llamada de callback](enviar-registro-de-facturación#body-callback-url).
 
         La consulta sólo actualiza el registro solicitado cuando el resultado permite confirmar su identidad y huella, o confirma que no está registrado mediante un SinDatos válido. Una consulta fallida o inconcluyente no confirma la aceptación ni permite dar por resuelta una conciliación pendiente. Un rechazo confirmado se conserva como rechazo.
+
+        La AEAT no devuelve el CSV en las consultas, así que una consulta nunca lo informa ni lo recupera. Si confirma un registro cuyo resultado de envío no llegó, el registro queda con su estado actualizado y el campo `csv` vacío. Usa `vf_record_registration_status` para saber si el registro está acreditado. [Leer más en la FAQ](/faq).
       operationId: "queryInvoiceRecord"
       parameters:
         - name: invoiceId
@@ -448,6 +450,8 @@ paths:
         La conciliación obligatoria bloquea el reenvío con HTTP 409 y motivo `pending_reconciliation` hasta aclarar el resultado: se aplica a la marca interna `recovery_reconciliation_pending` y al caso de envío `success` con registro `unknown`, incluidos registros históricos. Los duplicados 3000/3001 y las respuestas inutilizables o desconocidas pueden exigir conciliación. El UUID de bloqueo puede ser el propio registro; los bloqueos por registros anteriores de la misma empresa cliente y SIF mantienen los motivos `pending_submission` y `unresolved_submission`.
 
         El flujo de comprobar el estado y confirmar el reenvío en dos clics corresponde al panel, no a este endpoint. La API conserva sus operaciones y autenticación y no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente; los envíos iniciales directos mantienen la consulta inmediata cuando un timeout deja el estado en `unknown`. Los reintentos automáticos siguen respetando las esperas y el orden de la cadena. [Leer más en la FAQ](/faq).
+
+        Si el registro ya tiene un CSV guardado, el reenvío no lo borra cuando la nueva respuesta de la AEAT no incluye uno (por ejemplo, ante un registro duplicado) ni cuando el envío falla sin respuesta. Un CSV nuevo sí sustituye al anterior.
 
         Se llama a la URL de callback del registro si se incluyó en el momento de su alta.
       operationId: "resubmitInvoiceRecord"
@@ -591,7 +595,7 @@ paths:
                     - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
                     - `full_invoice_number`: `string`. Número de factura.
                     - `fingerprint`: `string`. Huella del registro de facturación.
-                    - `csv`: `string`. Código Seguro de Verificación del registro de facturación.
+                    - `csv`: `string|null`. Código Seguro de Verificación (CSV) de la remisión que contiene el registro. Puede ser `null` aunque el registro esté aceptado: para saber si está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`. [Leer más en la FAQ](/faq).
                     - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
                     - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
                     - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
@@ -1245,7 +1249,7 @@ components:
             - `fiscal_year`: `integer`. Año fiscal del registro de facturación.
             - `full_invoice_number`: `string`. Número de factura.
             - `fingerprint`: `string|null`. Huella del registro de facturación.
-            - `csv`: `string|null`. Código Seguro de Verificación del registro de facturación.
+            - `csv`: `string|null`. Código Seguro de Verificación (CSV) de la remisión que contiene el registro. Puede ser `null` aunque el registro esté aceptado: para saber si está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`. [Leer más en la FAQ](/faq).
             - `vf_post_status`: `string|null`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
             - `vf_record_registration_status`: `string|null`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
             - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
@@ -1690,7 +1694,14 @@ components:
             csv:
               nullable: true
               type: string
-              description: Código Seguro de Verificación del registro de facturación.
+              description: |
+                Código Seguro de Verificación (CSV) que la AEAT emite en la respuesta a la remisión. Acredita la remisión, no cada registro individual.
+
+                **Un `csv` vacío (`null`) no significa que el registro no esté acreditado.** La AEAT no devuelve el CSV en consultas posteriores, por lo que un registro aceptado puede no tenerlo; por ejemplo, cuando el resultado del envío no llegó (timeout o respuesta ilegible) y se confirmó después con una consulta de estado. Para saber si un registro está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`.
+
+                En los envíos diferidos por lote, todos los registros del mismo envío comparten el mismo CSV, también los rechazados. Solo se omite si la AEAT rechaza todos los registros del envío.
+
+                Un reenvío no borra un CSV ya guardado cuando la nueva respuesta no incluye uno. Un CSV nuevo sustituye al anterior. [Leer más en la FAQ](/faq).
             vf_post_status:
               $ref: "#/components/schemas/vf_post_status"
             vf_record_registration_status:
@@ -1838,7 +1849,14 @@ components:
         csv:
           nullable: true
           type: string
-          description: Código Seguro de Verificación del registro de facturación.
+          description: |
+            Código Seguro de Verificación (CSV) que la AEAT emite en la respuesta a la remisión. Acredita la remisión, no cada registro individual.
+
+            **Un `csv` vacío (`null`) no significa que el registro no esté acreditado.** La AEAT no devuelve el CSV en consultas posteriores, por lo que un registro aceptado puede no tenerlo; por ejemplo, cuando el resultado del envío no llegó (timeout o respuesta ilegible) y se confirmó después con una consulta de estado. Para saber si un registro está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`.
+
+            En los envíos diferidos por lote, todos los registros del mismo envío comparten el mismo CSV, también los rechazados. Solo se omite si la AEAT rechaza todos los registros del envío.
+
+            Un reenvío no borra un CSV ya guardado cuando la nueva respuesta no incluye uno. Un CSV nuevo sustituye al anterior. [Leer más en la FAQ](/faq).
         vf_post_status:
           $ref: "#/components/schemas/vf_post_status"
         vf_record_registration_status:

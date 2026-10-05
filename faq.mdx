@@ -103,6 +103,22 @@ Usa el ID de B para [obtener sus datos](/openapi-reference/obtener-registro-de-f
 
 Si el registro anterior todavía no se ha enviado, el motivo es `pending_submission`. El bloqueo por `unresolved_submission` también se mantiene mientras esté pendiente la conciliación de un reenvío duplicado. Un **rechazo explícito definitivo** de AEAT es distinto de un resultado incierto y no bloquea por sí solo todos los registros posteriores.
 
+## ¿Un CSV vacío significa que el registro no está acreditado?
+
+No. El campo `csv` (Código Seguro de Verificación) **no es un indicador del estado del registro**.
+
+La AEAT emite el CSV en la respuesta a la remisión y acredita la remisión, no cada registro individual. Según la documentación técnica de la AEAT «Sistemas Informáticos de Facturación» (v1.0.3, apartado 6.4.4), el CSV debe guardarlo el SIF en el momento del alta y **no puede recuperarse mediante consultas posteriores**. Por eso un registro aceptado puede tener `csv` vacío (`null`). Ocurre, por ejemplo, cuando el resultado del envío no llegó (timeout o respuesta ilegible) y se confirmó después con una [consulta de estado](/openapi-reference/consultar-registro-de-facturación-con-veri*factu).
+
+<Warning>Para saber si un registro está acreditado, usa el estado del registro (`vf_record_registration_status`), no la presencia del `csv`. Ver [valores posibles para `vf_record_registration_status`](/openapi-reference/enviar-registro-de-facturación#response-data-vf-record-registration-status-one-of-0).</Warning>
+
+### ¿Qué CSV recibe cada registro en un envío diferido por lote?
+
+Todos los registros del mismo envío comparten el mismo CSV, **también los rechazados**. Solo se omite cuando la AEAT rechaza todos los registros del envío.
+
+### ¿Qué pasa con el CSV si reenvío un registro?
+
+Un reenvío no borra un CSV que el registro ya tenga guardado cuando la nueva respuesta de la AEAT no incluye uno, por ejemplo ante un registro duplicado, o cuando el envío falla sin respuesta. Si la nueva respuesta trae un CSV, este sustituye al anterior.
+
 ## Hay un límite de 12 líneas (conceptos) para las facturas. ¿Qué debo hacer si un cliente emite facturas con más de 12 líneas?
 
 La lista de los conceptos facturados deben agruparse por **condición fiscal completa**. En ese sentido, el número máximo de líneas es de 12.

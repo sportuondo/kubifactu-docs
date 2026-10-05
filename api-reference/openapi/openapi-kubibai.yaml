@@ -308,7 +308,7 @@ paths:
                     - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
                     - `full_invoice_number`: `string`. Número de factura.
                     - `fingerprint`: `string`. Huella del registro de facturación.
-                    - `csv`: `string`. Código Seguro de Verificación del registro de facturación.
+                    - `csv`: `string|null`. Código Seguro de Verificación (CSV) de la remisión que contiene el registro. Puede ser `null` aunque el registro esté aceptado: para saber si está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`. [Leer más en la FAQ](/faq).
                     - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
                     - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
                     - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
@@ -805,7 +805,14 @@ components:
             csv:
               nullable: true
               type: string
-              description: Código Seguro de Verificación del registro de facturación.
+              description: |
+                Código Seguro de Verificación (CSV) que la AEAT emite en la respuesta a la remisión. Acredita la remisión, no cada registro individual.
+
+                **Un `csv` vacío (`null`) no significa que el registro no esté acreditado.** La AEAT no devuelve el CSV en consultas posteriores, por lo que un registro aceptado puede no tenerlo; por ejemplo, cuando el resultado del envío no llegó (timeout o respuesta ilegible) y se confirmó después con una consulta de estado. Para saber si un registro está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`.
+
+                En los envíos diferidos por lote, todos los registros del mismo envío comparten el mismo CSV, también los rechazados. Solo se omite si la AEAT rechaza todos los registros del envío.
+
+                Un reenvío no borra un CSV ya guardado cuando la nueva respuesta no incluye uno. Un CSV nuevo sustituye al anterior. [Leer más en la FAQ](/faq).
             vf_post_status:
               $ref: "#/components/schemas/vf_post_status"
             vf_record_registration_status:
