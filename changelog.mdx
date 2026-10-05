@@ -3,6 +3,11 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2026-10-05" description="Actualización documental">
+  - Aclarado en la [FAQ](/faq) el flujo del panel para envíos Failure / Unknown: el primer clic comprueba el estado en la AEAT y, sólo tras un SinDatos válido, un segundo clic permite confirmar el reenvío. Se detallan sus diferencias con la API y los reintentos automáticos, que conservan las esperas y el orden.
+  - Documentado el bloqueo por conciliación obligatoria en el [endpoint de reenvío](/openapi-reference/reenviar-registro-de-facturación): HTTP 409 con motivo `pending_reconciliation` y el UUID del propio registro. Se mantienen los motivos de bloqueo por registros anteriores y la distinción entre timeout, resultado incierto y rechazo explícito.
+</Update>
+
 <Update label="2026-10-04">
   - La respuesta de `GET /api/invoices` ([listar registros de facturación con filtros](/openapi-reference/listar-registros-de-facturación-con-filtros)) incluye los totales almacenados `total_quota` y `total_amount`, y el desglose fiscal completo `tax_breakdown` en cada elemento de `data`. Los campos del desglose sin valor se devuelven como `null`. Los registros de anulación incluyen ambos totales a `0` y `tax_breakdown: []`.
 </Update>
