@@ -123,12 +123,12 @@ Un reenvío no borra un CSV que el registro ya tenga guardado cuando la nueva re
 
 La lista de los conceptos facturados deben agruparse por **condición fiscal completa**. En ese sentido, el número máximo de líneas es de 12.
 
-<Warning>Esta agrupación responde a la condición fiscal de la operación, y no puede realizarse únicamente por tipo impositivo.</Warning>
+<Warning>Esta agrupación responde a la condición fiscal de la operación, y no puede realizarse únicamente por tipo impositivo. En las peticiones con `tax_type_key: "02"` (IPSI), debe usarse `ipsi_tax_regime_key` en lugar de las claves de IVA o IGIC. La API admite los tipos y claves enumerados en la referencia; esto no implica cobertura completa de todos los impuestos ni regímenes IPSI.</Warning>
 
 ```
 CONDICIÓN FISCAL COMPLETA =
 tax_rate +
-vat_tax_regime_key o igic_tax_regime_key +
+vat_tax_regime_key, ipsi_tax_regime_key o igic_tax_regime_key (según `tax_type_key`) +
 equalization_tax_rate (si aplica)
 ```
 
@@ -164,3 +164,9 @@ En las facturas, a menudo se incluyen menciones, detracciones, adiciones o canti
 Todos estos importes, aunque se incluyen en la factura por su evidente importancia, no son importes "propios" de la factura, razón por la que no afectan a la base ni a la cuota de IVA, ni al "Importe Total" . Se trata de cantidades que alteran el **"total a pagar"** añadiendo o restando cantidades, pero no el **"importe total factura"**. Por ello cuando sea preciso incluirlos en la factura, **esa parte NO integrará el registro de facturación**.
 
 A este respecto, a modo de consejo o recomendación, para facilitar la comprensión de este matiz al cliente que reciba la factura, se podrían incluir ambos importes en la factura: "Importe total factura" (que es el que aparece en el QR tributario) y "Total a pagar", debidamente diferenciados.
+
+## ¿Cómo informar una factura con IPSI?
+
+Para las nuevas peticiones con `tax_type_key: "02"`, informa `ipsi_tax_regime_key` con una de las claves admitidas (`01`, `08`, `11`, `18`, `19` o `20`) y omite `vat_tax_regime_key` e `igic_tax_regime_key`. La referencia de la API describe el alcance concreto de cada clave; no debe interpretarse como cobertura completa de todos los regímenes IPSI.
+
+La documentación técnica de la AEAT «Sistemas Informáticos de Facturación», versión 1.2.2 de 08/04/2026, apartado 3.1.3 y punto 15.6, admite estas seis claves ([PDF de validaciones y errores](https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/IVA/VERI-FACTU/Validaciones_Errores_Veri-Factu.pdf)). La AEAT indica que la omisión de la clave se avisa hasta el 31/12/2026 y se rechaza desde el 01/01/2027. KubiFACTU validará el campo requerido y las combinaciones incompatibles desde esta actualización, que pueden producir una respuesta HTTP 422.

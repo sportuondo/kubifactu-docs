@@ -1,0 +1,43 @@
+---
+title: 'Factura con IPSI'
+description: 'Generación de un registro de facturación con un desglose IPSI admitido por la API'
+---
+
+import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
+
+## Encabezados HTTP
+
+<ClientDefaultHeaders />
+
+## Cuerpo JSON de la petición
+
+Ejemplo ficticio de una factura simplificada por `104.00`, con base imponible de `100.00` e IPSI del `4.00%`. Usa una de las claves de régimen IPSI admitidas por la API; este ejemplo no representa cobertura completa de todos los regímenes IPSI.
+
+<CodeGroup>
+```json JSON
+{
+  "sif_id": "00000000-0000-4000-8000-000000000001",
+  "invoice_type_key": "F2",
+  "sender_data": {
+    "company_name": "Empresa emisora de ejemplo",
+    "tax_id_number": "NIF-EMISOR-EJEMPLO"
+  },
+  "full_invoice_number": "2026-IPSI-000001",
+  "fiscal_year": 2026,
+  "issue_date": "2026-10-06",
+  "operation_description": "Factura simplificada de ejemplo sujeta a IPSI.",
+  "total_quota": 4.00,
+  "total_amount": 104.00,
+  "tax_breakdown": [
+    {
+      "tax_type_key": "02",
+      "ipsi_tax_regime_key": "01",
+      "operation_type_key": "S1",
+      "tax_base": 100.00,
+      "tax_rate": 4.00,
+      "tax_quota": 4.00
+    }
+  ]
+}
+```
+</CodeGroup>

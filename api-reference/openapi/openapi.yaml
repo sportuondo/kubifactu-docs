@@ -1378,12 +1378,12 @@ components:
 
             En el endpoint por lotes, la ruta de esta propiedad es `invoices.*.tax_breakdown` y cada factura se valida de forma independiente.
 
-            El desglose debe agruparse por condición fiscal completa: `tax_rate` + `vat_tax_regime_key` o `igic_tax_regime_key` + `equalization_tax_rate` (si aplica). Esta agrupación responde a la condición fiscal de la operación, y no puede realizarse únicamente por tipo impositivo.
+            El desglose debe agruparse por condición fiscal completa: `tax_rate` + `vat_tax_regime_key`, `ipsi_tax_regime_key` o `igic_tax_regime_key` (según `tax_type_key`) + `equalization_tax_rate` (si aplica). Esta agrupación responde a la condición fiscal de la operación, y no puede realizarse únicamente por tipo impositivo.
 
             A modo de ejemplo, indicar lo siguiente:
 
             ### Caso 1: Factura con todas las líneas al 21%
-            Si las líneas al 21% se acogen a regímenes diferentes, deben generarse múltiples agrupaciones en el desglose, cada una con su combinación única de `tax_rate` + `vat_tax_regime_key` o `igic_tax_regime_key` + `equalization_tax_rate` (si aplica).
+            Si las líneas al 21% se acogen a regímenes diferentes, deben generarse múltiples agrupaciones en el desglose, cada una con su combinación única de `tax_rate` + `vat_tax_regime_key`, `ipsi_tax_regime_key` o `igic_tax_regime_key` (según `tax_type_key`) + `equalization_tax_rate` (si aplica).
 
             Ejemplo válido:
             - Línea 1: 21%, régimen general
@@ -1407,11 +1407,46 @@ components:
           items:
             type: object
             required:
-              - tax_type_key
-              - vat_tax_regime_key
-              - igic_tax_regime_key
               - operation_type_key
               - tax_base
+            oneOf:
+              - required: [tax_type_key, vat_tax_regime_key]
+                properties:
+                  tax_type_key:
+                    type: string
+                    enum: ["01"]
+                not:
+                  anyOf:
+                    - required: [igic_tax_regime_key]
+                    - required: [ipsi_tax_regime_key]
+              - required: [tax_type_key, ipsi_tax_regime_key]
+                properties:
+                  tax_type_key:
+                    type: string
+                    enum: ["02"]
+                not:
+                  anyOf:
+                    - required: [vat_tax_regime_key]
+                    - required: [igic_tax_regime_key]
+              - required: [tax_type_key, igic_tax_regime_key]
+                properties:
+                  tax_type_key:
+                    type: string
+                    enum: ["03"]
+                not:
+                  anyOf:
+                    - required: [vat_tax_regime_key]
+                    - required: [ipsi_tax_regime_key]
+              - required: [tax_type_key]
+                properties:
+                  tax_type_key:
+                    type: string
+                    enum: ["05"]
+                not:
+                  anyOf:
+                    - required: [vat_tax_regime_key]
+                    - required: [ipsi_tax_regime_key]
+                    - required: [igic_tax_regime_key]
             properties:
               tax_type_key:
                 $ref: "#/components/schemas/tax_type_key"
@@ -1419,6 +1454,8 @@ components:
                 $ref: "#/components/schemas/vat_tax_regime_key"
               igic_tax_regime_key:
                 $ref: "#/components/schemas/igic_tax_regime_key"
+              ipsi_tax_regime_key:
+                $ref: "#/components/schemas/ipsi_tax_regime_key"
               operation_type_key:
                 $ref: "#/components/schemas/operation_type_key"
               exemption_cause_key:
@@ -1877,6 +1914,7 @@ components:
         - tax_type_key
         - vat_tax_regime_key
         - igic_tax_regime_key
+        - ipsi_tax_regime_key
         - operation_type_key
         - exemption_cause_key
         - tax_base
@@ -1898,6 +1936,11 @@ components:
           nullable: true
           description: Clave del régimen de IGIC almacenada. Es `null` cuando no tiene valor.
           enum: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "14", "15", "17", "18", "19", null]
+        ipsi_tax_regime_key:
+          type: string
+          nullable: true
+          description: Clave del régimen de IPSI almacenada. Es `null` cuando no tiene valor.
+          enum: ["01", "08", "11", "18", "19", "20", null]
         operation_type_key:
           type: string
           nullable: true
@@ -1946,6 +1989,7 @@ components:
         tax_type_key: "01"
         vat_tax_regime_key: "01"
         igic_tax_regime_key: null
+        ipsi_tax_regime_key: null
         operation_type_key: "S1"
         exemption_cause_key: null
         tax_base: 100.50
@@ -2247,6 +2291,8 @@ components:
         - `02`: Impuesto sobre la Producción, los Servicios y la Importación (IPSI) de Ceuta y Melilla.
         - `03`: Impuesto General Indirecto Canario (IGIC).
         - `05`: Otros.
+
+        En las peticiones, `vat_tax_regime_key` solo corresponde a `01`, `ipsi_tax_regime_key` a `02` y `igic_tax_regime_key` a `03`. Para `05` no se informa una clave de régimen. Estas opciones documentan los tipos admitidos por la API; no representan cobertura completa de todos los impuestos o regímenes IPSI.
       enum:
         - "01"
         - "02"
@@ -2293,6 +2339,19 @@ components:
         - "18"
         - "19"
         - "20"
+
+    ipsi_tax_regime_key:
+      type: string
+      description: |
+        Clave del régimen de IPSI aplicable a una operación sujeta a este impuesto. Es obligatoria para las nuevas peticiones con `tax_type_key: "02"` desde esta actualización. No se deben incluir `vat_tax_regime_key` ni `igic_tax_regime_key` en esas peticiones; las claves de régimen IPSI tampoco son compatibles con otros tipos impositivos. Los valores admitidos son:
+
+        - `01`: Régimen general.
+        - `08`: Operaciones sujetas al IGIC / IVA.
+        - `11`: Arrendamiento de local de negocio.
+        - `18`: Operaciones a que se refiere el artículo 73, apartados 4 y 5, de la Ordenanza fiscal del IPSI (solo aplicable en Ceuta).
+        - `19`: Operaciones interiores exentas.
+        - `20`: Régimen de estimación objetiva.
+      enum: ["01", "08", "11", "18", "19", "20"]
 
     igic_tax_regime_key:
       type: string
