@@ -79,3 +79,5 @@ Con carácter general, todas las facturas emitidas, en la medida en que responda
 En estos casos hay que emitir una [subsanación con registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).
 
 Para subsanar un registro que ha sido rechazado anteriormente por rechazo de Veri*Factu debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original.
+
+<Warning>No envíes `previous_rejection_key = X` si la AEAT ya tiene registrada la factura o si su alta sigue pendiente de envío: la API lo rechaza con HTTP `422`. Ver [¿Cuándo no debo subsanar con rechazo previo X?](/faq#¿cuándo-no-debo-subsanar-con-rechazo-previo-x)</Warning>

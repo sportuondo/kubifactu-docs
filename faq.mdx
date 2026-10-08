@@ -17,6 +17,8 @@ Para subsanar un registro que ha sido **_rechazado_** anteriormente por Veri*Fac
 
 <Warning>Solo debe utilizarse la subsanación cuando la AEAT haya **_rechazado_** o **_aceptado con errores_** el registro de forma explícita. Ver [valores posible para `vf_record_registration_status`](/openapi-reference/enviar-registro-de-facturación#response-data-vf-record-registration-status-one-of-0).</Warning>
 
+<Warning>No envíes `previous_rejection_key = X` si la AEAT ya tiene registrada la factura o si su alta sigue pendiente de envío: la API lo rechaza con HTTP `422`. Ver [¿Cuándo no debo subsanar con rechazo previo X?](#¿cuándo-no-debo-subsanar-con-rechazo-previo-x)</Warning>
+
 ### Caso de ejemplo
 
 Dado la secuencia de facturas F4 → F5 → F6, donde cada factura se genera encadenada a la anterior. El resultado del envío es:
@@ -34,11 +36,22 @@ En este punto hay que generar un **registro de subsanación por rechazo previo**
 
 El registro de subsanación de F5 se encadena al último registro válido del emisor, existente en el SIF en ese momento. En este ejemplo sería F6.
 
+### ¿Cuándo no debo subsanar con rechazo previo X?
+
+Con `previous_rejection_key = X` se declara que la factura **no está registrada en la AEAT**. Si la AEAT ya tiene un alta o una anulación de esa factura, rechaza la subsanación como registro duplicado (código 3000).
+
+Para evitarlo, KubiFACTU comprueba si ya existe un alta de la misma factura (mismo número y mismo ejercicio o fecha de expedición, en la misma empresa cliente) y rechaza la petición con HTTP `422` y el error en `previous_rejection_key` (`invoices.<n>.previous_rejection_key` en los lotes) en estos casos:
+
+- **El alta original ya está registrada en la AEAT** (`vf_record_registration_status` = `success`, `accepted_with_errors` o `cancelled`). No envíes `X`: si necesitas corregir su contenido, envía una [subsanación ordinaria](/api-reference/facturas/examples/correction) con `correction_key = S` y `previous_rejection_key = N` (u omitido).
+- **El alta original sigue pendiente de envío.** Espera a conocer su resultado, mediante el `callback_url` o [consultando el registro](/openapi-reference/consultar-registro-de-facturación-con-veri*factu), y decide después cómo subsanarla.
+
+La subsanación con `X` sigue admitiéndose cuando el alta original fue **rechazada** (`failed`), **no está registrada** (`not_registered`) o no existe en KubiFACTU.
+
 ## ¿Qué debo hacer cuando Veri*Factu "acepta con errores" una de mis facturas?
 
 En estos casos hay que emitir una subsanación ordinaria, es decir, una [subsanación SIN registro previo rechazado](/api-reference/facturas/examples/correction).
 
-Para subsanar un registro que ha sido **_aceptado con errores_** por Veri*Factu debemos enviar el campo `correction_key` con el valor `S` y **hay que obviar** el campo `previous_rejection_key`. También deberán modificarse los campos que deban ser corregidos.
+Para subsanar un registro que ha sido **_aceptado con errores_** por Veri*Factu debemos enviar el campo `correction_key` con el valor `S` y **hay que obviar** el campo `previous_rejection_key` (o enviarlo con el valor `N`). También deberán modificarse los campos que deban ser corregidos.
 
 <Warning>Solo debe utilizarse la subsanación cuando la AEAT haya **_rechazado_** o **_aceptado con errores_** el registro de forma explícita. Ver [valores posible para `vf_record_registration_status`](/openapi-reference/enviar-registro-de-facturación#response-data-vf-record-registration-status-one-of-0).</Warning>
 

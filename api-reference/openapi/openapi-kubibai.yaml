@@ -32,11 +32,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateInvoiceRecordResponse'
         '422':
-          description: "Errores de validación."
+          description: |
+            Errores de validación.
+
+            Una subsanación con `correction_key = S` y `previous_rejection_key = X` devuelve el error en `previous_rejection_key` si en KubiFACTU ya existe el alta de la misma factura registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
+              examples:
+                registered_original:
+                  summary: "Alta original registrada en la AEAT"
+                  value:
+                    data:
+                      error:
+                        message: "The given data was invalid."
+                        errors:
+                          previous_rejection_key:
+                            - "AEAT already holds this invoice, so previous_rejection_key cannot be X. To correct the registered record, send the correction with previous_rejection_key N. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                        details:
+                          request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
+                pending_original:
+                  summary: "Alta original pendiente de envío"
+                  value:
+                    data:
+                      error:
+                        message: "The given data was invalid."
+                        errors:
+                          previous_rejection_key:
+                            - "The original record of this invoice is still pending submission to AEAT, so it cannot be corrected with previous_rejection_key X yet. Wait for its submission result. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                        details:
+                          request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
         '403':
           description: "No autorizado. La API-KEY proporcionada no es válida."
           content:
@@ -67,11 +93,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateInvoiceRecordResponse'
         '422':
-          description: "Errores de validación."
+          description: |
+            Errores de validación.
+
+            Una subsanación con `correction_key = S` y `previous_rejection_key = X` devuelve el error en `previous_rejection_key` si en KubiFACTU ya existe el alta de la misma factura registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
+              examples:
+                registered_original:
+                  summary: "Alta original registrada en la AEAT"
+                  value:
+                    data:
+                      error:
+                        message: "The given data was invalid."
+                        errors:
+                          previous_rejection_key:
+                            - "AEAT already holds this invoice, so previous_rejection_key cannot be X. To correct the registered record, send the correction with previous_rejection_key N. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                        details:
+                          request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
+                pending_original:
+                  summary: "Alta original pendiente de envío"
+                  value:
+                    data:
+                      error:
+                        message: "The given data was invalid."
+                        errors:
+                          previous_rejection_key:
+                            - "The original record of this invoice is still pending submission to AEAT, so it cannot be corrected with previous_rejection_key X yet. Wait for its submission result. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                        details:
+                          request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
         '403':
           description: "No autorizado. La API-KEY proporcionada no es válida."
           content:
@@ -995,6 +1047,13 @@ components:
         - `X`: El alta inicial fue **rechazada** y la factura **no está registrada en la AEAT**. También corresponde a las operativas especiales de **subsanación sin registro previo**. Solo puede informarse cuando `correction_key = S`; **no significa simplemente que el último envío fue rechazado**.
         - `S`: La factura **ya está registrada en la AEAT**, pero una subsanación posterior fue **rechazada**. Solo puede informarse cuando `correction_key = S`.
         - `N` u omitido: En una subsanación habitual de una factura **ya registrada en la AEAT**, se informa `correction_key = S`. También corresponde a un alta normal/inicial, sin subsanación.
+
+        Con `correction_key = S` y `previous_rejection_key = X`, la API busca en KubiFACTU un registro de alta de la misma factura (mismo número y mismo ejercicio o fecha de expedición, en la misma empresa cliente) y devuelve HTTP `422` con el error en `previous_rejection_key` si ese registro:
+
+        - Está **registrado en la AEAT** (`vf_record_registration_status` = `success`, `accepted_with_errors` o `cancelled`). La AEAT rechazaría la subsanación como registro duplicado (código 3000), porque con `X` la factura no debe existir previamente en la AEAT. No envíes `X`: para corregir el contenido del registro aceptado, envía la subsanación con `previous_rejection_key = N`.
+        - Está **pendiente de envío** a la AEAT. Espera a conocer su resultado, mediante `callback_url` o consultando el registro, antes de decidir cómo subsanarlo.
+
+        `X` sigue admitiéndose cuando el alta original fue rechazada (`failed`), no está registrada (`not_registered`) o no existe en KubiFACTU.
       enum:
         - X
         - S

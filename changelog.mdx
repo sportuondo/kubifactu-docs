@@ -3,6 +3,10 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2026-10-08" description="Actualización documental">
+  - Documentado el nuevo error HTTP 422 en `previous_rejection_key` de los endpoints de creación (normales, diferidos, lotes y KubiBAI): una subsanación con `correction_key = S` y `previous_rejection_key = X` se rechaza si en KubiFACTU consta el alta de la misma factura registrada en la AEAT o pendiente de envío, porque la AEAT la rechazaría como registro duplicado (código 3000). Para corregir una factura ya registrada se usa `previous_rejection_key = N`. Consulta la [FAQ](/faq#¿cuándo-no-debo-subsanar-con-rechazo-previo-x) y el [ejemplo de subsanación con registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).
+</Update>
+
 <Update label="2026-10-06" description="Actualización documental">
   - Añadido el soporte documentado para desgloses IPSI: las nuevas peticiones con `tax_type_key: "02"` requieren `ipsi_tax_regime_key`, y las combinaciones incompatibles pueden responder con HTTP 422. La omisión de esta clave se avisa en la AEAT hasta el 31/12/2026 y se rechaza desde el 01/01/2027. Consulta la [FAQ](/faq) y el [ejemplo de factura IPSI](/api-reference/facturas/examples/ipsi).
 </Update>

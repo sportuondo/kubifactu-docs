@@ -1,6 +1,6 @@
 ---
 title: 'Subsanación con registro previo rechazado'
-description: 'Generación de un nuevo registro de subsanación cuando un registro anterior ha sido rechazado (por rechazo de Veri*Factu o por problemas técnicos en el envío)'
+description: 'Generación de un nuevo registro de subsanación cuando Veri*Factu ha rechazado el alta original'
 ---
 
 import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
@@ -11,7 +11,11 @@ import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
 
 ## Cuerpo JSON de la petición
 
-Para subsanar un registro que ha sido rechazado anteriormente (por rechazo de Veri*Factu o por problemas técnicos en el envío) debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original.
+Para subsanar un registro que ha sido rechazado anteriormente por Veri*Factu, y que por tanto no está registrado en la AEAT, debemos enviar el campo `correction_key` con el valor `S` y el campo `previous_rejection_key` con el valor `X`. El resto de campos del registro se pueden mantener idénticos al original.
+
+<Note>Un fallo técnico en el envío no es un rechazo. En ese caso no se subsana: [se reenvía el mismo registro](/faq#¿qué-debo-hacer-si-no-puedo-enviar-un-registro-porque-verifactu-tiene-problemas-técnicos-de-conexión-o-no-ha-superado-las-validaciones-básicas-de-verifactu) sin modificarlo.</Note>
+
+<Warning>Con `previous_rejection_key = X` se declara que la factura **no está registrada en la AEAT**. Si en KubiFACTU existe un alta de la misma factura (mismo número y mismo ejercicio o fecha de expedición, en la misma empresa cliente) que ya está registrada en la AEAT o que sigue pendiente de envío, la API rechaza la petición con HTTP `422`. Si la factura ya está registrada y necesitas corregirla, utiliza una [subsanación ordinaria](/api-reference/facturas/examples/correction) con `previous_rejection_key = N`. Si el alta sigue pendiente, espera a conocer su resultado. [Más información](/faq#¿cuándo-no-debo-subsanar-con-rechazo-previo-x).</Warning>
 
 <CodeGroup>
 ```json JSON
@@ -46,6 +50,30 @@ Para subsanar un registro que ha sido rechazado anteriormente (por rechazo de Ve
       "tax_quota": 21.00
     }
   ]
+}
+```
+</CodeGroup>
+
+## Respuesta de error si la AEAT ya tiene la factura
+
+Si el alta original de la factura ya está registrada en la AEAT, la API responde con HTTP `422` e indica el ID en KubiFACTU del registro existente. En el endpoint de lotes, la clave del error es `invoices.<n>.previous_rejection_key`.
+
+<CodeGroup>
+```json JSON
+{
+  "data": {
+    "error": {
+      "message": "The given data was invalid.",
+      "errors": {
+        "previous_rejection_key": [
+          "AEAT already holds this invoice, so previous_rejection_key cannot be X. To correct the registered record, send the correction with previous_rejection_key N. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+        ]
+      },
+      "details": {
+        "request_id": "9ded9e2c-d59e-4432-a926-652cbcfac365"
+      }
+    }
+  }
 }
 ```
 </CodeGroup>
