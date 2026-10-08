@@ -4,6 +4,7 @@ description: 'Registro de actualizaciones de la documentación'
 ---
 
 <Update label="2026-10-08" description="Actualización documental">
+  - Los errores SOAP causados por el NIF o el nombre del obligado a emitir o del representante (códigos 4104, 4105, 4107, 4109, 4115, 4116, 4117, 4123 y 4124) pasan a guardarse como rechazo: `vf_post_status = success` y `vf_record_registration_status = failed`, en lugar de `failure`. Ya no se pueden reenviar ni bloquean los siguientes registros del SIF; se corrigen con una subsanación `correction_key = S` y `previous_rejection_key = X`. El resto de errores SOAP no cambia. Consulta la [FAQ](/faq#¿qué-ocurre-si-veri-factu-no-identifica-el-nif-o-el-nombre-del-emisor).
   - Documentado el nuevo error HTTP 422 en `previous_rejection_key` de los endpoints de creación (normales, diferidos, lotes y KubiBAI): una subsanación con `correction_key = S` y `previous_rejection_key = X` se rechaza si en KubiFACTU consta el alta de la misma factura registrada en la AEAT o pendiente de envío, porque la AEAT la rechazaría como registro duplicado (código 3000). Para corregir una factura ya registrada se usa `previous_rejection_key = N`. Consulta la [FAQ](/faq#¿cuándo-no-debo-subsanar-con-rechazo-previo-x) y el [ejemplo de subsanación con registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).
 </Update>
 

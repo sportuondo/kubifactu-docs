@@ -73,6 +73,8 @@ El registro de subsanación de F5 **es un registro independiente del de alta** y
 
 Si el envío falla por un problema técnico de conexión con Veri*Factu o por no superar sus validaciones básicas, **no debes modificar el registro ni generar otra alta o anulación de la misma factura**. El reenvío del mismo registro conserva su UUID, identidad, huella y encadenamiento originales.
 
+La excepción son los errores en el NIF o el nombre del emisor o del representante: reenviar no los resuelve y se tratan como un rechazo. Ver [¿Qué ocurre si Veri*Factu no identifica el NIF o el nombre del emisor?](#¿qué-ocurre-si-veri-factu-no-identifica-el-nif-o-el-nombre-del-emisor)
+
 `vf_post_status = failure` indica un fallo de envío o una respuesta de error; **no demuestra por sí solo que la AEAT no haya recibido el registro**. Un timeout identificable se guarda con `vf_post_status = failure` y `vf_record_registration_status = unknown`, también cuando ocurra en futuros envíos diferidos. El timeout por sí solo no activa la conciliación obligatoria. No se reclasifican masivamente los registros históricos.
 
 ### ¿Cómo compruebo el resultado desde el panel?
@@ -115,6 +117,29 @@ Por ejemplo, en la secuencia A → B → C:
 Usa el ID de B para [obtener sus datos](/openapi-reference/obtener-registro-de-facturación) (`GET /api/invoices/{invoiceId}`) y [consultar su estado en AEAT](/openapi-reference/consultar-registro-de-facturación-con-veri*factu) (`GET /api/invoices/{invoiceId}/query`). Si B no llegó a AEAT, completa el [reenvío del mismo registro](/openapi-reference/reenviar-registro-de-facturación) (`GET /api/invoices/{invoiceId}/resubmit`), conservando su identidad, huella y encadenamiento. Vuelve a solicitar C cuando B deje de bloquear la cadena.
 
 Si el registro anterior todavía no se ha enviado, el motivo es `pending_submission`. El bloqueo por `unresolved_submission` también se mantiene mientras esté pendiente la conciliación de un reenvío duplicado. Un **rechazo explícito definitivo** de AEAT es distinto de un resultado incierto y no bloquea por sí solo todos los registros posteriores.
+
+## ¿Qué ocurre si Veri*Factu no identifica el NIF o el nombre del emisor?
+
+La AEAT comprueba que el NIF y el nombre o razón social del obligado a emitir (`sender_data`) y, si se informa, del representante, coinciden con su censo. Si no coinciden, rechaza la remisión completa con un error SOAP, por ejemplo:
+
+```
+Codigo[4104].Error en la cabecera: el valor del campo NIF del bloque ObligadoEmision no está identificado.
+```
+
+Estos errores (códigos 4104, 4105, 4107, 4109, 4115, 4116, 4117, 4123 y 4124) se guardan como un **rechazo**:
+
+- `vf_post_status = success` y `vf_record_registration_status = failed`, con el detalle en `vf_error_descriptions`.
+- El registro **no se puede reenviar**: el reenvío manda los mismos datos y volvería a fallar.
+- El registro **no bloquea** los siguientes registros del SIF.
+
+Para corregirlo:
+
+1. Revisa con tu cliente el NIF y el nombre o razón social tal como constan en la AEAT. Si el NIF de la empresa cliente es erróneo, corrígelo primero en la empresa cliente.
+2. Envía una [subsanación con registro previo rechazado](/api-reference/facturas/examples/correction-no-previous) (`correction_key = S` y `previous_rejection_key = X`) con los datos corregidos.
+
+<Note>Un alta normal con el mismo número de factura se rechaza como duplicada. Usa siempre la subsanación.</Note>
+
+Los demás errores SOAP (técnicos, de certificado o de formato del mensaje) siguen dejando `vf_post_status = failure`: se resuelven reenviando el mismo registro.
 
 ## ¿Un CSV vacío significa que el registro no está acreditado?
 

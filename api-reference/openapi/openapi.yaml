@@ -2282,7 +2282,9 @@ components:
 
         En una subsanación se informa `correction_key = S` y se utiliza el valor de `previous_rejection_key` que corresponda a la situación de la factura en la AEAT.
 
-        Un rechazo **no debe confundirse con un error técnico en el envío** (timeout, error de red, fallo del servicio, ausencia de respuesta, error SOAP, etc.) que tendrá el campo `vf_post_status = failure`. En esos casos **el registro no se considera rechazado**, y debe **reenviarse exactamente igual**, **sin modificar datos** y **sin informar** `correction_key` ni `previous_rejection_key`. [Ver más información al respecto](/faq#¿qué-debo-hacer-si-no-puedo-enviar-un-registro-porque-veri-factu-tiene-problemas-técnicos-de-conexión).
+        Un rechazo **no debe confundirse con un error técnico en el envío** (timeout, error de red, fallo del servicio, ausencia de respuesta, error SOAP técnico, etc.) que tendrá el campo `vf_post_status = failure`. En esos casos **el registro no se considera rechazado**, y debe **reenviarse exactamente igual**, **sin modificar datos** y **sin informar** `correction_key` ni `previous_rejection_key`. [Ver más información al respecto](/faq#¿qué-debo-hacer-si-no-puedo-enviar-un-registro-porque-veri-factu-tiene-problemas-técnicos-de-conexión).
+
+        Los errores SOAP causados por el NIF o el nombre del obligado a emitir o del representante (códigos 4104, 4105, 4107, 4109, 4115, 4116, 4117, 4123 y 4124) **sí son un rechazo**: se guardan con `vf_post_status = success` y `vf_record_registration_status = failed`, porque reenviar los mismos datos no los resuelve. Corrige los datos y subsana con `correction_key = S` y `previous_rejection_key = X`. [Ver más información al respecto](/faq#¿qué-ocurre-si-veri-factu-no-identifica-el-nif-o-el-nombre-del-emisor).
 
         - `X`: El alta inicial fue **rechazada** y la factura **no está registrada en la AEAT**. También corresponde a las operativas especiales de **subsanación sin registro previo**. Solo puede informarse cuando `correction_key = S`; **no significa simplemente que el último envío fue rechazado**.
         - `S`: La factura **ya está registrada en la AEAT**, pero una subsanación posterior fue **rechazada**. Solo puede informarse cuando `correction_key = S`.
@@ -2530,7 +2532,7 @@ components:
         Los valores posibles son:
 
         - `success`: Se ha realizado el envío a Veri*Factu.
-        - `failure`: Ha fallado el envío a Veri*Factu o Veri*Factu ha respondido con un error. Un timeout identificable se combina con `vf_record_registration_status = unknown`: no demuestra que la AEAT no haya recibido el registro y no activa por sí solo la conciliación obligatoria.
+        - `failure`: Ha fallado el envío a Veri*Factu o Veri*Factu ha respondido con un error que se resuelve reenviando el mismo registro. Un timeout identificable se combina con `vf_record_registration_status = unknown`: no demuestra que la AEAT no haya recibido el registro y no activa por sí solo la conciliación obligatoria.
       enum:
         - "success"
         - "failure"
@@ -2543,7 +2545,7 @@ components:
 
         - `success`: El registro ha sido correctamente registrado en Veri*Factu.
         - `accepted_with_errors`: El registro ha sido registrado en Veri*Factu, pero tiene **errores que deben ser subsanados**.
-        - `failed`: El registro tiene errores no aceptables y ha sido **rechazado** por Veri*Factu.
+        - `failed`: El registro tiene errores no aceptables y ha sido **rechazado** por Veri*Factu. Incluye los errores SOAP causados por el NIF o el nombre del obligado a emitir o del representante.
         - `not_registered`: No se ha encontrado el registro en Veri*Factu.
         - `cancelled`: El registro está anulado.
         - `unknown`: Se desconoce el estado del registro. Puede acompañar a `vf_post_status = failure` tras un timeout identificable. Si el envío está en `success`, exige conciliación antes del reenvío manual.
