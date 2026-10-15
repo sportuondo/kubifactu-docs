@@ -1586,6 +1586,8 @@ components:
           description: |
             Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.
             Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `33.57`.
+            Se compara con la suma de las cuotas y recargos del desglose, incluso cuando el resultado es cero. Una diferencia absoluta superior a 10,00 € devuelve HTTP 422 con `incorrect_total_quota` (en lotes, `invoices.N.incorrect_total_quota`).
+            Esta comprobación se aplica a los envíos inmediatos, diferidos y por lotes, tanto con `tax_breakdown` como con su alias `lines`. Una diferencia de exactamente 10,00 € está dentro de la tolerancia.
 
         total_amount:
           type: number
@@ -1593,6 +1595,8 @@ components:
           description: |
             Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las entradas de `tax_breakdown`.
             Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2450.75`.
+            Se compara con la suma del desglose, incluso cuando el resultado es cero. Una diferencia absoluta superior a 10,00 € devuelve HTTP 422 con `incorrect_total_amount` (en lotes, `invoices.N.incorrect_total_amount`).
+            Esta comprobación se aplica a los envíos inmediatos, diferidos y por lotes, tanto con `tax_breakdown` como con su alias `lines`. Una diferencia de exactamente 10,00 € está dentro de la tolerancia.
 
         simplified_invoice_key:
           $ref: "#/components/schemas/simplified_invoice_key"

@@ -829,14 +829,20 @@ components:
               format: integer
               description: |
                 Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.
-                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `25436`.
+                Valor entero en céntimos. Ejemplo: Para 254,36 € el valor debe ser `25436`.
+                Se compara con la suma de las cuotas y recargos de `invoice_data.tax_breakdown`, cuyos importes se expresan en euros. La comparación convierte las cantidades a la misma unidad y también se realiza cuando la suma es cero.
+                Una diferencia absoluta superior a 1.000 céntimos (10,00 €) devuelve HTTP 422 con `invoice_data.incorrect_total_quota`. Exactamente 1.000 céntimos está dentro de la tolerancia.
+                Se aplica a los envíos inmediatos y diferidos, tanto con `tax_breakdown` como con su alias `lines`.
 
             total_amount:
               type: number
               format: integer
               description: |
                 Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las entradas de `invoice_data.tax_breakdown`.
-                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `25436`.
+                Valor entero en céntimos. Ejemplo: Para 254,36 € el valor debe ser `25436`.
+                Se compara con la suma de las bases, cuotas y recargos de `invoice_data.tax_breakdown`, cuyos importes se expresan en euros. La comparación convierte las cantidades a la misma unidad y también se realiza cuando la suma es cero.
+                Una diferencia absoluta superior a 1.000 céntimos (10,00 €) devuelve HTTP 422 con `invoice_data.incorrect_total_amount`. Exactamente 1.000 céntimos está dentro de la tolerancia.
+                Se aplica a los envíos inmediatos y diferidos, tanto con `tax_breakdown` como con su alias `lines`.
 
           required:
             - invoice_type_key
@@ -1351,9 +1357,9 @@ components:
                   example:
                     invoice_exists:
                       - "An invoice already exists with the indicated invoice number and fiscal for the provided SIF. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
-                    incorrect_total_quota:
+                    invoice_data.incorrect_total_quota:
                       - "The total quota of the invoice does not match the total tax quota and equalization_tax_quota of the tax breakdown. Calculated total quota: [26.25]."
-                    incorrect_total_amount:
+                    invoice_data.incorrect_total_amount:
                       - "The total amount of the invoice does not match the total tax base of the tax breakdown. Calculated total amount: [151.25]."
                 details:
                   type: object
