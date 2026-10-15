@@ -833,16 +833,24 @@ components:
                 Se compara con la suma de las cuotas y recargos de `invoice_data.tax_breakdown`, cuyos importes se expresan en euros. La comparación convierte las cantidades a la misma unidad y también se realiza cuando la suma es cero.
                 Una diferencia absoluta superior a 1.000 céntimos (10,00 €) devuelve HTTP 422 con `invoice_data.incorrect_total_quota`. Exactamente 1.000 céntimos está dentro de la tolerancia.
                 Se aplica a los envíos inmediatos y diferidos, tanto con `tax_breakdown` como con su alias `lines`.
+                Excepciones por régimen: si existe al menos una línea válida de IVA (`tax_type_key: "01"`) con `vat_tax_regime_key` igual a `03`, `05`, `06`, `08` o `09`, de IGIC (`"03"`) con uno de esos valores en `igic_tax_regime_key`, o de IPSI (`"02"`) con `ipsi_tax_regime_key: "08"`, se omiten las comparaciones globales de `total_amount` y `total_quota` para toda esa factura.
+                En facturas mixtas basta una línea con uno de esos regímenes, independientemente de su posición. Es un criterio conservador de KubiFACTU para evitar falsos rechazos: no se comprueba la coherencia de ambas sumas globales ni se compara solo el subtotal de las líneas ordinarias. La documentación consultada de la AEAT no concreta este criterio para mezclas.
+                La excepción no elimina la obligatoriedad ni la validación del formato de los totales, del desglose o de los regímenes. El impuesto `05` (Otros) no es el régimen `05` y no activa la excepción.
 
             total_amount:
               type: number
               format: integer
               description: |
-                Importe total de la factura. Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las entradas de `invoice_data.tax_breakdown`.
+                Importe total de la factura. Con carácter general se compara con Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las entradas de `invoice_data.tax_breakdown`, salvo las excepciones por régimen indicadas a continuación.
                 Valor entero en céntimos. Ejemplo: Para 254,36 € el valor debe ser `25436`.
                 Se compara con la suma de las bases, cuotas y recargos de `invoice_data.tax_breakdown`, cuyos importes se expresan en euros. La comparación convierte las cantidades a la misma unidad y también se realiza cuando la suma es cero.
                 Una diferencia absoluta superior a 1.000 céntimos (10,00 €) devuelve HTTP 422 con `invoice_data.incorrect_total_amount`. Exactamente 1.000 céntimos está dentro de la tolerancia.
                 Se aplica a los envíos inmediatos y diferidos, tanto con `tax_breakdown` como con su alias `lines`.
+                Excepciones por régimen: si existe al menos una línea válida de IVA (`tax_type_key: "01"`) con `vat_tax_regime_key` igual a `03`, `05`, `06`, `08` o `09`, de IGIC (`"03"`) con uno de esos valores en `igic_tax_regime_key`, o de IPSI (`"02"`) con `ipsi_tax_regime_key: "08"`, se omiten las comparaciones globales de `total_amount` y `total_quota` para toda esa factura.
+                En facturas mixtas basta una línea con uno de esos regímenes, independientemente de su posición. Es un criterio conservador de KubiFACTU para evitar falsos rechazos: no se comprueba la coherencia de ambas sumas globales ni se compara solo el subtotal de las líneas ordinarias. La documentación consultada de la AEAT no concreta este criterio para mezclas.
+                La excepción no elimina la obligatoriedad ni la validación del formato de los totales, del desglose o de los regímenes. El impuesto `05` (Otros) no es el régimen `05` y no activa la excepción.
+                Ejemplo ilustrativo de bienes usados (IVA, régimen `03`): compra de 1.000 €, venta de 1.242 €, base de 200 € y cuota de 42 €. El precio total se declara como `total_amount: 124200` y la cuota como `total_quota: 4200` (céntimos), mientras que el desglose conserva `tax_base: 200.00` y `tax_quota: 42.00` (euros). La diferencia entre precio total y suma del desglose no genera este 422.
+                Referencia: [Validaciones y errores de la AEAT, versión 1.2.2 de 08/04/2026, apartados 3.1.3.15.6, 3.1.3.16 y 3.1.3.17](https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/IVA/VERI-FACTU/Validaciones_Errores_Veri-Factu.pdf#page=15).
 
           required:
             - invoice_type_key
