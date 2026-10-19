@@ -5,6 +5,7 @@ description: 'Registro de actualizaciones de la documentación'
 
 <Update label="2026-10-19" description="Actualización documental">
   - Retirada de la [FAQ](/faq) y del [endpoint de reenvío](/openapi-reference/reenviar-registro-de-facturación) la mención a reintentos automáticos de los envíos fallidos: KubiFACTU no los ofrece. Para recuperar un envío fallido o con resultado incierto, consulta el registro y, si procede, solicita su reenvío.
+  - Tras un [reenvío](/openapi-reference/reenviar-registro-de-facturación), `vf_response_body` y `vf_error_descriptions` reflejan solo la última respuesta de la AEAT, igual que tras el envío inicial. Antes, un reenvío rechazado anteponía la respuesta y los errores nuevos a los del intento anterior.
 </Update>
 
 <Update label="2026-10-08" description="Actualización documental">
