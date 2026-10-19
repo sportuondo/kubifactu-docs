@@ -88,7 +88,7 @@ Por ejemplo, un timeout deja la factura F5 en Failure / Unknown. Pulsas reenviar
 
 Si la consulta falla, es ambigua, carece de huella o no coincide con el registro consultado, **no se reenvía** y se mantiene la necesidad de comprobación. Un rechazo confirmado se guarda como rechazo; no equivale a aceptación y debe seguir el [procedimiento de subsanación por rechazo](/api-reference/facturas/examples/correction-no-previous).
 
-El segundo clic comprueba de nuevo el estado actual, la conciliación, el tiempo de espera y la cadena. Si la recuperación automática ya ha resuelto el registro, no se realiza un reenvío innecesario. Los reintentos automáticos siguen activos y respetan las esperas y el orden de los registros.
+El segundo clic comprueba de nuevo el estado actual, la conciliación, el tiempo de espera y la cadena. Si el registro ya se ha resuelto entretanto, no se realiza un reenvío innecesario.
 
 El reenvío web sigue disponible para **root, owner y cliente**, dentro de su ámbito. El botón independiente de consulta sólo es visible para root y owner; el cliente conserva la consulta directa de registros de su empresa y la comprobación mediante el flujo de reenvío.
 

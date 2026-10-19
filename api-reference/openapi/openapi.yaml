@@ -527,7 +527,7 @@ paths:
 
         La conciliación obligatoria bloquea el reenvío con HTTP 409 y motivo `pending_reconciliation` hasta aclarar el resultado: se aplica a la marca interna `recovery_reconciliation_pending` y al caso de envío `success` con registro `unknown`, incluidos registros históricos. Los duplicados 3000/3001 y las respuestas inutilizables o desconocidas pueden exigir conciliación. El UUID de bloqueo puede ser el propio registro; los bloqueos por registros anteriores de la misma empresa cliente y SIF mantienen los motivos `pending_submission` y `unresolved_submission`.
 
-        El flujo de comprobar el estado y confirmar el reenvío en dos clics corresponde al panel, no a este endpoint. La API conserva sus operaciones y autenticación y no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente; los envíos iniciales directos mantienen la consulta inmediata cuando un timeout deja el estado en `unknown`. Los reintentos automáticos siguen respetando las esperas y el orden de la cadena. [Leer más en la FAQ](/faq).
+        El flujo de comprobar el estado y confirmar el reenvío en dos clics corresponde al panel, no a este endpoint. La API conserva sus operaciones y autenticación y no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente; los envíos iniciales directos mantienen la consulta inmediata cuando un timeout deja el estado en `unknown`. [Leer más en la FAQ](/faq).
 
         Si el registro ya tiene un CSV guardado, el reenvío no lo borra cuando la nueva respuesta de la AEAT no incluye uno (por ejemplo, ante un registro duplicado) ni cuando el envío falla sin respuesta. Un CSV nuevo sí sustituye al anterior.
 
