@@ -120,6 +120,20 @@ Usa el ID de B para [obtener sus datos](/openapi-reference/obtener-registro-de-f
 
 Si el registro anterior todavía no se ha enviado, el motivo es `pending_submission`. El bloqueo por `unresolved_submission` también se mantiene mientras esté pendiente la conciliación de un reenvío duplicado. Un **rechazo explícito definitivo** de AEAT es distinto de un resultado incierto y no bloquea por sí solo todos los registros posteriores.
 
+### ¿Qué ocurre con los registros diferidos que esperan detrás de un registro fallido?
+
+Los envíos diferidos no se bloquean al crearlos: el registro se crea y queda en cola. Si un registro anterior de la misma empresa cliente y SIF falló o tiene un resultado incierto, los diferidos posteriores esperan a que se resuelva y salen más tarde de lo normal.
+
+La fecha y hora de generación de esos registros no cambia, porque forma parte de su huella. Cuando un registro llega con retraso, la AEAT puede aceptarlo con errores por la diferencia entre esa fecha y su propia hora (código 2004). El artículo 16.4 de la Orden HAC/1177/2024 obliga a indicar en el envío que una incidencia retrasó la remisión. Por eso, antes de enviarlos, KubiFACTU cambia a `S` el campo [`affected_by_incidence_key`](/openapi-reference/enviar-registro-de-facturación) de los diferidos que esperaban, aunque se crearan con `N`. Lo hace cuando el registro que falló se [reenvía](/openapi-reference/reenviar-registro-de-facturación) o cuando una [consulta](/openapi-reference/consultar-registro-de-facturación-con-veri*factu) aclara su resultado.
+
+Por ejemplo, en la secuencia diferida A → B → C:
+
+- El envío de **A** falla por un problema de conexión.
+- **B** y **C** se crean después y quedan en cola detrás de A.
+- Al reenviar A, KubiFACTU marca B y C con `S`. Los dos salen en el siguiente envío por lote con `Incidencia = S`.
+
+Un registro diferido que solo espera su turno en la cola, sin un fallo anterior, conserva el valor con el que se creó.
+
 ## ¿Qué ocurre si Veri*Factu no identifica el NIF o el nombre del emisor?
 
 La AEAT comprueba que el NIF y el nombre o razón social del obligado a emitir (`sender_data`) y, si se informa, del representante, coinciden con su censo. Si no coinciden, rechaza la remisión completa con un error SOAP, por ejemplo:

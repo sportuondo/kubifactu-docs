@@ -1408,6 +1408,9 @@ components:
         correction_key:
           $ref: "#/components/schemas/correction_key"
 
+        affected_by_incidence_key:
+          $ref: "#/components/schemas/affected_by_incidence_key"
+
         full_invoice_number:
           type: string
           description: |
@@ -2279,9 +2282,16 @@ components:
     affected_by_incidence_key:
       type: string
       description: |
-        Indicador que especifica si la remisión voluntaria del registro de facturación se ha visto afectada por algún tipo de incidencia técnica (ausencia de corriente eléctrica, problemas de conexión a Internet, fallo del sistema informático de facturación, etc.). Si no se informa este campo se entenderá que tiene valor “N”.
+        Indica si una incidencia técnica ha afectado a la remisión voluntaria del registro de facturación, por ejemplo un corte de luz, la caída de la conexión a Internet o un fallo del sistema de facturación. Si no se informa, vale `N`.
 
-        - `S`: Sí, la remisión de este registro de facturación se ha visto afectada por aglún tipo de incidencia.
+        KubiFACTU lo cambia a `S` por su cuenta, aunque el registro se haya creado con `N`, en estos casos:
+
+        - Al [reenviar](/openapi-reference/reenviar-registro-de-facturación) un registro cuyo envío falló.
+        - En los registros diferidos que esperan detrás de un registro anterior de la misma empresa cliente y SIF cuyo envío falló o tiene un resultado incierto. Los marca antes de enviarlos, cuando ese registro anterior se reenvía o una consulta aclara su resultado. Ver [la FAQ](/faq#¿qué-ocurre-con-los-registros-diferidos-que-esperan-detrás-de-un-registro-fallido).
+
+        KubiFACTU nunca cambia un `S` a `N`.
+
+        - `S`: Sí, una incidencia ha afectado a la remisión de este registro de facturación.
         - `N`: No
       enum:
         - S
