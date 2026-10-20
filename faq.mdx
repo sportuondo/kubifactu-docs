@@ -75,16 +75,16 @@ Si el envío falla por un problema técnico de conexión con Veri*Factu o por no
 
 La excepción son los errores en el NIF o el nombre del emisor o del representante: reenviar no los resuelve y se tratan como un rechazo. Ver [¿Qué ocurre si Veri*Factu no identifica el NIF o el nombre del emisor?](#¿qué-ocurre-si-veri-factu-no-identifica-el-nif-o-el-nombre-del-emisor)
 
-`vf_post_status = failure` indica un fallo de envío o una respuesta de error; **no demuestra por sí solo que la AEAT no haya recibido el registro**. Un timeout identificable se guarda con `vf_post_status = failure` y `vf_record_registration_status = unknown`, también cuando ocurra en futuros envíos diferidos. El timeout por sí solo no activa la conciliación obligatoria. No se reclasifican masivamente los registros históricos.
+`vf_post_status = failure` indica un fallo de envío o una respuesta de error; **no demuestra por sí solo que la AEAT no haya recibido el registro**. Un timeout identificable se guarda con `vf_post_status = failure` y `vf_record_registration_status = unknown`, tanto en los envíos directos como en los diferidos, y activa la [conciliación obligatoria](#¿qué-significa-conciliación-obligatoria): KubiFACTU consulta el registro en la AEAT por sí mismo y, mientras no obtiene un resultado definitivo, el reenvío queda bloqueado. No se reclasifican masivamente los registros históricos.
 
 ### ¿Cómo compruebo el resultado desde el panel?
 
-Cuando el envío está en **Failure** y el registro en **Unknown**, sin conciliación obligatoria pendiente, el botón de reenvío conserva su visibilidad, pero requiere dos acciones separadas:
+Tras un timeout, la conciliación obligatoria se encarga de comprobar el resultado. Si aun así un registro queda con el envío en **Failure** y el registro en **Unknown**, sin conciliación obligatoria pendiente, por ejemplo un registro histórico, el botón de reenvío conserva su visibilidad, pero requiere dos acciones separadas:
 
 1. En el primer clic, la confirmación dice **«Sí, comprobar estado»**. Sólo consulta a la AEAT; no reenvía.
 2. Si la consulta confirma el registro con su identidad y huella, actualiza su estado y evita el reenvío. Si devuelve un **SinDatos válido**, guarda **«No registrado»** (`not_registered`) y permite confirmar el reenvío mediante un segundo clic.
 
-Por ejemplo, un timeout deja la factura F5 en Failure / Unknown. Pulsas reenviar y confirmas «Sí, comprobar estado». Si la AEAT confirma F5, el proceso termina sin otro envío. Si responde SinDatos válido, revisas el nuevo estado «No registrado» y vuelves a pulsar reenviar para confirmar el envío del mismo registro.
+Por ejemplo, la factura histórica F5 está en Failure / Unknown sin conciliación pendiente. Pulsas reenviar y confirmas «Sí, comprobar estado». Si la AEAT confirma F5, el proceso termina sin otro envío. Si responde SinDatos válido, revisas el nuevo estado «No registrado» y vuelves a pulsar reenviar para confirmar el envío del mismo registro.
 
 Si la consulta falla, es ambigua, carece de huella o no coincide con el registro consultado, **no se reenvía** y se mantiene la necesidad de comprobación. Un rechazo confirmado se guarda como rechazo; no equivale a aceptación y debe seguir el [procedimiento de subsanación por rechazo](/api-reference/facturas/examples/correction-no-previous).
 
@@ -94,11 +94,13 @@ El reenvío web sigue disponible para **root, owner y cliente**, dentro de su á
 
 ### ¿Qué cambia para las integraciones por API?
 
-El flujo de dos clics pertenece al panel. La API mantiene su autenticación mediante `X-Qbikode-ClientApiKey` y sus operaciones de [consulta](/openapi-reference/consultar-registro-de-facturación-con-veri*factu) (`GET /api/invoices/{invoiceId}/query`) y [reenvío](/openapi-reference/reenviar-registro-de-facturación) (`GET /api/invoices/{invoiceId}/resubmit`). La API de reenvío no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente. Ante un resultado incierto, consulta el mismo registro antes de decidir reenviarlo. Los envíos iniciales directos conservan la consulta inmediata cuando un timeout deja el estado en `unknown`.
+El flujo de dos clics pertenece al panel. La API mantiene su autenticación mediante `X-Qbikode-ClientApiKey` y sus operaciones de [consulta](/openapi-reference/consultar-registro-de-facturación-con-veri*factu) (`GET /api/invoices/{invoiceId}/query`) y [reenvío](/openapi-reference/reenviar-registro-de-facturación) (`GET /api/invoices/{invoiceId}/resubmit`). La API de reenvío no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente. Ante ese resultado incierto, consulta el mismo registro antes de decidir reenviarlo.
+
+Tras un timeout identificable, en cambio, el reenvío devuelve HTTP 409 con motivo `pending_reconciliation` hasta que la conciliación termina. Los envíos iniciales directos y los reenvíos consultan el registro en el momento, y los envíos diferidos, poco después. Si esa consulta no obtiene un resultado definitivo, KubiFACTU la repite periódicamente con un número limitado de intentos. También puedes consultar tú el registro: una consulta con resultado definitivo levanta el bloqueo.
 
 ### ¿Qué significa conciliación obligatoria?
 
-Conciliar significa **comprobar qué recibió la AEAT antes de permitir otro envío**. Mientras esa comprobación esté pendiente, el reenvío manual queda bloqueado tanto en el panel como en la API. Se aplica cuando existe la marca interna `recovery_reconciliation_pending` o cuando un registro histórico tiene envío `success` y estado `unknown`. Los duplicados 3000/3001 y las respuestas inutilizables o desconocidas pueden exigir esta conciliación.
+Conciliar significa **comprobar qué recibió la AEAT antes de permitir otro envío**. Mientras esa comprobación esté pendiente, el reenvío manual queda bloqueado tanto en el panel como en la API. Se aplica cuando existe la marca interna `recovery_reconciliation_pending` o cuando un registro histórico tiene envío `success` y estado `unknown`. Un timeout identificable la activa; los duplicados 3000/3001 y las respuestas inutilizables o desconocidas pueden exigirla.
 
 En la API, el bloqueo del propio registro devuelve **HTTP 409**, con `data.error.code = E-INVOICE-SUBMISSION-BLOCKED`, `data.error.errors.reason = pending_reconciliation`, `data.error.errors.blocking_invoice_id = UUID del propio registro` y `data.error.details = null`. Consulta su estado y revisa el resultado antes de volver a solicitar el reenvío; una comprobación fallida o inconcluyente no levanta el bloqueo.
 

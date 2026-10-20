@@ -523,11 +523,11 @@ paths:
       description: |
         Reenvía un registro de facturación a Veri*Factu sin volver a generarlo. Este endpoint es útil para registros que fallaron **por un problema técnico de conexión** (timeout, error del servidor o falta de respuesta) en el envío inicial.
 
-        Ante un resultado incierto, consulta el estado del mismo registro antes de decidir reenviarlo. Un timeout identificable se guarda como `vf_post_status = failure` y `vf_record_registration_status = unknown`; por sí solo no activa la conciliación obligatoria.
+        Ante un resultado incierto, consulta el estado del mismo registro antes de decidir reenviarlo. Un timeout identificable se guarda como `vf_post_status = failure` y `vf_record_registration_status = unknown` y activa la conciliación obligatoria: KubiFACTU consulta el registro en la AEAT por sí mismo.
 
-        La conciliación obligatoria bloquea el reenvío con HTTP 409 y motivo `pending_reconciliation` hasta aclarar el resultado: se aplica a la marca interna `recovery_reconciliation_pending` y al caso de envío `success` con registro `unknown`, incluidos registros históricos. Los duplicados 3000/3001 y las respuestas inutilizables o desconocidas pueden exigir conciliación. El UUID de bloqueo puede ser el propio registro; los bloqueos por registros anteriores de la misma empresa cliente y SIF mantienen los motivos `pending_submission` y `unresolved_submission`.
+        La conciliación obligatoria bloquea el reenvío con HTTP 409 y motivo `pending_reconciliation` hasta aclarar el resultado: se aplica a la marca interna `recovery_reconciliation_pending` y al caso de envío `success` con registro `unknown`, incluidos registros históricos. Un timeout identificable la activa; los duplicados 3000/3001 y las respuestas inutilizables o desconocidas pueden exigirla. El UUID de bloqueo puede ser el propio registro; los bloqueos por registros anteriores de la misma empresa cliente y SIF mantienen los motivos `pending_submission` y `unresolved_submission`.
 
-        El flujo de comprobar el estado y confirmar el reenvío en dos clics corresponde al panel, no a este endpoint. La API conserva sus operaciones y autenticación y no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente; los envíos iniciales directos mantienen la consulta inmediata cuando un timeout deja el estado en `unknown`. [Leer más en la FAQ](/faq).
+        El flujo de comprobar el estado y confirmar el reenvío en dos clics corresponde al panel, no a este endpoint. La API conserva sus operaciones y autenticación y no impone la comprobación previa del panel para `failure` + `unknown` sin conciliación pendiente. Tras un timeout, los envíos iniciales directos y los reenvíos consultan el registro en el momento, y los envíos diferidos, poco después; si la consulta no obtiene un resultado definitivo, se repite periódicamente con un número limitado de intentos. [Leer más en la FAQ](/faq).
 
         Si el registro ya tiene un CSV guardado, el reenvío no lo borra cuando la nueva respuesta de la AEAT no incluye uno (por ejemplo, ante un registro duplicado) ni cuando el envío falla sin respuesta. Un CSV nuevo sí sustituye al anterior.
 
@@ -2544,7 +2544,7 @@ components:
         Los valores posibles son:
 
         - `success`: Se ha realizado el envío a Veri*Factu.
-        - `failure`: Ha fallado el envío a Veri*Factu o Veri*Factu ha respondido con un error que se resuelve reenviando el mismo registro. Un timeout identificable se combina con `vf_record_registration_status = unknown`: no demuestra que la AEAT no haya recibido el registro y no activa por sí solo la conciliación obligatoria.
+        - `failure`: Ha fallado el envío a Veri*Factu o Veri*Factu ha respondido con un error que se resuelve reenviando el mismo registro. Un timeout identificable se combina con `vf_record_registration_status = unknown`: no demuestra que la AEAT no haya recibido el registro y activa la conciliación obligatoria.
       enum:
         - "success"
         - "failure"
@@ -2560,7 +2560,7 @@ components:
         - `failed`: El registro tiene errores no aceptables y ha sido **rechazado** por Veri*Factu. Incluye los errores SOAP causados por el NIF o el nombre del obligado a emitir o del representante.
         - `not_registered`: No se ha encontrado el registro en Veri*Factu.
         - `cancelled`: El registro está anulado.
-        - `unknown`: Se desconoce el estado del registro. Puede acompañar a `vf_post_status = failure` tras un timeout identificable. Si el envío está en `success`, exige conciliación antes del reenvío manual.
+        - `unknown`: Se desconoce el estado del registro. Puede acompañar a `vf_post_status = failure` tras un timeout identificable. Tras un timeout o con el envío en `success`, exige conciliación antes del reenvío manual.
       enum:
         - "success"
         - "accepted_with_errors"
