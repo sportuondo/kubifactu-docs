@@ -3,6 +3,11 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+<Update label="2026-10-22" description="Actualización documental">
+  - Las respuestas de error que documentan `details.request_id`, como los errores de validación (HTTP 422), lo devuelven ahora también en producción. Es un UUID que identifica la petición; inclúyelo al contactar con soporte. Antes, en producción, `details` llegaba como `null`.
+  - Corregida la respuesta documentada para una API-KEY no válida (HTTP 403): no incluye `code` ni `http_code`, y `details` es siempre `null`, porque la API-KEY se rechaza antes de asignar el identificador de la petición. `code` solo aparece en los errores que lo documentan, como `E-INVOICE-SUBMISSION-BLOCKED`.
+</Update>
+
 <Update label="2026-10-20" description="Actualización documental">
   - Los registros diferidos que esperan detrás de un registro fallido o con resultado incierto de la misma empresa cliente y SIF se envían ahora con `affected_by_incidence_key = S`, aunque se crearan con `N`. KubiFACTU los marca cuando ese registro se reenvía o una consulta aclara su resultado. Antes salían con el valor con el que se crearon, y la AEAT podía aceptarlos con errores (código 2004) por el retraso. Ver [la FAQ](/faq#¿qué-ocurre-con-los-registros-diferidos-que-esperan-detrás-de-un-registro-fallido).
   - El campo `affected_by_incidence_key` aparece ahora en la referencia del [envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación). La API ya lo aceptaba.

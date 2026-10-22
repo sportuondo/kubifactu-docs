@@ -2679,18 +2679,10 @@ components:
             error:
               type: object
               properties:
-                code:
-                  type: string
-                  description: Código de error que indica el tipo de problema.
-                  example: "E-UNAUTH-APIKEY"
                 message:
                   type: string
                   description: Mensaje detallado del error.
                   example: "No client with API-KEY '5tVySMGJOpq8HfMgIX28Qz6kF0dFOoq37x55PLZcWsGeGeYkNgJyAcRTlFJ5NbVoDRm8qtCywEoiN3A9JkBanMBXYmxiqR3BItxgxx' was found."
-                http_code:
-                  type: integer
-                  description: Código HTTP asociado al error.
-                  example: 403
                 errors:
                   type: object
                   nullable: true
@@ -2699,11 +2691,10 @@ components:
                   example: null
                 details:
                   type: object
-                  properties:
-                    request_id:
-                      type: string
-                      description: Identificador único de la solicitud para rastreo.
-                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+                  nullable: true
+                  enum: [null]
+                  description: Siempre es `null` en esta respuesta. La API-KEY se rechaza antes de asignar el identificador de la solicitud.
+                  example: null
 
     VerifactuHealthCheckResponse:
       type: object
@@ -2761,8 +2752,9 @@ components:
                   properties:
                     request_id:
                       type: string
+                      format: uuid
                       description: Identificador único de la solicitud para rastreo.
-                      example: "2cc8ef846029ec69613711ad1d85f6dfebf16ffb"
+                      example: "9ded9e2c-d59e-4432-a926-652cbcfac365"
 
 
   securitySchemes:
