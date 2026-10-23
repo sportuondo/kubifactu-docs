@@ -3,6 +3,8 @@ title: 'Diferencias con KubiBAI'
 description: 'Diferencias principales con respecto al funcionamiento de KubiBAI'
 ---
 
+import RecoveryTestOnly from '/snippets/recovery-test-only.mdx';
+
 ## Certificados
 
 La firma de las comunicaciones con la AEAT debe firmarse con un certificado autorizado. Nosotros hacemos las veces de intermediarios, con lo que no es necesario tener un certificado para cada empresa cliente que emite registros de facturación a la AEAT. Además, **cada intermediario puede optar por usar su propio certificado** (en lugar del nuestro) para la firma de las comunicaciones. Para ello, el intermediario debe estar registrado como **apoderado o colborador social** en la AEAT.
@@ -18,3 +20,11 @@ Aunque se ha tratado de mantener una estructura de JSON similar a la utilizada e
 Una de las estructuras que más cambios ha sufrido es la que especifica el desglose fiscal (`invoice_data.tax_breakdown`), que en Veri*Factu, además de ser obligatoria, presenta requisitos muy diferentes a los de TicketBAI.
 
 Recomendamos consultar detenidamente la sección [API desde KubiBAI](/openapi-kubibai-reference/enviar-registro-de-facturación) de esta documentación para identificar los campos que se conservan (y sus valores aceptados) y los que son nuevos con respecto a KubiBAI.
+
+## Fallos de envío en el alta inmediata
+
+<RecoveryTestOnly />
+
+Con la recuperación automática, `POST /api/invoices` responde HTTP `200` con el objeto `recovery` cuando el envío falla. El alta inmediata de KubiBAI (`POST /api/invoicing/invoices`) responde HTTP `500` sin `recovery` cuando el envío falla con un error de conexión, una respuesta ilegible, un error al generar el XML o un error inesperado. El registro entra igualmente en la recuperación automática: para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación) (`GET /api/invoicing/invoices/{invoiceId}`).
+
+La anulación inmediata de KubiBAI responde igual que la de la API principal: si el envío falla, HTTP `200` con el objeto `recovery`. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)

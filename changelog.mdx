@@ -3,6 +3,22 @@ title: Actualizaciones
 description: 'Registro de actualizaciones de la documentación'
 ---
 
+import RecoveryTestOnly from '/snippets/recovery-test-only.mdx';
+
+<Update label="PENDIENTE-FECHA-DESPLIEGUE" description="Recuperación automática de envíos">
+  <RecoveryTestOnly />
+
+  - Nueva [recuperación automática de envíos](/faq#¿qué-es-la-recuperación-automática-de-envíos). Con la recuperación activa, KubiFACTU reintenta por su cuenta los registros diferidos y los envíos inmediatos (altas y anulaciones, también de KubiBAI) cuyo resultado deja la cadena esperando. Los errores temporales se reintentan al cabo de 1, 5 y 15 minutos, y después cada 30 minutos, sin límite. Los errores inesperados se reintentan al cabo de 1 y 5 minutos, y el tercero consecutivo deja el registro en `attention`. Los errores de configuración local, XML no válido, autorización o servicio suspendido pasan directamente a `attention`.
+  - Tras un timeout o una respuesta ilegible, KubiFACTU consulta el registro en la AEAT antes de reenviarlo. Si la AEAT lo tiene, la recuperación termina. Si no lo tiene, KubiFACTU lo reenvía.
+  - Cada reintento, y los diferidos que esperan detrás, salen con `affected_by_incidence_key = S` sin que nadie reenvíe ni consulte el registro que falló.
+  - Las respuestas de los registros en recuperación incluyen el objeto `recovery` (`status`, `reason_code`, `message`, `attempts` y `next_attempt_at`). Ver el [envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación). `recovery.status = resolved` indica que la recuperación ha terminado, no que la AEAT haya aceptado el registro.
+  - La respuesta de un envío inmediato que falla no cambia, salvo por el objeto `recovery`. El alta inmediata de KubiBAI responde HTTP `500` sin `recovery` en algunos fallos (ver [Diferencias con KubiBAI](/kubibai-differences#fallos-de-envío-en-el-alta-inmediata)). Si la petición traía `callback_url`, los reintentos automáticos posteriores llaman a esa URL, así que `callback_url` también sirve en los envíos inmediatos. Un registro puede generar varios callbacks: correlaciónalos por `id`.
+  - El siguiente envío inmediato de la misma empresa cliente y SIF sigue recibiendo HTTP `409` mientras el registro anterior está en recuperación. Los diferidos no se bloquean.
+  - KubiFACTU avisa por correo al intermediario cuando un registro pasa a `attention` y cuando sigue en `retry` más de 120 minutos.
+  - Los registros creados antes de activar la recuperación y las cadenas que ya estaban paradas no entran en ella: se consultan y reenvían a mano.
+  - Documentada la respuesta HTTP `503` (`E-SERVICE-BUSY`) del [reenvío](/openapi-reference/reenviar-registro-de-facturación) cuando coincide con otro envío de la misma empresa cliente. Esta respuesta no depende de la recuperación automática.
+</Update>
+
 <Update label="2026-10-22" description="Actualización documental">
   - Las respuestas de error que documentan `details.request_id`, como los errores de validación (HTTP 422), lo devuelven ahora también en producción. Es un UUID que identifica la petición; inclúyelo al contactar con soporte. Antes, en producción, `details` llegaba como `null`.
   - Corregida la respuesta documentada para una API-KEY no válida (HTTP 403): no incluye `code` ni `http_code`, y `details` es siempre `null`, porque la API-KEY se rechaza antes de asignar el identificador de la petición. `code` solo aparece en los errores que lo documentan, como `E-INVOICE-SUBMISSION-BLOCKED`.

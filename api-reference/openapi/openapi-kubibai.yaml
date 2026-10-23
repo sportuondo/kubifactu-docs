@@ -70,7 +70,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
         '500':
-          description: "Error interno del servidor."
+          description: |
+            Error interno del servidor. Este endpoint también responde HTTP `500` cuando el envío a la AEAT falla con un error de conexión, una respuesta ilegible, un error al generar el XML o un error inesperado.
+
+            Con la recuperación automática, el registro entra igualmente en la recuperación, pero esta respuesta no incluye `recovery`. Para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación). La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción las respuestas no incluyen `recovery` y los registros fallidos se consultan y reenvían a mano.
       security:
         - client_api_key: []
 
@@ -348,7 +351,11 @@ paths:
                   type: string
                   format: url
                   description: |
-                    Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos) o reenvíos de regitros de facturación. URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
+                    URL a la que KubiFACTU llama con el resultado de la AEAT cuando procesa el registro de anulación: su envío en diferido, un reenvío o una [consulta](/openapi-kubibai-reference/consultar-registro-de-facturación-con-veri*factu).
+
+                    Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
+
+                    Con la recuperación automática, los reintentos automáticos también llaman a esta URL: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción las respuestas no incluyen `recovery` y los registros fallidos se consultan y reenvían a mano.
 
                     Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
 
@@ -369,6 +376,7 @@ paths:
                     - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-kubibai-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
                     - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
                     - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-kubibai-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
+                    - `recovery`: `object`. Solo en los registros que sigue la recuperación automática. Mismo formato que el campo `recovery` de la respuesta de anulación de registros de facturación.
                   example: "https://www.tuempresa.com/kubifactu/callback"
       responses:
         '200':
@@ -403,7 +411,11 @@ components:
           type: string
           format: url
           description: |
-            Sólo aplicable a [registros de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos) o reenvíos de regitros de facturación. URL a la que se llamará con el resultado de la AEAT al procesamiento del registro de facturación.
+            URL a la que KubiFACTU llama con el resultado de la AEAT cuando procesa el registro de facturación: el envío de un [registro de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos), un reenvío o una [consulta](/openapi-kubibai-reference/consultar-registro-de-facturación-con-veri*factu). No se llama por el resultado que ya devuelve la respuesta de un envío inmediato.
+
+            Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
+
+            Con la recuperación automática, los reintentos automáticos también llaman a esta URL, incluidos los de un envío inmediato que falló: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). Por eso `callback_url` también sirve en los envíos inmediatos. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción las respuestas no incluyen `recovery` y los registros fallidos se consultan y reenvían a mano.
 
             Se hará una petición POST a esta URL y se enviarán un array en formato JSON con los datos de las facturas procesadas cuyos ítems contendrán los siguientes campos:
 
@@ -422,6 +434,7 @@ components:
             - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-kubibai-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
             - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
             - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-kubibai-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
+            - `recovery`: `object`. Solo en los registros que sigue la recuperación automática. Mismo formato que el campo `recovery` de la respuesta de envío de registros de facturación.
           example: "https://www.tuempresa.com/kubifactu/callback"
 
         sif_id:
@@ -956,6 +969,8 @@ components:
               nullable: true
               format: byte
               description: Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación. Este campo será `null` para facturas en diferido que aún no han sido procesadas o cuando no se haya recibido respuesta de Veri*Factu.
+            recovery:
+              $ref: '#/components/schemas/InvoiceRecovery'
 
     CancelInvoiceRecordResponse:
       type: object
@@ -1001,6 +1016,103 @@ components:
               format: date-time
               example: "1977-04-22T06:00:00Z"
               description: Fecha y hora en la que la empresa cliente pueda enviar una nueva petición en formato ISO-8601 (ej.- 1977-04-22T06:00:00Z) con zona horaria UTC.
+            recovery:
+              $ref: '#/components/schemas/InvoiceRecovery'
+
+    InvoiceRecovery:
+      type: object
+      description: |
+        Estado de la [recuperación automática de envíos](/faq#¿qué-es-la-recuperación-automática-de-envíos) del registro. Es opcional: solo aparece en los registros que sigue la recuperación. Los registros diferidos creados con la recuperación activa lo llevan desde su creación. Los envíos inmediatos solo lo llevan si su resultado dejó la cadena esperando; un envío inmediato aceptado, o rechazado de forma definitiva por la AEAT, no lo incluye.
+
+        La respuesta de un envío inmediato que falla es la misma que sin recuperación, más este objeto. La excepción es el alta inmediata de KubiBAI (`POST /api/invoicing/invoices`): si el envío falla con un error de conexión, una respuesta ilegible, un error al generar el XML o un error inesperado, responde HTTP `500` sin `recovery`, aunque el registro entra igualmente en la recuperación. Para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación).
+
+        La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción las respuestas no incluyen `recovery` y los registros fallidos se consultan y reenvían a mano.
+      required:
+        - status
+        - reason_code
+        - message
+        - attempts
+        - next_attempt_at
+      properties:
+        status:
+          type: string
+          description: |
+            Estado de la recuperación:
+
+            - `pending`: el registro espera su envío. Si `reason_code` tiene valor, espera detrás de un registro anterior con una incidencia.
+            - `processing`: KubiFACTU está enviando o consultando el registro.
+            - `retry`: el último intento falló y KubiFACTU lo repetirá en `next_attempt_at`.
+            - `resolved`: la recuperación ha terminado. **No significa que la AEAT haya aceptado el registro.** El resultado está en `vf_record_registration_status`. Por ejemplo, un alta que la AEAT rechaza como duplicada (código 3000) porque ya tiene registrada otra alta anterior de la misma factura termina en `resolved` con `vf_record_registration_status = failed`. Si el registro no guardaba la descripción del error de la AEAT, como ocurre en los diferidos y los reenvíos, `vf_error_descriptions` muestra «3000 - La AEAT ya tiene registrada otra alta de esta factura.».
+            - `attention`: KubiFACTU ha detenido los reintentos y el registro necesita intervención. Corrige la causa y solicita el [reenvío](/openapi-reference/reenviar-registro-de-facturación).
+
+            Mientras el estado no es `resolved`, el registro bloquea la cadena: el siguiente envío inmediato de la misma empresa cliente y SIF recibe HTTP `409`.
+          enum:
+            - pending
+            - processing
+            - retry
+            - resolved
+            - attention
+          example: retry
+        reason_code:
+          type: string
+          nullable: true
+          description: |
+            Motivo del último fallo, que decide qué hace KubiFACTU. Es `null` en `resolved` y en un registro `pending` sin incidencia delante. En `pending` con valor, es el motivo de la incidencia del registro anterior que bloquea la cadena.
+
+            - `temporary_service_error`: conexión sin respuesta, timeout, HTTP 429 o 5xx, una página HTML en lugar de la respuesta SOAP o un código técnico de la AEAT. Se reintenta al cabo de 1, 5 y 15 minutos, y después cada 30 minutos, sin límite.
+            - `remote_certificate_verification_error`: la AEAT no puede verificar el certificado presentado (código 4108). Se reintenta con el mismo calendario.
+            - `unexpected_error`: un error o un código que KubiFACTU no reconoce. Se reintenta al cabo de 1 y 5 minutos.
+            - `unexpected_error_limit_reached`: tercer fallo inesperado consecutivo. Pasa a `attention`.
+            - `local_configuration_error`: certificado o configuración local incompleta o no válida. Pasa a `attention`.
+            - `invalid_xml`: la AEAT rechaza el XML o un campo de la cabecera que genera KubiFACTU. Pasa a `attention`.
+            - `authorization_error`: falta de autorización para remitir (código 4112, HTTP 401 o 403). Pasa a `attention`.
+            - `service_suspended`: servicio suspendido (código 4141). Pasa a `attention`.
+          enum:
+            - temporary_service_error
+            - remote_certificate_verification_error
+            - unexpected_error
+            - unexpected_error_limit_reached
+            - local_configuration_error
+            - invalid_xml
+            - authorization_error
+            - service_suspended
+          example: temporary_service_error
+        message:
+          type: string
+          description: |
+            Descripción del estado, siempre en inglés. Usa `status` y `reason_code` para decidir qué hacer, no este texto.
+
+            En `retry` y `attention`, es el mensaje del motivo:
+
+            - `temporary_service_error`: "A temporary service or communication error prevented submission. KubiFactu will retry automatically."
+            - `remote_certificate_verification_error`: "The certificate presented to AEAT could not be verified. KubiFactu will retry automatically."
+            - `unexpected_error`: "An unexpected error prevented submission. KubiFactu will retry automatically a limited number of times."
+            - `unexpected_error_limit_reached`: "Automatic retries have stopped after three consecutive unexpected failures. This record remains unresolved. Contact KubiFactu support to investigate the issue."
+            - `local_configuration_error`: "Submission requires attention because the local configuration is incomplete or invalid. Correct the configuration and retry the record."
+            - `invalid_xml`: "Submission requires attention because the generated record is not valid XML for the configured schema. Contact KubiFactu support."
+            - `authorization_error`: "Submission requires attention because authorization failed. Review the credentials or certificate and retry the record."
+            - `service_suspended`: "Automatic submission is suspended for this service. Restore the service and retry the record."
+
+            En los demás casos depende del estado:
+
+            - `pending`: "Submission is pending." Si espera detrás de una incidencia anterior: "Submission is waiting for an earlier incident to be resolved."
+            - `processing`: "Submission is being processed."
+            - `resolved`: "Automatic recovery has finished. Check the registration status for the result."
+            - `retry` sin motivo: "Submission will be retried automatically."
+            - `attention` sin motivo: "Submission requires intervention before it can continue."
+          example: "A temporary service or communication error prevented submission. KubiFactu will retry automatically."
+        attempts:
+          type: integer
+          description: |
+            Número de envíos del registro a la AEAT dentro de la recuperación, incluido el envío inmediato que falló. Las consultas no cuentan. Un registro diferido recién creado tiene `0`.
+          example: 1
+        next_attempt_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: |
+            En `retry`, fecha y hora del siguiente intento, en formato ISO-8601 con zona horaria UTC. En `pending`, fecha y hora en la que el registro entró en la cola, no una cita para el envío. Es `null` en `processing`, `attention` y `resolved`.
+          example: "2026-10-22T08:30:24+00:00"
 
     invoice_type_key:
       type: string
