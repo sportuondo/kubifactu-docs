@@ -49,7 +49,7 @@ El entorno de producción parte **desde cero**, por lo que:
 
 <RecoveryTestOnly />
 
-Si tu integración ya lee el objeto `recovery` o espera los callbacks de los reintentos automáticos en el entorno de pruebas, prepárala para funcionar sin ellos en producción hasta que se active la recuperación. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)
+Si tu integración ya lee el objeto `recovery` o espera los callbacks de los reintentos automáticos en el entorno de pruebas, ten en cuenta que en producción `recovery` vale `null` y no hay callbacks de reintentos hasta que se active la recuperación. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)
 
 ## Soporte
 

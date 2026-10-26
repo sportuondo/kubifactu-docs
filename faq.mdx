@@ -86,9 +86,9 @@ La excepción son los errores en el NIF o el nombre del emisor o del representan
 Con la recuperación automática, KubiFACTU reintenta por su cuenta los envíos que dejan esperando la cadena de una empresa cliente y un SIF. No hace falta consultar ni reenviar el registro. Entran en la recuperación:
 
 - Los registros diferidos creados con la recuperación activa: `POST /api/invoices/deferred`, `POST /api/invoices/batch`, `/deferredcancel` y sus equivalentes de KubiBAI. Llevan el objeto `recovery` desde que se crean, con el estado `pending`.
-- Los envíos inmediatos cuyo resultado deja la cadena esperando: `POST /api/invoices`, `POST /api/invoices/{invoiceId}/cancel` y el alta y la anulación de KubiBAI. Por ejemplo, un error de conexión, un timeout, una respuesta ilegible o un error temporal del servicio de la AEAT. Un envío inmediato aceptado, o rechazado de forma definitiva por la AEAT, no entra en la recuperación y su respuesta no incluye `recovery`.
+- Los envíos inmediatos cuyo resultado deja la cadena esperando: `POST /api/invoices`, `POST /api/invoices/{invoiceId}/cancel` y el alta y la anulación de KubiBAI. Por ejemplo, un error de conexión, un timeout, una respuesta ilegible o un error temporal del servicio de la AEAT. Un envío inmediato aceptado, o rechazado de forma definitiva por la AEAT, no entra en la recuperación y su respuesta lleva `recovery: null`.
 
-La respuesta de un envío inmediato que falla es la misma que sin recuperación, más el objeto `recovery`. La excepción es el alta inmediata de KubiBAI, que en algunos fallos responde HTTP `500` sin `recovery` (ver [Diferencias con KubiBAI](/kubibai-differences#fallos-de-envío-en-el-alta-inmediata)). Consulta su formato en la [referencia del envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación).
+La respuesta de un envío inmediato que falla es la misma que sin recuperación, con `recovery` relleno. La excepción es el alta inmediata de KubiBAI, que en algunos fallos responde HTTP `500` sin `recovery` (ver [Diferencias con KubiBAI](/kubibai-differences#fallos-de-envío-en-el-alta-inmediata)). Consulta su formato en la [referencia del envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación).
 
 #### Qué hace KubiFACTU con cada fallo
 
@@ -168,7 +168,7 @@ Un mismo registro puede generar más de un callback, por ejemplo tras una consul
 
 <RecoveryTestOnly />
 
-- Las respuestas incluyen el objeto `recovery` en los registros que sigue la recuperación: el alta inmediata y la diferida, `GET /api/invoices/{invoiceId}`, la consulta, el reenvío, las anulaciones (`/cancel` y `/deferredcancel`), sus equivalentes de KubiBAI y los callbacks. El listado `GET /api/invoices` y la respuesta de `POST /api/invoices/batch` no lo incluyen.
+- Las respuestas incluyen siempre el campo `recovery`: el alta inmediata y la diferida, `GET /api/invoices/{invoiceId}`, la consulta, el reenvío, las anulaciones (`/cancel` y `/deferredcancel`), sus equivalentes de KubiBAI y los callbacks. Va relleno en los registros que sigue la recuperación y vale `null` en el resto; si vale `null`, puedes ignorarlo. Si KubiFACTU desactiva la recuperación automática, `recovery` vale `null` y la forma de las respuestas y los callbacks no cambia. El listado `GET /api/invoices` y la respuesta de `POST /api/invoices/batch` no lo incluyen.
 - KubiFACTU llama a `callback_url` con cada cambio que producen los intentos automáticos: un nuevo `retry`, el paso a `attention` o el final de la recuperación. No llama por el resultado que ya devuelve la propia petición. Por eso `callback_url` también sirve en los envíos inmediatos.
 - Tras un timeout, si la consulta no obtiene un resultado definitivo, KubiFACTU la repite en los siguientes intentos de la recuperación.
 - El reenvío de un registro en recuperación se admite en `retry`, en `attention` y en `pending` si el registro ya se envió. En `processing`, en `resolved` y en un diferido que aún espera su primer envío devuelve HTTP `422`. Mientras la conciliación está pendiente devuelve HTTP `409` con motivo `pending_reconciliation`.
