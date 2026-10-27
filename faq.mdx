@@ -3,8 +3,6 @@ title: Preguntas frecuentes
 description: 'Preguntas frecuentes sobre el funcionamiento de Veri*Factu a través de KubiFACTU'
 ---
 
-import RecoveryTestOnly from '/snippets/recovery-test-only.mdx';
-
 ## ¿Qué datos deben incluirse en la factura se entrega al cliente?
 
 La factura debe ser entregada al receptor (ya sea en versión impresa o digital) con un QR de cotejo que le permita verificar que la factura ha sido correctamente remitida a la AEAT.
@@ -81,65 +79,17 @@ La excepción son los errores en el NIF o el nombre del emisor o del representan
 
 ### ¿Qué es la recuperación automática de envíos?
 
-<RecoveryTestOnly />
+KubiFACTU reintenta por su cuenta los envíos que dejan esperando la cadena de una empresa cliente y un SIF. Se aplica a altas y anulaciones, tanto inmediatas como diferidas, también en KubiBAI.
 
-Con la recuperación automática, KubiFACTU reintenta por su cuenta los envíos que dejan esperando la cadena de una empresa cliente y un SIF. No hace falta consultar ni reenviar el registro. Entran en la recuperación:
+Ante un fallo temporal, no necesitas consultar ni reenviar el registro. Si hay dudas sobre si la AEAT lo recibió, KubiFACTU lo comprueba antes de reenviarlo. Mientras se resuelve la incidencia, los siguientes registros de la misma cadena [esperan su turno](#¿qué-ocurre-si-intento-enviar-el-siguiente-registro-mientras-el-anterior-sigue-pendiente).
 
-- Los registros diferidos creados con la recuperación activa: `POST /api/invoices/deferred`, `POST /api/invoices/batch`, `/deferredcancel` y sus equivalentes de KubiBAI. Llevan el objeto `recovery` desde que se crean, con el estado `pending`.
-- Los envíos inmediatos cuyo resultado deja la cadena esperando: `POST /api/invoices`, `POST /api/invoices/{invoiceId}/cancel` y el alta y la anulación de KubiBAI. Por ejemplo, un error de conexión, un timeout, una respuesta ilegible o un error temporal del servicio de la AEAT. Un envío inmediato aceptado, o rechazado de forma definitiva por la AEAT, no entra en la recuperación y su respuesta lleva `recovery: null`.
+Puedes seguir la recuperación mediante el objeto `recovery` y los callbacks. El estado `resolved` indica que la recuperación ha terminado; el resultado de la AEAT se consulta en `vf_record_registration_status`.
 
-La respuesta de un envío inmediato que falla es la misma que sin recuperación, con `recovery` relleno. La excepción es el alta inmediata de KubiBAI, que en algunos fallos responde HTTP `500` sin `recovery` (ver [Diferencias con KubiBAI](/kubibai-differences#fallos-de-envío-en-el-alta-inmediata)). Consulta su formato en la [referencia del envío de registros de facturación](/openapi-reference/enviar-registro-de-facturación).
+Si el registro pasa a `attention`, necesita intervención. Revisa el motivo indicado, corrige la causa y solicita el [reenvío del mismo registro](/openapi-reference/reenviar-registro-de-facturación). No modifiques el registro ni generes otra alta o anulación de la misma factura. Si necesitas ayuda, contacta con [soporte@kubifactu.com](mailto:soporte@kubifactu.com). KubiFACTU avisa por correo al intermediario cuando hace falta intervenir o la incidencia se prolonga.
 
-#### Qué hace KubiFACTU con cada fallo
+Los registros creados antes de activar la recuperación y las cadenas que ya estaban paradas no entran en ella y requieren consulta y reenvío manual.
 
-KubiFACTU clasifica cada fallo con un motivo (`recovery.reason_code`). El motivo decide si reintenta el envío o si el registro necesita intervención (`attention`):
-
-| Motivo | Causa | Qué hace KubiFACTU |
-| --- | --- | --- |
-| `temporary_service_error` | Conexión sin respuesta, timeout, HTTP 429 o 5xx, una página HTML en lugar de la respuesta SOAP o un código técnico de la AEAT, como 3500 o 4110 | Reintenta al cabo de 1, 5 y 15 minutos, y después cada 30 minutos, sin límite de intentos |
-| `remote_certificate_verification_error` | La AEAT no puede verificar el certificado presentado (código 4108) | Reintenta con el mismo calendario |
-| `unexpected_error` | Un error o un código de la AEAT que KubiFACTU no reconoce | Reintenta al cabo de 1 y 5 minutos. El tercer fallo inesperado consecutivo pasa a `attention` con el motivo `unexpected_error_limit_reached` |
-| `local_configuration_error` | Certificado o configuración local incompleta o no válida | Pasa a `attention` |
-| `invalid_xml` | La AEAT rechaza el XML o un campo de la cabecera que genera KubiFACTU | Pasa a `attention` |
-| `authorization_error` | Falta de autorización para remitir (código 4112, HTTP 401 o 403) | Pasa a `attention` |
-| `service_suspended` | Servicio suspendido (código 4141) | Pasa a `attention` |
-
-Tras un timeout o una respuesta ilegible, KubiFACTU no reenvía el registro sin más: primero lo consulta en la AEAT. Si la AEAT lo tiene registrado, la recuperación termina. Si responde que no lo tiene, KubiFACTU lo reenvía en el siguiente intento. En los envíos inmediatos, la consulta tras un timeout se hace dentro de la misma petición, así que la respuesta puede llegar ya con `recovery.status` en `resolved` o en `retry`.
-
-En una anulación, si la consulta devuelve el alta original registrada y sin anular, con su misma huella, KubiFACTU trata la anulación como no registrada y la reenvía.
-
-Cada reintento sale con `affected_by_incidence_key = S` (`Incidencia = S`), igual que los registros diferidos que esperan detrás. Ver [¿Qué ocurre con los registros diferidos que esperan detrás de un registro fallido?](#¿qué-ocurre-con-los-registros-diferidos-que-esperan-detrás-de-un-registro-fallido)
-
-#### Estados de la recuperación
-
-`recovery.status` toma estos valores:
-
-- `pending`: el registro espera su envío. Si `reason_code` tiene valor, espera detrás de un registro anterior con una incidencia.
-- `processing`: KubiFACTU está enviando o consultando el registro.
-- `retry`: el último intento falló y KubiFACTU lo repetirá en `next_attempt_at`.
-- `resolved`: la recuperación ha terminado. **No significa que la AEAT haya aceptado el registro**: el resultado está en `vf_record_registration_status`. Por ejemplo, un alta que la AEAT rechaza como duplicada (código 3000) porque ya tiene registrada otra alta anterior de la misma factura termina en `resolved` con `vf_record_registration_status = failed`.
-- `attention`: KubiFACTU ha detenido los reintentos y el registro necesita intervención.
-
-Mientras un registro está en `pending`, `processing`, `retry` o `attention`, la cadena sigue esperando. El siguiente envío inmediato de la misma empresa cliente y SIF recibe HTTP `409`, y los diferidos se crean y esperan su turno. Ver [¿Qué ocurre si intento enviar el siguiente registro mientras el anterior sigue pendiente?](#¿qué-ocurre-si-intento-enviar-el-siguiente-registro-mientras-el-anterior-sigue-pendiente)
-
-#### Cómo desbloquear un registro en `attention`
-
-1. Lee `recovery.reason_code` y `recovery.message` para conocer la causa.
-2. Corrige la causa. Por ejemplo, revisa el certificado o la autorización de la empresa cliente, o restablece el servicio. Si el motivo es `invalid_xml` o `unexpected_error_limit_reached`, escribe a [soporte@kubifactu.com](mailto:soporte@kubifactu.com).
-3. Solicita el [reenvío del mismo registro](/openapi-reference/reenviar-registro-de-facturación) (`GET /api/invoices/{invoiceId}/resubmit`) o pulsa el botón de reenvío del panel. No modifiques el registro ni generes otra alta o anulación de la misma factura.
-
-Si el reenvío vuelve a fallar por una causa temporal, KubiFACTU retoma los reintentos automáticos.
-
-#### Avisos por correo
-
-KubiFACTU envía un correo al intermediario y al equipo de soporte en estos casos:
-
-- Cuando un registro pasa a `attention`.
-- Cuando un registro sigue en `retry` más de 120 minutos después de que empezara la incidencia. El aviso se repite cada 24 horas mientras la incidencia siga abierta.
-
-#### Registros anteriores a la activación
-
-La recuperación solo sigue los registros creados con ella activa. Los registros creados antes y las cadenas que ya estaban paradas al activarla no entran: se consultan y reenvían a mano, como se describe en esta sección.
+Para los campos de la respuesta y los callbacks, consulta la [referencia de la API](/openapi-reference/enviar-registro-de-facturación) y las [diferencias con KubiBAI](/kubibai-differences#fallos-de-envío-en-el-alta-inmediata).
 
 ### ¿Cómo compruebo el resultado desde el panel?
 
@@ -165,8 +115,6 @@ Tras un timeout identificable, en cambio, el reenvío devuelve HTTP 409 con moti
 Un mismo registro puede generar más de un callback, por ejemplo tras una consulta o un reenvío. Correlaciona cada callback por `id` y procésalo de forma idempotente.
 
 #### Con la recuperación automática
-
-<RecoveryTestOnly />
 
 - Las respuestas incluyen siempre el campo `recovery`: el alta inmediata y la diferida, `GET /api/invoices/{invoiceId}`, la consulta, el reenvío, las anulaciones (`/cancel` y `/deferredcancel`), sus equivalentes de KubiBAI y los callbacks. Va relleno en los registros que sigue la recuperación y vale `null` en el resto; si vale `null`, puedes ignorarlo. Si KubiFACTU desactiva la recuperación automática, `recovery` vale `null` y la forma de las respuestas y los callbacks no cambia. El listado `GET /api/invoices` y la respuesta de `POST /api/invoices/batch` no lo incluyen.
 - KubiFACTU llama a `callback_url` con cada cambio que producen los intentos automáticos: un nuevo `retry`, el paso a `attention` o el final de la recuperación. No llama por el resultado que ya devuelve la propia petición. Por eso `callback_url` también sirve en los envíos inmediatos.
@@ -196,8 +144,6 @@ Usa el ID de B para [obtener sus datos](/openapi-reference/obtener-registro-de-f
 
 Si el registro anterior todavía no se ha enviado, el motivo es `pending_submission`. El bloqueo por `unresolved_submission` también se mantiene mientras esté pendiente la conciliación de un reenvío duplicado. Un **rechazo explícito definitivo** de AEAT es distinto de un resultado incierto y no bloquea por sí solo todos los registros posteriores.
 
-<RecoveryTestOnly />
-
 Con la recuperación automática, el `409` no cambia: el motivo es `pending_submission` mientras el registro anterior está en `pending` y `unresolved_submission` mientras está en `retry`, `processing` o `attention`. Lo que cambia es que no tienes que consultar ni reenviar B, porque KubiFACTU lo hace por su cuenta. Sigue el estado de B en `recovery.status`, mediante su `callback_url` o con `GET /api/invoices/{invoiceId}`, y vuelve a solicitar C cuando B esté en `resolved`. Si B pasa a `attention`, desbloquéalo como se indica en [¿Qué es la recuperación automática de envíos?](#¿qué-es-la-recuperación-automática-de-envíos)
 
 ### ¿Qué ocurre con los registros diferidos que esperan detrás de un registro fallido?
@@ -213,8 +159,6 @@ Por ejemplo, en la secuencia diferida A → B → C:
 - Al reenviar A, KubiFACTU marca B y C con `S`. Los dos salen en el siguiente envío por lote con `Incidencia = S`.
 
 Un registro diferido que solo espera su turno en la cola, sin un fallo anterior, conserva el valor con el que se creó.
-
-<RecoveryTestOnly />
 
 Con la recuperación automática no hace falta reenviar ni consultar A. KubiFACTU reintenta A por su cuenta con `Incidencia = S`, y B y C salen después también con `S`. Los diferidos creados antes de activar la recuperación no reciben esta marca automática si esperan detrás de un registro que sí está en recuperación: salen con el valor con el que se crearon.
 

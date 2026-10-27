@@ -3,8 +3,6 @@ title: 'Paso a producción'
 description: 'Pasos a seguir para pasar al entorno de producción'
 ---
 
-import RecoveryTestOnly from '/snippets/recovery-test-only.mdx';
-
 Este documento detalla los pasos necesarios para pasar del **entorno de pruebas** al **entorno de producción** en la plataforma **KubiFACTU**, conforme a la normativa de la AEAT y a la *Resolución de 18 de diciembre de 2024 (BOE-A-2024-27600)*.
 
 ## Declaración responsable
@@ -46,10 +44,6 @@ El entorno de producción parte **desde cero**, por lo que:
 
 - Las **API Keys** y **SIFs** serán **nuevos**.
 - No se conservarán los datos del entorno de pruebas.
-
-<RecoveryTestOnly />
-
-Si tu integración ya lee el objeto `recovery` o espera los callbacks de los reintentos automáticos en el entorno de pruebas, ten en cuenta que en producción `recovery` vale `null` y no hay callbacks de reintentos hasta que se active la recuperación. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)
 
 ## Soporte
 

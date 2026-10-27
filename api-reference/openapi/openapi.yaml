@@ -129,7 +129,7 @@ paths:
 
         Antes de crear el registro, la API comprueba la cadena de la misma empresa cliente y el mismo SIF. Si existe un registro anterior pendiente de envío o de resolver su resultado, devuelve HTTP `409` con el código `E-INVOICE-SUBMISSION-BLOCKED`. El nuevo registro no se crea, no se envía a AEAT y no queda en cola.
 
-        Con la recuperación automática, si el envío falla y deja la cadena esperando, la respuesta es la misma que sin recuperación, con `recovery` relleno, y KubiFACTU reintenta el registro por su cuenta. Los reintentos llaman a `callback_url` si la petición lo incluía. El `409` del siguiente registro se mantiene hasta que la recuperación termine. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+        Con la recuperación automática, si el envío falla y deja la cadena esperando, la respuesta es la misma que sin recuperación, con `recovery` relleno, y KubiFACTU reintenta el registro por su cuenta. Los reintentos llaman a `callback_url` si la petición lo incluía. El `409` del siguiente registro se mantiene hasta que la recuperación termine.
       operationId: "createInvoiceRecord"
       x-mint:
         content: |
@@ -285,7 +285,7 @@ paths:
 
         El cuerpo del callback siempre es un array y puede contener uno o varios registros. Un callback no tiene por qué corresponder exactamente con el lote original, por lo que la integración debe correlacionar cada resultado mediante `id` o `client_invoice_id`, sin depender de su posición en el array. Un mismo registro puede llegar en más de un callback, así que procesa cada resultado de forma idempotente.
 
-        Con la recuperación automática, `recovery` va relleno en los elementos de los registros que sigue, y los reintentos automáticos generan callbacks adicionales del mismo registro: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). `recovery.status = resolved` no significa que la AEAT haya aceptado el registro: el resultado está en `vf_record_registration_status`. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+        Con la recuperación automática, `recovery` va relleno en los elementos de los registros que sigue, y los reintentos automáticos generan callbacks adicionales del mismo registro: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). `recovery.status = resolved` no significa que la AEAT haya aceptado el registro: el resultado está en `vf_record_registration_status`.
 
         Ejemplo de callback con la recuperación automática activa:
 
@@ -506,7 +506,7 @@ paths:
 
         Si el registro es un diferido que todavía no se ha enviado, el endpoint no consulta a la AEAT y devuelve los datos guardados.
 
-        Con la recuperación automática, la consulta de un registro en recuperación solo llama a la URL de callback si cambia el resultado o el estado de `recovery`. Si la consulta confirma que la AEAT tiene el registro, la recuperación termina (`resolved`). Si la AEAT responde que no lo tiene, el registro queda en `retry` y KubiFACTU lo reenvía en el siguiente intento. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+        Con la recuperación automática, la consulta de un registro en recuperación solo llama a la URL de callback si cambia el resultado o el estado de `recovery`. Si la consulta confirma que la AEAT tiene el registro, la recuperación termina (`resolved`). Si la AEAT responde que no lo tiene, el registro queda en `retry` y KubiFACTU lo reenvía en el siguiente intento.
       operationId: "queryInvoiceRecord"
       parameters:
         - name: invoiceId
@@ -560,7 +560,6 @@ paths:
 
         Mientras la conciliación del registro está pendiente, devuelve HTTP `409` con motivo `pending_reconciliation`, igual que sin recuperación.
 
-        La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
       operationId: "resubmitInvoiceRecord"
       parameters:
         - name: invoiceId
@@ -608,7 +607,7 @@ paths:
             - El registro no tiene huella generada (no se ha procesado correctamente).
             - El registro ya está registrado en Veri*Factu y no puede ser reenviado.
             - El registro es un diferido que todavía espera su primer envío.
-            - El registro está en recuperación automática con `recovery.status` en `processing` o `resolved`. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+            - El registro está en recuperación automática con `recovery.status` en `processing` o `resolved`.
           content:
             application/json:
               schema:
@@ -651,7 +650,7 @@ paths:
 
         Si se considera que "toda la factura" en sí misma está mal o no debería haberse emitido, siempre que para solucionarlo no deba emplearse algún procedimiento (de rectificativa u otro) previsto en el Reglamento de Obligaciones de Facturación (ROF), se podrá anular, generando para ello un registro de facturación de anulación.
 
-        Con la recuperación automática, si el envío de la anulación falla y deja la cadena esperando, la respuesta es la misma que sin recuperación, con `recovery` relleno, y KubiFACTU reintenta la anulación por su cuenta. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+        Con la recuperación automática, si el envío de la anulación falla y deja la cadena esperando, la respuesta es la misma que sin recuperación, con `recovery` relleno, y KubiFACTU reintenta la anulación por su cuenta.
       operationId: "cancelInvoiceRecord"
       parameters:
         - name: invoiceId
@@ -713,7 +712,7 @@ paths:
 
                     Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
 
-                    Con la recuperación automática, los reintentos automáticos también llaman a esta URL: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+                    Con la recuperación automática, los reintentos automáticos también llaman a esta URL: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`).
 
                     Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
 
@@ -1371,7 +1370,7 @@ components:
 
             Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
 
-            Con la recuperación automática, los reintentos automáticos también llaman a esta URL, incluidos los de un envío inmediato que falló: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). Por eso `callback_url` también sirve en los envíos inmediatos. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+            Con la recuperación automática, los reintentos automáticos también llaman a esta URL, incluidos los de un envío inmediato que falló: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). Por eso `callback_url` también sirve en los envíos inmediatos.
 
             Se hará una petición POST a esta URL y se enviarán un array en formato JSON con los datos de las facturas procesadas cuyos ítems contendrán los siguientes campos:
 
@@ -1988,7 +1987,6 @@ components:
 
         La respuesta de un envío inmediato que falla es la misma que sin recuperación, con este objeto relleno.
 
-        La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
       required:
         - status
         - reason_code
@@ -2447,7 +2445,7 @@ components:
         - Al [reenviar](/openapi-reference/reenviar-registro-de-facturación) un registro cuyo envío falló.
         - En los registros diferidos que esperan detrás de un registro anterior de la misma empresa cliente y SIF cuyo envío falló o tiene un resultado incierto. Los marca antes de enviarlos, cuando ese registro anterior se reenvía o una consulta aclara su resultado. Ver [la FAQ](/faq#¿qué-ocurre-con-los-registros-diferidos-que-esperan-detrás-de-un-registro-fallido).
 
-        Con la recuperación automática, cada reintento automático del registro que falló y cada registro diferido que espera detrás de él salen con `S`, sin que nadie reenvíe ni consulte el registro. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+        Con la recuperación automática, cada reintento automático del registro que falló y cada registro diferido que espera detrás de él salen con `S`, sin que nadie reenvíe ni consulte el registro.
 
         KubiFACTU nunca cambia un `S` a `N`.
 

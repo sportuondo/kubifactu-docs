@@ -73,7 +73,7 @@ paths:
           description: |
             Error interno del servidor. Este endpoint también responde HTTP `500` cuando el envío a la AEAT falla con un error de conexión, una respuesta ilegible, un error al generar el XML o un error inesperado.
 
-            Con la recuperación automática, el registro entra igualmente en la recuperación, pero esta respuesta no incluye `recovery`. Para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación). La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+            Con la recuperación automática, el registro entra igualmente en la recuperación, pero esta respuesta no incluye `recovery`. Para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación).
       security:
         - client_api_key: []
 
@@ -355,7 +355,7 @@ paths:
 
                     Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
 
-                    Con la recuperación automática, los reintentos automáticos también llaman a esta URL: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+                    Con la recuperación automática, los reintentos automáticos también llaman a esta URL: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`).
 
                     Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
 
@@ -415,7 +415,7 @@ components:
 
             Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
 
-            Con la recuperación automática, los reintentos automáticos también llaman a esta URL, incluidos los de un envío inmediato que falló: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). Por eso `callback_url` también sirve en los envíos inmediatos. La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
+            Con la recuperación automática, los reintentos automáticos también llaman a esta URL, incluidos los de un envío inmediato que falló: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`). Por eso `callback_url` también sirve en los envíos inmediatos.
 
             Se hará una petición POST a esta URL y se enviarán un array en formato JSON con los datos de las facturas procesadas cuyos ítems contendrán los siguientes campos:
 
@@ -1027,7 +1027,6 @@ components:
 
         La respuesta de un envío inmediato que falla es la misma que sin recuperación, con este objeto relleno. La excepción es el alta inmediata de KubiBAI (`POST /api/invoicing/invoices`): si el envío falla con un error de conexión, una respuesta ilegible, un error al generar el XML o un error inesperado, responde HTTP `500` sin `recovery`, aunque el registro entra igualmente en la recuperación. Para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación).
 
-        La recuperación automática solo está activa en el entorno de pruebas (`https://devapi.kubifactu.com`). Se activará en producción cuando termine la fase de pruebas. Hasta entonces, en producción `recovery` siempre vale `null` y los registros fallidos se consultan y reenvían a mano.
       required:
         - status
         - reason_code
