@@ -21,6 +21,6 @@ Recomendamos consultar detenidamente la sección [API desde KubiBAI](/openapi-ku
 
 ## Fallos de envío en el alta inmediata
 
-Con la recuperación automática, `POST /api/invoices` responde HTTP `200` con el objeto `recovery` cuando el envío falla. El alta inmediata de KubiBAI (`POST /api/invoicing/invoices`) responde HTTP `500` sin `recovery` cuando el envío falla con un error de conexión, una respuesta ilegible, un error al generar el XML o un error inesperado. El registro entra igualmente en la recuperación automática: para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación) (`GET /api/invoicing/invoices/{invoiceId}`).
+`POST /api/invoices` responde HTTP `200` con el objeto `recovery` cuando el envío falla. El alta inmediata de KubiBAI (`POST /api/invoicing/invoices`) responde HTTP `500` sin `recovery` cuando el envío falla con un error de conexión, una respuesta ilegible, un error al generar el XML o un error inesperado. El registro entra igualmente en la recuperación automática: para conocer su estado, [obtén el registro](/openapi-kubibai-reference/obtener-registro-de-facturación) (`GET /api/invoicing/invoices/{invoiceId}`).
 
 La anulación inmediata de KubiBAI responde igual que la de la API principal: si el envío falla, HTTP `200` con el objeto `recovery`. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)

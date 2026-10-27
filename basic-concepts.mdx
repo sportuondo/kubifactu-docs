@@ -53,7 +53,7 @@ Un mismo registro puede generar más de un callback, por ejemplo tras una consul
 
 <Tip>Si la empresa cliente no necesita emitir registros de facturación por debajo de los márgenes de tiempo indicados por la AEAT (por defecto, un registro cada 60 segundos), es más simple y directo emitir registros de facturación "normales", es decir, NO DIFERIDOS, ya que la validación por parte de la AEAT se realiza de forma directa, sin esperas ni procesos de callback.</Tip>
 
-Con la recuperación automática, un envío inmediato que falla y deja la cadena esperando también recibe callbacks: KubiFACTU lo reintenta por su cuenta y cada reintento llama a `callback_url` si la petición lo incluía. Con los registros diferidos, los reintentos generan callbacks adicionales del mismo registro. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)
+Un envío inmediato que falla y deja la cadena esperando también recibe callbacks: KubiFACTU lo reintenta por su cuenta y cada reintento llama a `callback_url` si la petición lo incluía. Con los registros diferidos, los reintentos generan callbacks adicionales del mismo registro. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)
 
 ## Encadenamiento (trazabilidad) y SIFs
 
