@@ -2155,6 +2155,8 @@ components:
           nullable: true
           type: string
           description: Cadena con la descripción de los errores devueltos por Veri*Factu.
+        recovery:
+          $ref: "#/components/schemas/InvoiceRecovery"
 
     InvoiceTaxBreakdown:
       type: object
