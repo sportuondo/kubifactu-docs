@@ -1230,21 +1230,6 @@ components:
         - tax_id_number
         - email
 
-    UpdateClientCompanyCertificateRequest:
-      type: object
-      properties:
-        certificate_file:
-          type: string
-          format: binary
-          description: Certificado digital de la empresa en formato archivo.
-        certificate_password:
-          type: string
-          description: Contraseña del certificado digital.
-          example: "passwd"
-      required:
-        - certificate_file
-        - certificate_password
-
     UploadAuthorizationDocumentsRequest:
       type: object
       properties:
