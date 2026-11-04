@@ -9,6 +9,14 @@ La factura debe ser entregada al receptor (ya sea en versión impresa o digital)
 
 Junto al QR deberá aparecer la frase **«Factura verificable en la sede electrónica de la AEAT»** o **«VERI*FACTU»**, que deberá tener un tipo de letra y tamaño bien visibles, similares a los del resto de datos de la factura. El código QR deberá tener un tamaño entre **30x30 y 40x40 milímetros**.
 
+## ¿Necesito crear un SIF para cada empresa?
+
+No. Al darte de alta, KubiFACTU crea un SIF de intermediario que puedes usar con todas tus empresas cliente. No hay que asociarlo a ninguna empresa: en cada petición indicas la empresa emisora con su API-KEY y el SIF con `sif_id`.
+
+Cada pareja de empresa y SIF tiene su propia cadena, así que un registro atascado de una empresa no bloquea a las demás aunque compartan SIF.
+
+Un SIF adicional puede compensar cuando una misma empresa factura desde varios puntos, por ejemplo dos locales, y quieres que una incidencia en uno no retrase las facturas del otro. Ver [Sistemas informáticos de facturación (SIF)](/basic-concepts#sistemas-informáticos-de-facturación-sif) y [Encadenamiento (trazabilidad) y SIFs](/basic-concepts#encadenamiento-trazabilidad-y-sifs).
+
 ## ¿Qué debo hacer si cuando Veri*Factu "rechaza" una de mis facturas?
 
 En estos casos hay que emitir una [subsanación CON registro previo rechazado](/api-reference/facturas/examples/correction-no-previous).

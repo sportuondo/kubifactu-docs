@@ -441,11 +441,11 @@ components:
           type: string
           format: uuid
           description: |
-            ID del SIF que se quiere utilizar para el envío de la factura. Los SIFs se pueden registrar en el panel web de KubiFACTU.
+            UUID del SIF con el que se genera el registro de facturación. Es el valor de la columna «Identificador» del menú «SIFs» del panel web. Al darte de alta, KubiFACTU crea un SIF de intermediario que puedes usar con todas tus empresas cliente.
 
-            Un SIF puede procesar registros de facturación de diferentes empresas.
+            Un SIF de empresa solo se puede usar con la empresa a la que pertenece. Con otra empresa, la petición se rechaza con un error de validación.
 
-            Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado.
+            Cada pareja de SIF y empresa emisora tiene su propia cadena de registros. Consulta [Sistemas informáticos de facturación (SIF)](/basic-concepts#sistemas-informáticos-de-facturación-sif) para saber cuándo puede compensar usar más de un SIF.
           example: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
 
         sender_data:
@@ -496,7 +496,7 @@ components:
             fiscal_year:
               type: integer
               description: |
-                Ejercicio fiscal en el que se emite la factura. Aunque este dato no se envía a la AEAT, se utiliza junto con el `sif_id` para verificar que no se están duplicando los números de factura.
+                Ejercicio fiscal en el que se emite la factura. Aunque este dato no se envía a la AEAT, se utiliza para verificar que la empresa emisora no duplica números de factura. La comprobación es por empresa, no por SIF.
               example: 2026
 
             series_code:
@@ -1476,7 +1476,7 @@ components:
                     Cada clave es el nombre del campo asociado al error y contiene un array de mensajes.
                   example:
                     invoice_exists:
-                      - "An invoice already exists with the indicated invoice number and fiscal for the provided SIF. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                      - "An invoice already exists with the indicated invoice number and fiscal year or issue date. If the submission of this record previously failed due to technical issues, consider resubmitting it using the record resubmission endpoint. If AEAT rejected it, send a correction with correction_key S and previous_rejection_key X. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
                     invoice_data.incorrect_total_quota:
                       - "The total quota of the invoice does not match the total tax quota and equalization_tax_quota of the tax breakdown. Calculated total quota: [26.25]."
                     invoice_data.incorrect_total_amount:

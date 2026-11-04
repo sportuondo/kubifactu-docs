@@ -978,7 +978,10 @@ paths:
   /api/clientcompanies/{companyId}/sifs:
     get:
       summary: "Obtener SIFs de empresa"
-      description: "Obtención de los Sistemas Informáticos de Facturación de la empresa."
+      description: |
+        Obtiene los SIFs de empresa de la empresa indicada. No incluye los SIFs de intermediario, que se pueden usar con cualquier empresa cliente y no pertenecen a ninguna.
+
+        Consulta [Sistemas informáticos de facturación (SIF)](/basic-concepts#sistemas-informáticos-de-facturación-sif).
       operationId: "getClientCompanySifs"
       parameters:
         - name: companyId
@@ -990,7 +993,7 @@ paths:
             type: string
       responses:
         '200':
-          description: "Empresa creada con éxito."
+          description: "SIFs de la empresa obtenidos con éxito."
           content:
             application/json:
               schema:
@@ -1007,7 +1010,12 @@ paths:
         - owner_api_key: []
     post:
       summary: "Nuevo SIF de empresa"
-      description: "Creación de un Sistema Informático de Facturación de empresa."
+      description: |
+        Crea un SIF de empresa. Solo se puede usar para enviar registros de facturación de esa empresa: con otra, la API rechaza la petición con un error de validación. En el XML declara `N` en `TipoUsoPosibleMultiOT` e `IndicadorMultiplesOT`.
+
+        Para usar un mismo SIF con varias empresas cliente, usa un SIF de intermediario. Los SIFs de intermediario se crean desde el panel web.
+
+        Consulta [Sistemas informáticos de facturación (SIF)](/basic-concepts#sistemas-informáticos-de-facturación-sif).
       operationId: "createClientCompanySif"
       parameters:
         - name: companyId
@@ -1025,7 +1033,7 @@ paths:
               $ref: "#/components/schemas/CreateClientCompanySifRequest"
       responses:
         '200':
-          description: "Empresa creada con éxito."
+          description: "SIF creado con éxito."
           content:
             application/json:
               schema:
@@ -1143,7 +1151,10 @@ paths:
   /api/sifs/{sifId}:
     delete:
       summary: "Eliminar SIF"
-      description: "Eliminación de un Sistema Informático de Facturación."
+      description: |
+        Elimina un SIF de intermediario o de empresa. A partir de ese momento, las peticiones que indiquen ese `sif_id` se rechazan con un error de validación.
+
+        Si después creas otro SIF, tendrá un UUID nuevo y sus registros formarán una cadena nueva para cada empresa.
       operationId: "deleteSif"
       parameters:
         - name: sifId
@@ -1280,11 +1291,12 @@ components:
       properties:
         company_name:
           type: string
-          description: Nombre de la empresa.
+          description: |
+            Razón social del productor del SIF: la entidad que desarrolla el sistema de facturación y firma su declaración responsable. Normalmente es el intermediario que desarrolla el ERP integrado con KubiFACTU, no la empresa emisora. Consulta [Datos del productor](/basic-concepts#datos-del-productor).
           example: "Empresa de ejemplo"
         tax_id_number:
           type: string
-          description: NIF/CIF de la empresa.
+          description: NIF/CIF del productor del SIF.
           example: "S6271969E"
         other_country_code:
           $ref: "#/components/schemas/other_country_code"
@@ -1384,11 +1396,11 @@ components:
           type: string
           format: uuid
           description: |
-            ID del SIF que se quiere utilizar para el envío de la factura. Los SIFs se pueden registrar en el panel web de KubiFACTU.
+            UUID del SIF con el que se genera el registro de facturación. Es el valor de la columna «Identificador» del menú «SIFs» del panel web. Al darte de alta, KubiFACTU crea un SIF de intermediario que puedes usar con todas tus empresas cliente.
 
-            Un SIF puede procesar registros de facturación de diferentes empresas.
+            Un SIF de empresa solo se puede usar con la empresa a la que pertenece. Con otra empresa, la petición se rechaza con un error de validación.
 
-            Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado.
+            Cada pareja de SIF y empresa emisora tiene su propia cadena de registros. Consulta [Sistemas informáticos de facturación (SIF)](/basic-concepts#sistemas-informáticos-de-facturación-sif) para saber cuándo puede compensar usar más de un SIF.
           example: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
 
         invoice_type_key:
@@ -1463,7 +1475,7 @@ components:
         fiscal_year:
           type: integer
           description: |
-            Ejercicio fiscal en el que se emite la factura. Aunque este dato no se envía a la AEAT, se utiliza junto con el `sif_id` para verificar que no se están duplicando los números de factura.
+            Ejercicio fiscal en el que se emite la factura. Aunque este dato no se envía a la AEAT, se utiliza para verificar que la empresa emisora no duplica números de factura. La comprobación es por empresa, no por SIF.
           example: 2026
 
         issue_date:
@@ -2324,11 +2336,11 @@ components:
           example: "9dccd6c6-08f8-490d-a370-bfef724c0855"
         company_name:
           type: string
-          description: Nombre de la empresa asociada al SIF.
+          description: Razón social del productor del SIF.
           example: "Empresa de ejemplo"
         tax_id_number:
           type: string
-          description: NIF/CIF de la empresa asociada al SIF.
+          description: NIF/CIF del productor del SIF.
           example: "S6271969E"
         other_country_code:
           $ref: "#/components/schemas/other_country_code"
@@ -2337,7 +2349,7 @@ components:
         other_tax_id_number:
           type: string
           description: >
-            Número de identificación en el país de residencia de la empresa. Ejemplo: `L74JF44L2` para una empresa de `DE`.
+            Número de identificación del productor del SIF en su país de residencia. Ejemplo: `L74JF44L2` para una empresa de `DE`.
         name:
           type: string
           description: Nombre del SIF.
@@ -2833,7 +2845,7 @@ components:
                     Cada clave es el nombre del campo asociado al error y contiene un array de mensajes.
                   example:
                     invoice_exists:
-                      - "An invoice already exists with the indicated invoice number and fiscal for the provided SIF. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
+                      - "An invoice already exists with the indicated invoice number and fiscal year or issue date. If the submission of this record previously failed due to technical issues, consider resubmitting it using the record resubmission endpoint. If AEAT rejected it, send a correction with correction_key S and previous_rejection_key X. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
                     incorrect_total_quota:
                       - "The total quota of the invoice does not match the total tax quota and equalization_tax_quota of the tax breakdown. Calculated total quota: [26.25]."
                     incorrect_total_amount:

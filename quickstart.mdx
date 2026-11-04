@@ -13,6 +13,8 @@ import ClientDefaultHeaders from '/snippets/client-default-headers.mdx';
 
 Este ejemplo muestra de la remisión de una factura ordinaria por un total de `121.00€`, con un concepto por valor de `100.00€` + IVA del `21.00%`.
 
+En `sif_id` va el UUID de tu SIF. Al darte de alta, KubiFACTU crea un SIF de intermediario que puedes usar con todas tus empresas cliente; su UUID aparece en la columna **Identificador** del menú **SIFs** del panel y es distinto en pruebas y en producción. Ver [Sistemas informáticos de facturación (SIF)](/basic-concepts#sistemas-informáticos-de-facturación-sif).
+
 <CodeGroup>
 ```json Body
 {

@@ -28,7 +28,7 @@ Los registros de facturación son los envíos que se hacen a Veri*Factu (AEAT) p
 
 ## Obligatoriedad del envío de las facturas a Veri*Factu y QR
 
-Salvo en el caso de los [registros de facturación diferidos](#registros-de-facturacion-diferidos), el **registro de facturación** se genera en el momento en que la los datos de la factura son remitidos a nuestro sistema. Tras la generación del registro de facturación este se envía a Veri*Factu (AEAT) para su validación y registro.
+Salvo en el caso de los [registros de facturación diferidos](#registros-de-facturación-diferidos), el **registro de facturación** se genera en el momento en que la los datos de la factura son remitidos a nuestro sistema. Tras la generación del registro de facturación este se envía a Veri*Factu (AEAT) para su validación y registro.
 
 <Warning>La factura debe ser entregada al receptor (ya sea en versión impresa o digital) con un **QR de cotejo** que le permita verificar que la factura ha sido correctamente remitida a la AEAT. Junto al QR deberá aparecer la frase **«Factura verificable en la sede electrónica de la AEAT» o «VERI*FACTU»**, que deberá tener un tipo de letra y tamaño bien visibles, similares a los del resto de datos de la factura. El código QR deberá tener un tamaño entre **30x30 y 40x40 milímetros**.</Warning>
 
@@ -55,17 +55,61 @@ Un mismo registro puede generar más de un callback, por ejemplo tras una consul
 
 Un envío inmediato que falla y deja la cadena esperando también recibe callbacks: KubiFACTU lo reintenta por su cuenta y cada reintento llama a `callback_url` si la petición lo incluía. Con los registros diferidos, los reintentos generan callbacks adicionales del mismo registro. Ver [¿Qué es la recuperación automática de envíos?](/faq#¿qué-es-la-recuperación-automática-de-envíos)
 
+## Sistemas informáticos de facturación (SIF)
+
+Cada registro de facturación que KubiFACTU envía a la AEAT incluye los datos del **Sistema Informático de Facturación (SIF)** con el que se ha generado: su nombre, su identificador, su versión, su número de instalación y la razón social y el NIF de su productor. En KubiFACTU esos datos se guardan en un SIF, y en cada petición eliges qué SIF usar.
+
+### El SIF con el que empiezas
+
+Al darte de alta como intermediario, KubiFACTU crea automáticamente un **SIF de intermediario** con el nombre y el NIF de tu empresa. Con ese SIF puedes enviar los registros de facturación de todas tus empresas cliente. No necesitas crear ninguno más para empezar.
+
+### Cómo se usa
+
+El SIF **no se asocia a ninguna empresa** en el panel. En cada petición indicas:
+
+- La empresa emisora, con su API-KEY en el encabezado `X-Qbikode-ClientApiKey`.
+- El SIF, con su UUID en el campo `sif_id`.
+
+El `sif_id` es el UUID que aparece en la columna **Identificador** del listado del menú **SIFs** del panel. Es distinto en el servidor de pruebas y en el de producción.
+
+### Datos del productor
+
+La razón social y el NIF del SIF (`company_name` y `tax_id_number` en la API) identifican a su **productor**: la entidad que desarrolla el sistema de facturación con el que la empresa emite sus facturas y que firma su declaración responsable. No son los datos de la empresa emisora.
+
+Si integras tu ERP con KubiFACTU, el productor suele ser quien desarrolla ese ERP, normalmente tú como intermediario. Por eso el SIF que se crea al darte de alta lleva los datos de tu empresa. La empresa cliente solo es la productora si desarrolla su propio software de facturación.
+
+### Tipos de SIF
+
+| | SIF de intermediario | SIF de empresa |
+|---|---|---|
+| Empresas con las que se puede usar | Cualquiera de tus empresas cliente | Solo la empresa a la que pertenece. Con otra, la API rechaza la petición con HTTP `422` |
+| Dónde se crea | Panel, menú **SIFs** | Panel, pestaña **SIFs** de la empresa, o [vía API](/openapi-reference/nuevo-sif-de-empresa) |
+| `TipoUsoPosibleMultiOT` e `IndicadorMultiplesOT` en el XML | `S` | `N` |
+
 ## Encadenamiento (trazabilidad) y SIFs
 
 La trazabilidad se refiere a que se pueda garantizar que no hay "huecos" o "saltos" en la secuencia de generación de los registros de facturación correspondientes a las facturas expedidas utilizando un determinado **Sistema Informático de Facturación (SIF)**, así como que dicha secuencia se corresponde con la de la fecha y hora de generación empleadas.
 
-Los registros de facturación se encadenan de forma independiente dentro de cada SIF y para cada empresa que emita facturas. Es decir, **existe una única cadena de registros de facturación por cada par de valores distintos de SIF y empresa emisora de facturas**. Así, cada centro de facturación (por ejemplo, cada tienda de una misma empresa) puede operar como un SIF independiente.
+Los registros de facturación se encadenan de forma independiente para cada empresa emisora dentro de cada SIF. Es decir, **existe una única cadena de registros de facturación por cada pareja de SIF y empresa emisora**.
 
-<Note>Un SIF puede procesar registros de facturación de diferentes empresas.</Note>
+KubiFACTU calcula el encadenamiento en el servidor a partir de los registros que ya ha procesado para esa pareja. Tu integración no necesita saber cuál fue la factura anterior.
 
-<Tip>Una empresa puede tener uno o varios SIFs. Por ejemplo, una empresa con varias tiendas puede operar con un SIF por cada establecimiento, de forma que el encadenamiento/trazabilidad de las facturas se trate por separado, pero **no es obligatorio hacerlo**.</Tip>
+La pareja de SIF y empresa también determina qué registros esperan cuando uno se atasca. Si un registro está pendiente de envío o su resultado es incierto, los siguientes de la misma empresa y el mismo SIF esperan: en los envíos síncronos, la API devuelve HTTP `409` con el código `E-INVOICE-SUBMISSION-BLOCKED`; en los diferidos, quedan en cola. Ver [¿Qué ocurre si intento enviar el siguiente registro mientras el anterior sigue pendiente?](/faq#¿qué-ocurre-si-intento-enviar-el-siguiente-registro-mientras-el-anterior-sigue-pendiente)
 
-<Info>Nuestro sistema se encarga de generar los datos de encadenamiento de forma automática en base a las facturas previamente procesadas para los correspondientes SIFs y empresas.</Info>
+### Empresas distintas: basta con un SIF
+
+La Ferretería López y la Panadería Ruiz son empresas cliente del mismo intermediario y envían sus facturas con el mismo SIF de intermediario. Cada una tiene su propia cadena. Si una factura de la ferretería se queda pendiente porque la AEAT no responde, la panadería sigue enviando con normalidad.
+
+No necesitas un SIF por empresa: un registro atascado de una empresa nunca bloquea a otra.
+
+### Una empresa con varios puntos de facturación: puede compensar separar SIFs
+
+Tienda Sol factura con el mismo CIF en dos locales, Centro y Puerto.
+
+- **Con un solo SIF**, los dos locales comparten cadena. Si una factura del local Centro se queda pendiente porque la AEAT no responde, las siguientes del local Puerto también esperan hasta que se resuelva. Eso puede tardar bastante más que la espera habitual entre envíos.
+- **Con un SIF por local**, cada local tiene su propia cadena. Una incidencia en el local Centro no retrasa las facturas del local Puerto.
+
+Separar SIFs no permite enviar más rápido. La [espera entre envíos](#registros-de-facturación-diferidos) que fija la AEAT va por empresa, así que los dos locales la comparten igualmente. Además, los números de factura tienen que ser únicos dentro de la empresa aunque uses SIFs distintos: cada local necesita su propia serie, por ejemplo `C-2026-000001` y `P-2026-000001`.
 
 ## Rectificaciones, subsanaciones y anulaciones
 
