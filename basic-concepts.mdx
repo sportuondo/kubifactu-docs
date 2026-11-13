@@ -34,6 +34,32 @@ Salvo en el caso de los [registros de facturación diferidos](#registros-de-fact
 
 <Info>El QR de cotejo lo genera nuestro servicio una vez recibida y procesada la factura adecuadamente.</Info>
 
+## Colocar el QR en la factura
+
+KubiFACTU entrega el QR como PNG de 400 × 400 píxeles con nivel M de corrección de errores y un margen blanco de cuatro módulos. La imagen se descarga mediante `qr_image_url`. Si tienes activados los campos heredados, también puedes recibirla en `qr_image` como base64, con las opciones de conversión a BMP o JPEG. Para maquetar la factura, utiliza preferentemente el PNG, que evita la compresión con pérdida de JPEG.
+
+Tu aplicación debe colocar el QR en la factura y fijar su tamaño físico. Los píxeles del archivo y su resolución declarada no garantizan el tamaño impreso. No dependas del tamaño natural que el editor asigna a la imagen.
+
+1. Coloca el QR al principio de la factura, separado del resto del contenido. Conserva la proporción cuadrada, el contraste y todo el margen blanco de la imagen. No lo recortes ni lo deformes.
+2. Asigna el ancho y el alto en milímetros en tu generador de PDF o plantilla de impresión. El artículo 21.1 establece un tamaño de 30 × 30 a 40 × 40 mm para el QR. Distingue la matriz de módulos del borde blanco del archivo al comprobar esas medidas.
+3. Mantén como mínimo 2 mm de espacio blanco por cada lado del QR. La AEAT recomienda 6 mm. Añade espacio exterior si hace falta, sin colocar texto, bordes ni otros elementos en esa zona. El margen de cuatro módulos incluido en el PNG cambia de tamaño físico según la densidad del QR y la escala de colocación.
+4. Incluye junto al QR la frase «Factura verificable en la sede electrónica de la AEAT» o «VERI*FACTU», con un tamaño de letra visible y similar al resto de datos de la factura.
+5. Comprueba las dimensiones en el PDF resultante y en una impresión al 100 %, sin ajustes de escala. Verifica que un lector recupera exactamente `qr_value`. Para una prueba local, decodifica la imagen sin abrir la URL.
+
+### Ejemplo de medidas
+
+En una prueba local con esta URL sintética, el PNG de 400 píxeles tiene una matriz de 334 píxeles de ancho y un borde blanco de 33 píxeles a cada lado:
+
+```text
+https://example.invalid/verifactu/qr?nif=B12345674&numserie=F2026-001&fecha=13-11-2026&importe=121.00
+```
+
+Si colocas el archivo completo a 40 × 40 mm, la matriz ocupa 33,4 × 33,4 mm y cada borde blanco mide 3,3 mm. Al reservar otros 3 mm de blanco por fuera de la imagen, obtienes 6,3 mm libres por cada lado de la matriz. El espacio total reservado es de 46 × 46 mm.
+
+Estas medidas corresponden a ese ejemplo. Una URL distinta puede producir otra matriz. Comprueba las medidas con los datos y el generador de documentos de tu integración, especialmente con números de factura largos. KubiFACTU no genera ni maqueta la factura completa y no puede controlar el escalado del programa receptor.
+
+Consulta el [artículo 21 de la Orden HAC/1177/2024](https://www.boe.es/buscar/act.php?id=BOE-A-2024-22138#a2-3) y el apartado 3 de las [especificaciones técnicas del QR de la AEAT](https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/IVA/VERI-FACTU/DetalleEspecificacTecnCodigoQRfactura.pdf), versión 0.5.0 de 10/12/2025. Las indicaciones de dimensiones y espacio blanco proceden de esas fuentes. Las medidas del ejemplo se han comprobado sobre una imagen sintética, no sobre una factura impresa.
+
 ## Registros de facturación diferidos
 
 La Agencia Estatal de Administración Tributaria (AEAT) impone ciertos límites al número de solicitudes que un obligado tributario (un CIF/NIF de empresa) puede realizar en un período de tiempo determinado. Actualmente, el límite predeterminado es de una solicitud cada 60 segundos. Para gestionar esto, proporcionamos dos campos de respuesta, `next_request_waiting_time` y `next_request_datetime`, que indican el tiempo de espera necesario antes de enviar otra solicitud. En caso de que se emitan múltiples registros de facturación en el margen de tiempo especificado, ofrecemos una función de **envío de registros de facturación en diferido**. En tales casos, nuestro sistema genera los datos mínimos esenciales requeridos, como códigos QR y otros elementos necesarios, para los registros de facturación. Sin embargo, en lugar de enviarlos inmediatamente a la AEAT, espera hasta que hayan transcurrido los márgenes de tiempo especificados por la AEAT para el emisor respectivo.

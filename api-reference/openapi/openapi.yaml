@@ -459,6 +459,8 @@ paths:
       description: |
         Descarga la imagen PNG del código QR indicada por el campo `qr_image_url` de las respuestas de factura y callbacks.
 
+        El PNG tiene 400 × 400 píxeles, nivel M de corrección de errores y un margen blanco de cuatro módulos. El tamaño físico depende de la maquetación de la factura. Consulta [cómo colocar el QR en la factura](/basic-concepts#colocar-el-qr-en-la-factura).
+
         La petición debe hacerse con el header HTTP `X-Qbikode-ClientApiKey`.
       operationId: "downloadInvoiceRecordQrImage"
       parameters:
