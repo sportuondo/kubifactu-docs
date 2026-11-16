@@ -167,7 +167,7 @@ components:
       name: X-Qbikode-ClientApiKey
       in: header
       description: |
-        API-KEY de la empresa que hace la petición. Este dato se puede consultar en el panel web, accediendo a la sección _Empresas_ y accediendo a la ficha de la empresa en.
+        API-KEY de la empresa que hace la petición. Este dato se puede consultar en el panel web, accediendo a la sección _Empresas_ y a la ficha de la empresa.
 
     owner_api_key:
       type: apiKey
