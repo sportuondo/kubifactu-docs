@@ -31,7 +31,7 @@ En `sif_id` va el UUID de tu SIF. Al darte de alta, KubiFACTU crea un SIF de int
     }
   ],
   "full_invoice_number": "2026-000001",
-  "fiscal_year": "2026",
+  "fiscal_year": 2026,
   "issue_date": "2026-01-01",
   "operation_description": "Factura ordinaria por entrega de mercancías.",
   "total_quota": 21.00,
@@ -41,18 +41,18 @@ En `sif_id` va el UUID de tu SIF. Al darte de alta, KubiFACTU crea un SIF de int
       "tax_type_key": "01", // Impuesto sobre el Valor Añadido (IVA)
       "vat_tax_regime_key": "01", // Operación de régimen general
       "operation_type_key": "S1", // Operación Sujeta y No exenta - Sin inversión del sujeto pasivo
-      "tax_base": "100.00",
-      "tax_rate": "21.00",
-      "tax_quota": "21.00"
+      "tax_base": 100.00,
+      "tax_rate": 21,
+      "tax_quota": 21.00
     }
   ]
 }
 ```
 
 ```bash cURL
-curl -X "POST" "https://kubifactu.kubicode.test/api/invoices" \
+curl -X "POST" "https://devapi.kubifactu.com/api/invoices" \
      -H 'Accept: application/json' \
-     -H 'Content-Type: text/plain; charset=utf-8' \
+     -H 'Content-Type: application/json' \
      -H 'X-Qbikode-ClientApiKey: API-KEY de la empresa' \
      -d $'{
   "sif_id": "9db0bca1-187e-4cf4-b87c-96f2044008d7",
@@ -68,7 +68,7 @@ curl -X "POST" "https://kubifactu.kubicode.test/api/invoices" \
     }
   ],
   "full_invoice_number": "2026-000001",
-  "fiscal_year": "2026",
+  "fiscal_year": 2026,
   "issue_date": "2026-01-01",
   "operation_description": "Factura ordinaria por entrega de mercancías.",
   "total_quota": 21.00,
@@ -78,9 +78,9 @@ curl -X "POST" "https://kubifactu.kubicode.test/api/invoices" \
       "tax_type_key": "01",
       "vat_tax_regime_key": "01",
       "operation_type_key": "S1",
-      "tax_base": "100.00",
-      "tax_rate": "21.00",
-      "tax_quota": "21.00"
+      "tax_base": 100.00,
+      "tax_rate": 21,
+      "tax_quota": 21.00
     }
   ]
 }'

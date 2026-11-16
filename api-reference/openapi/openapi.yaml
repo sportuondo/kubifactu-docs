@@ -130,6 +130,16 @@ paths:
         Antes de crear el registro, la API comprueba la cadena de la misma empresa cliente y el mismo SIF. Si existe un registro anterior pendiente de envío o de resolver su resultado, devuelve HTTP `409` con el código `E-INVOICE-SUBMISSION-BLOCKED`. El nuevo registro no se crea, no se envía a AEAT y no queda en cola.
 
         Si el envío falla y deja la cadena esperando, la respuesta incluye `recovery` relleno y KubiFACTU reintenta el registro por su cuenta. Los reintentos llaman a `callback_url` si la petición lo incluía. El `409` del siguiente registro se mantiene hasta que la recuperación termine.
+
+        ### Validación de la petición
+
+        Para evitar errores, la aplicación puede validar la petición antes de enviarla:
+
+        - Las restricciones del cuerpo (campos obligatorios, longitudes, valores admitidos, formatos y condiciones entre campos) están en el esquema de la petición. Su incumplimiento devuelve `422` con el error en la ruta del campo.
+        - Los errores que dependen de los datos de la cuenta en KubiFACTU (el SIF, el NIF de la empresa cliente, las facturas ya registradas, la espera que pide la AEAT o la cadena de registros) no se pueden comprobar antes. Están en las respuestas `409`, `422` y `503`.
+        - El resultado de la AEAT solo se conoce al procesar el registro. Se devuelve con HTTP `200` en `vf_post_status` y `vf_record_registration_status`, también cuando la AEAT rechaza el registro o el envío falla.
+
+        Omite los campos que no apliquen. Enviar `null` en un campo que el esquema no marca como `nullable` devuelve `422`. KubiFACTU elimina los espacios al principio y al final de los textos y convierte un texto vacío en `null`.
       operationId: "createInvoiceRecord"
       x-mint:
         content: |
@@ -142,9 +152,32 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateInvoiceRecordRequest"
+            example:
+              sif_id: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
+              invoice_type_key: "F1"
+              sender_data:
+                company_name: "Empresa emisora de ejemplo"
+                tax_id_number: "J27290840"
+              recipients:
+                - company_name: "Empresa receptora de ejemplo"
+                  tax_id_number: "B99014037"
+              full_invoice_number: "2026-000001"
+              fiscal_year: 2026
+              issue_date: "2026-01-01"
+              operation_description: "Factura ordinaria por entrega de mercancías."
+              total_quota: 21.00
+              total_amount: 121.00
+              tax_breakdown:
+                - tax_type_key: "01"
+                  vat_tax_regime_key: "01"
+                  operation_type_key: "S1"
+                  tax_base: 100.00
+                  tax_rate: 21
+                  tax_quota: 21.00
       responses:
         '200':
-          description: "Factura enviada con éxito."
+          description: |
+            Registro creado y enviado a la AEAT. El resultado está en `vf_post_status` y `vf_record_registration_status`: un rechazo de la AEAT o un fallo en el envío también devuelven `200`.
           content:
             application/json:
               schema:
@@ -152,6 +185,8 @@ paths:
         '409':
           description: |
             Un registro anterior de la misma empresa cliente y el mismo SIF bloquea la cadena. Consulta o recupera el registro identificado por `blocking_invoice_id` mediante los endpoints existentes y vuelve a solicitar el nuevo registro cuando deje de bloquear la cadena. Un rechazo explícito definitivo de AEAT no bloquea por sí solo nuevos registros.
+
+            Un registro diferido del mismo SIF que todavía espera su envío también bloquea, con `reason = pending_submission`. En este endpoint, `reason` nunca vale `pending_reconciliation`.
           content:
             application/json:
               schema:
@@ -167,9 +202,30 @@ paths:
                     details: null
         '422':
           description: |
-            Errores de validación.
+            Errores de validación. Una respuesta puede traer varios errores. Los errores de formato llevan como clave la ruta del campo, según las restricciones del esquema de la petición.
 
-            Una subsanación con `correction_key = S` y `previous_rejection_key = X` devuelve el error en `previous_rejection_key` si en KubiFACTU ya existe el alta de la misma factura registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso.
+            Estas claves dependen de los datos de la cuenta en KubiFACTU:
+
+            - `sif_id`: el SIF no existe, es de otro intermediario o se ha eliminado.
+            - `is_invalid_sif`: el SIF es de otra empresa cliente.
+            - `sender_data.tax_id_number`: el NIF del emisor no es el de la empresa cliente de la API-KEY.
+            - `client_is_disabled`: la empresa cliente está desactivada.
+            - `is_rate_limited`: la AEAT pidió esperar tras el último envío de la empresa cliente, inmediato o diferido, y el plazo no ha terminado. El mensaje indica hasta cuándo. Espera a esa hora o usa el envío diferido.
+            - `invoice_exists`: ya existe un alta con el mismo número de factura y el mismo ejercicio o la misma fecha de expedición. El mensaje incluye el ID del registro existente.
+            - `previous_rejection_key`: una subsanación con `correction_key = S` y `previous_rejection_key = X` cuyo alta original está registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso. Las dos situaciones solo se distinguen por el mensaje (ver los ejemplos).
+
+            Estas claves no son campos de la petición, pero se pueden calcular antes de enviarla:
+
+            - `incorrect_total_amount` e `incorrect_total_quota`: los totales no cuadran con el desglose (ver `total_amount` y `total_quota`).
+            - `tax_breakdown` y `lines`: la petición incluye las dos propiedades.
+
+            Si `errors` es `null`, el error es un requisito pendiente de la cuenta y `message` indica cuál:
+
+            - `Missing SEPA mandate information…`: falta el mandato SEPA del intermediario.
+            - `Authorization for intermediation not accepted…`: el intermediario no ha aceptado la autorización de intermediación en el panel web.
+            - `Missing complete authorization documentation for this client company…`: falta la documentación de autorización de la empresa cliente.
+
+            Los mensajes son informativos y pueden cambiar. Identifica cada error por la clave de `errors`.
           content:
             application/json:
               schema:
@@ -198,20 +254,58 @@ paths:
                         details:
                           request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
         '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
+          description: |
+            No autorizado. Falta la API-KEY, no existe o el intermediario tiene desactivado el acceso a la API. En este último caso, la respuesta incluye `code` y `reason`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '429':
+          description: |
+            Se ha superado el límite de peticiones por segundo de la empresa cliente o, sin una API-KEY válida, de la dirección IP. Se comprueba antes que la API-KEY. La respuesta no incluye la cabecera `Retry-After`: espera un segundo antes de repetir la petición.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
         '500':
           description: "Error interno del servidor."
+        '503':
+          description: |
+            Otra operación de la misma empresa cliente con la AEAT está en curso, por ejemplo otra alta o anulación inmediata, un reenvío, una consulta o el envío de sus registros diferidos. No se crea el registro. Vuelve a enviar la petición pasados los segundos que indica `data.error.errors.retry_after`.
+
+            Se comprueba antes de validar la petición: un `503` no indica que la petición sea válida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceBusyErrorResponse'
+              example:
+                data:
+                  error:
+                    code: E-SERVICE-BUSY
+                    message: "Another invoice submission is being processed for this company. Please retry."
+                    errors:
+                      retry_after: 5
+                    details: null
       security:
         - client_api_key: []
 
   /api/invoices/deferred:
     post:
       summary: "Enviar registro de facturación diferido"
-      description: "Generación de un nuevo registro de facturación diferido."
+      description: |
+        Generación de un nuevo registro de facturación diferido. KubiFACTU lo envía a la AEAT más tarde y comunica el resultado mediante `callback_url` o al consultar el registro.
+
+        El cuerpo y su validación son los del endpoint [Enviar registro de facturación](/openapi-reference/enviar-registro-de-facturación), salvo que el envío diferido no devuelve `409`, `503` ni el error `is_rate_limited`: un registro anterior pendiente o la espera que pide la AEAT no impiden crearlo, solo retrasan su envío.
+
+        ### Validación de la petición
+
+        Para evitar errores, la aplicación puede validar la petición antes de enviarla:
+
+        - Las restricciones del cuerpo (campos obligatorios, longitudes, valores admitidos, formatos y condiciones entre campos) están en el esquema de la petición. Su incumplimiento devuelve `422` con el error en la ruta del campo.
+        - Los errores que dependen de los datos de la cuenta en KubiFACTU (el SIF, el NIF de la empresa cliente o las facturas ya registradas) no se pueden comprobar antes. Están en la respuesta `422`.
+        - El resultado de la AEAT llega después, al enviar el registro.
+
+        Omite los campos que no apliquen. Enviar `null` en un campo que el esquema no marca como `nullable` devuelve `422`. KubiFACTU elimina los espacios al principio y al final de los textos y convierte un texto vacío en `null`.
       operationId: "createDeferredInvoiceRecord"
       requestBody:
         required: true
@@ -219,18 +313,60 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateInvoiceRecordRequest"
+            example:
+              sif_id: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
+              invoice_type_key: "F1"
+              sender_data:
+                company_name: "Empresa emisora de ejemplo"
+                tax_id_number: "J27290840"
+              recipients:
+                - company_name: "Empresa receptora de ejemplo"
+                  tax_id_number: "B99014037"
+              full_invoice_number: "2026-000001"
+              fiscal_year: 2026
+              issue_date: "2026-01-01"
+              operation_description: "Factura ordinaria por entrega de mercancías."
+              total_quota: 21.00
+              total_amount: 121.00
+              tax_breakdown:
+                - tax_type_key: "01"
+                  vat_tax_regime_key: "01"
+                  operation_type_key: "S1"
+                  tax_base: 100.00
+                  tax_rate: 21
+                  tax_quota: 21.00
       responses:
         '200':
-          description: "Factura recibida con éxito."
+          description: "Registro creado y pendiente de envío a la AEAT."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateInvoiceRecordResponse'
         '422':
           description: |
-            Errores de validación.
+            Errores de validación. Una respuesta puede traer varios errores. Los errores de formato llevan como clave la ruta del campo, según las restricciones del esquema de la petición.
 
-            Una subsanación con `correction_key = S` y `previous_rejection_key = X` devuelve el error en `previous_rejection_key` si en KubiFACTU ya existe el alta de la misma factura registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso.
+            Estas claves dependen de los datos de la cuenta en KubiFACTU:
+
+            - `sif_id`: el SIF no existe, es de otro intermediario o se ha eliminado.
+            - `is_invalid_sif`: el SIF es de otra empresa cliente.
+            - `sender_data.tax_id_number`: el NIF del emisor no es el de la empresa cliente de la API-KEY.
+            - `client_is_disabled`: la empresa cliente está desactivada.
+            - `invoice_exists`: ya existe un alta con el mismo número de factura y el mismo ejercicio o la misma fecha de expedición. El mensaje incluye el ID del registro existente.
+            - `previous_rejection_key`: una subsanación con `correction_key = S` y `previous_rejection_key = X` cuyo alta original está registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso. Las dos situaciones solo se distinguen por el mensaje (ver los ejemplos).
+
+            Estas claves no son campos de la petición, pero se pueden calcular antes de enviarla:
+
+            - `incorrect_total_amount` e `incorrect_total_quota`: los totales no cuadran con el desglose (ver `total_amount` y `total_quota`).
+            - `tax_breakdown` y `lines`: la petición incluye las dos propiedades.
+
+            Si `errors` es `null`, el error es un requisito pendiente de la cuenta y `message` indica cuál:
+
+            - `Missing SEPA mandate information…`: falta el mandato SEPA del intermediario.
+            - `Authorization for intermediation not accepted…`: el intermediario no ha aceptado la autorización de intermediación en el panel web.
+            - `Missing complete authorization documentation for this client company…`: falta la documentación de autorización de la empresa cliente.
+
+            Los mensajes son informativos y pueden cambiar. Identifica cada error por la clave de `errors`.
           content:
             application/json:
               schema:
@@ -259,11 +395,19 @@ paths:
                         details:
                           request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
         '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
+          description: |
+            No autorizado. Falta la API-KEY, no existe o el intermediario tiene desactivado el acceso a la API. En este último caso, la respuesta incluye `code` y `reason`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '429':
+          description: |
+            Se ha superado el límite de peticiones por segundo de la empresa cliente o, sin una API-KEY válida, de la dirección IP. Se comprueba antes que la API-KEY. La respuesta no incluye la cabecera `Retry-After`: espera un segundo antes de repetir la petición.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
         '500':
           description: "Error interno del servidor."
       security:
@@ -278,6 +422,18 @@ paths:
         La respuesta confirma la recepción del lote, pero no incluye los identificadores ni el resultado individual de los registros. Tampoco confirma su aceptación por Veri*Factu. El resultado de cada registro se obtiene posteriormente mediante la URL indicada en su campo `callback_url` o consultando el registro de facturación.
 
         Si algún registro no supera la validación, la respuesta contiene los errores indexados según su posición en el array, por ejemplo, `invoices.0.sif_id`.
+
+        ### Validación del lote
+
+        El lote se acepta entero o se rechaza entero: con un solo error, la respuesta es `422` y no se crea ningún registro.
+
+        La validación tiene dos fases. Primero se comprueba que `invoices` es un array de entre 1 y 500 objetos. Si falla, la respuesta solo trae ese error, y los errores de cada factura aparecen al corregirlo. Después, cada factura se valida con las mismas reglas que en [Enviar registro de facturación](/openapi-reference/enviar-registro-de-facturación), con las claves de error precedidas de `invoices.<n>.`.
+
+        Diferencias con el alta individual:
+
+        - Dos facturas del mismo lote con el mismo número y el mismo ejercicio, o con el mismo número y la misma fecha de expedición, son duplicadas, también si una es la subsanación de la otra. El error va en `invoices.<n>.full_invoice_number` de la segunda y siguientes.
+        - El lote no devuelve `409`, `503` ni el error `is_rate_limited`.
+        - Envía como texto los campos de tipo texto, como `client_invoice_id` y `full_invoice_number`.
 
         ### Resultado mediante callback
 
@@ -329,6 +485,29 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateBatchOfInvoicesRecordsRequest"
+            example:
+              invoices:
+                - sif_id: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
+                  invoice_type_key: "F1"
+                  sender_data:
+                    company_name: "Empresa emisora de ejemplo"
+                    tax_id_number: "J27290840"
+                  recipients:
+                    - company_name: "Empresa receptora de ejemplo"
+                      tax_id_number: "B99014037"
+                  full_invoice_number: "2026-000001"
+                  fiscal_year: 2026
+                  issue_date: "2026-01-01"
+                  operation_description: "Factura ordinaria por entrega de mercancías."
+                  total_quota: 21.00
+                  total_amount: 121.00
+                  tax_breakdown:
+                    - tax_type_key: "01"
+                      vat_tax_regime_key: "01"
+                      operation_type_key: "S1"
+                      tax_base: 100.00
+                      tax_rate: 21
+                      tax_quota: 21.00
       responses:
         '200':
           description: "Lote recibido para su procesamiento diferido."
@@ -338,9 +517,30 @@ paths:
                 $ref: '#/components/schemas/CreateBatchOfInvoiceRecordsResponse'
         '422':
           description: |
-            Errores de validación.
+            Errores de validación. No se crea ningún registro del lote. Una respuesta puede traer varios errores. Los errores de formato llevan como clave la ruta del campo, según las restricciones del esquema de la petición: `invoices` o `invoices.<n>` si falla la estructura del lote, e `invoices.<n>.<campo>` si falla una factura.
 
-            Una subsanación con `correction_key = S` y `previous_rejection_key = X` devuelve el error en `invoices.<n>.previous_rejection_key` si en KubiFACTU ya existe el alta de la misma factura registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso.
+            Estas claves dependen de los datos de la cuenta en KubiFACTU:
+
+            - `invoices.<n>.sif_id`: el SIF no existe, es de otro intermediario o se ha eliminado.
+            - `invoices.<n>.is_invalid_sif`: el SIF es de otra empresa cliente.
+            - `invoices.<n>.sender_data.tax_id_number`: el NIF del emisor no es el de la empresa cliente de la API-KEY.
+            - `invoices.<n>.client_is_disabled`: la empresa cliente está desactivada. Aparece en cada factura.
+            - `invoices.<n>.invoice_exists`: ya existe un alta con el mismo número de factura y el mismo ejercicio o la misma fecha de expedición. El mensaje incluye el ID del registro existente.
+            - `invoices.<n>.previous_rejection_key`: una subsanación con `correction_key = S` y `previous_rejection_key = X` cuyo alta original está registrada en la AEAT o pendiente de envío. Consulta en la descripción del campo `previous_rejection_key` qué valor corresponde en cada caso. Las dos situaciones solo se distinguen por el mensaje (ver los ejemplos).
+
+            Estas claves no son campos de la petición, pero se pueden calcular antes de enviarla:
+
+            - `invoices.<n>.full_invoice_number`: además de los errores de formato, la factura repite el número de otra anterior del mismo lote.
+            - `invoices.<n>.incorrect_total_amount` e `invoices.<n>.incorrect_total_quota`: los totales no cuadran con el desglose.
+            - `invoices.<n>.tax_breakdown` e `invoices.<n>.lines`: la factura incluye las dos propiedades.
+
+            Si `errors` es `null`, el error es un requisito pendiente de la cuenta y `message` indica cuál:
+
+            - `Missing SEPA mandate information…`: falta el mandato SEPA del intermediario.
+            - `Authorization for intermediation not accepted…`: el intermediario no ha aceptado la autorización de intermediación en el panel web.
+            - `Missing complete authorization documentation for this client company…`: falta la documentación de autorización de la empresa cliente.
+
+            Los mensajes son informativos y pueden cambiar. Identifica cada error por la clave de `errors`.
           content:
             application/json:
               schema:
@@ -369,11 +569,19 @@ paths:
                         details:
                           request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
         '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
+          description: |
+            No autorizado. Falta la API-KEY, no existe o el intermediario tiene desactivado el acceso a la API. En este último caso, la respuesta incluye `code` y `reason`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '429':
+          description: |
+            Se ha superado el límite de peticiones por segundo de la empresa cliente o, sin una API-KEY válida, de la dirección IP. Se comprueba antes que la API-KEY. La respuesta no incluye la cabecera `Retry-After`: espera un segundo antes de repetir la petición.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
         '500':
           description: "Error interno del servidor."
       security:
@@ -653,6 +861,8 @@ paths:
         Si se considera que "toda la factura" en sí misma está mal o no debería haberse emitido, siempre que para solucionarlo no deba emplearse algún procedimiento (de rectificativa u otro) previsto en el Reglamento de Obligaciones de Facturación (ROF), se podrá anular, generando para ello un registro de facturación de anulación.
 
         Si el envío de la anulación falla y deja la cadena esperando, la respuesta incluye `recovery` relleno y KubiFACTU reintenta la anulación por su cuenta.
+
+        El cuerpo es opcional: solo admite `callback_url`. KubiFACTU no comprueba el estado del alta en la AEAT antes de enviar la anulación: si la AEAT la rechaza, el resultado llega en la respuesta `200`.
       operationId: "cancelInvoiceRecord"
       parameters:
         - name: invoiceId
@@ -662,34 +872,85 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelInvoiceRecordRequest"
       responses:
         '200':
-          description: "Factura enviada con éxito."
+          description: |
+            Registro de anulación creado y enviado a la AEAT. El resultado está en `vf_post_status` y `vf_record_registration_status`: un rechazo de la AEAT o un fallo en el envío también devuelven `200`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CancelInvoiceRecordResponse'
+        '409':
+          description: |
+            Un registro anterior de la misma empresa cliente y el mismo SIF bloquea la cadena. Consulta o recupera el registro identificado por `blocking_invoice_id` y vuelve a solicitar la anulación cuando deje de bloquear la cadena.
+
+            Si el alta que quieres anular es un registro diferido que todavía espera su envío, la respuesta es `409` con `reason = pending_submission`. Usa la anulación en diferido, que se envía después del alta. En este endpoint, `reason` nunca vale `pending_reconciliation`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceSubmissionBlockedErrorResponse'
         '422':
-          description: "Errores de validación."
+          description: |
+            Errores de validación. Una respuesta puede traer varios errores.
+
+            - `callback_url`: no es una URL `https` o supera los 255 caracteres.
+            - `invoice_id`: no existe ningún registro con ese ID en la empresa cliente de la API-KEY.
+            - `invoice_record_exists`: ya existe una anulación de esa factura pendiente de envío o aceptada por la AEAT. El mensaje incluye el ID de la anulación existente.
+            - `is_rate_limited`: la AEAT pidió esperar tras el último envío de la empresa cliente y el plazo no ha terminado. El mensaje indica hasta cuándo. Espera a esa hora o usa la anulación en diferido.
+            - `client_is_disabled`: la empresa cliente está desactivada.
+
+            Si `errors` es `null`, el error es un requisito pendiente de la cuenta y `message` indica cuál:
+
+            - `Missing SEPA mandate information…`: falta el mandato SEPA del intermediario.
+            - `Authorization for intermediation not accepted…`: el intermediario no ha aceptado la autorización de intermediación en el panel web.
+            - `Missing complete authorization documentation for this client company…`: falta la documentación de autorización de la empresa cliente.
+
+            Los mensajes son informativos y pueden cambiar. Identifica cada error por la clave de `errors`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
         '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
+          description: |
+            No autorizado. Falta la API-KEY, no existe o el intermediario tiene desactivado el acceso a la API. En este último caso, la respuesta incluye `code` y `reason`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '429':
+          description: |
+            Se ha superado el límite de peticiones por segundo de la empresa cliente o, sin una API-KEY válida, de la dirección IP. Se comprueba antes que la API-KEY. La respuesta no incluye la cabecera `Retry-After`: espera un segundo antes de repetir la petición.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
         '500':
           description: "Error interno del servidor."
+        '503':
+          description: |
+            Otra operación de la misma empresa cliente con la AEAT está en curso, por ejemplo otra alta o anulación inmediata, un reenvío, una consulta o el envío de sus registros diferidos. No se crea la anulación. Vuelve a enviar la petición pasados los segundos que indica `data.error.errors.retry_after`.
+
+            Se comprueba antes de validar la petición: un `503` no indica que la petición sea válida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceBusyErrorResponse'
       security:
         - client_api_key: []
 
   /api/invoices/{invoiceId}/deferredcancel:
     post:
       summary: "Anular registro de facturación en diferido"
-      description: "Anulación de un registro de facturación en diferido."
+      description: |
+        Anulación de un registro de facturación en diferido. KubiFACTU la envía a la AEAT más tarde, después de los registros anteriores de la misma cadena, y comunica el resultado mediante `callback_url` o al consultar el registro.
+
+        El cuerpo es opcional: solo admite `callback_url`. A diferencia de la anulación inmediata, no devuelve `409`, `503` ni el error `is_rate_limited`, y admite anular un alta diferida que aún no se ha enviado.
       operationId: "cancelInvoiceRecordDeferred"
       parameters:
         - name: invoiceId
@@ -704,58 +965,48 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                callback_url:
-                  type: string
-                  format: url
-                  description: |
-                    URL a la que KubiFACTU llama con el resultado de la AEAT cuando procesa el registro de anulación: su envío en diferido, un [reenvío](/openapi-reference/reenviar-registro-de-facturación) o una [consulta](/openapi-reference/consultar-registro-de-facturación-con-veri*factu).
-
-                    Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
-
-                    Los reintentos automáticos también llaman a esta URL: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`).
-
-                    Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
-
-                    - `id`: `string`. Identificador de KubiFACTU para el registro de facturación.
-                    - `client_invoice_id`: `string`. Identificador del cliente para el registro de facturación.
-                    - `record_type`: `string (creation|cancellation)`. Tipo de registro de facturación.
-                    - `sif_id`: `string`. ID del SIF utilizado para la creación del registro.
-                    - `sender_company_name`: `string`. Nombre de la empresa emisora.
-                    - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
-                    - `full_invoice_number`: `string`. Número de factura.
-                    - `fingerprint`: `string`. Huella del registro de facturación.
-                    - `csv`: `string|null`. Código Seguro de Verificación (CSV) de la remisión que contiene el registro. Puede ser `null` aunque el registro esté aceptado: para saber si está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`. [Leer más en la FAQ](/faq).
-                    - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
-                    - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
-                    - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
-                    - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
-                    - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
-                    - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
-                    - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
-                    - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
-                    - `recovery`: `object` o `null`. Siempre presente. Vale `null` si la recuperación automática no sigue el registro; en ese caso puedes ignorarlo. Mismo formato que el campo `recovery` de la respuesta de anulación de registros de facturación.
-                  example: "https://www.tuempresa.com/kubifactu/callback"
+              $ref: "#/components/schemas/CancelInvoiceRecordRequest"
       responses:
         '200':
-          description: "Factura enviada con éxito."
+          description: "Registro de anulación creado y pendiente de envío a la AEAT."
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CancelInvoiceRecordResponse'
         '422':
-          description: "Errores de validación."
+          description: |
+            Errores de validación. Una respuesta puede traer varios errores.
+
+            - `callback_url`: no es una URL `https` o supera los 255 caracteres.
+            - `invoice_id`: no existe ningún registro con ese ID en la empresa cliente de la API-KEY.
+            - `invoice_record_exists`: ya existe una anulación de esa factura pendiente de envío o aceptada por la AEAT. El mensaje incluye el ID de la anulación existente.
+            - `client_is_disabled`: la empresa cliente está desactivada.
+
+            Si `errors` es `null`, el error es un requisito pendiente de la cuenta y `message` indica cuál:
+
+            - `Missing SEPA mandate information…`: falta el mandato SEPA del intermediario.
+            - `Authorization for intermediation not accepted…`: el intermediario no ha aceptado la autorización de intermediación en el panel web.
+            - `Missing complete authorization documentation for this client company…`: falta la documentación de autorización de la empresa cliente.
+
+            Los mensajes son informativos y pueden cambiar. Identifica cada error por la clave de `errors`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
         '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
+          description: |
+            No autorizado. Falta la API-KEY, no existe o el intermediario tiene desactivado el acceso a la API. En este último caso, la respuesta incluye `code` y `reason`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '429':
+          description: |
+            Se ha superado el límite de peticiones por segundo de la empresa cliente o, sin una API-KEY válida, de la dirección IP. Se comprueba antes que la API-KEY. La respuesta no incluye la cabecera `Retry-After`: espera un segundo antes de repetir la petición.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
         '500':
           description: "Error interno del servidor."
       security:
@@ -1356,15 +1607,21 @@ components:
       properties:
         client_invoice_id:
           type: string
+          nullable: true
           maxLength: 50
           description: |
-            Identificador único de la factura **dentro del sistema del cliente**.
+            Identificador único de la factura **dentro del sistema del cliente**, de hasta 50 caracteres. Envíalo como texto. KubiFACTU lo devuelve en la respuesta y en los callbacks, pero no comprueba que sea único.
           example: "96f2044008d7iujfd78jspo4"
 
         callback_url:
           type: string
+          nullable: true
           format: url
+          maxLength: 255
+          pattern: '^https://'
           description: |
+            URL `https` de hasta 255 caracteres.
+
             URL a la que KubiFACTU llama con el resultado de la AEAT cuando procesa el registro de facturación: el envío de un [registro de facturación en diferido](/basic-concepts#registros-de-facturación-diferidos), un [reenvío](/openapi-reference/reenviar-registro-de-facturación) o una [consulta](/openapi-reference/consultar-registro-de-facturación-con-veri*factu). No se llama por el resultado que ya devuelve la respuesta de un envío inmediato.
 
             Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
@@ -1397,10 +1654,13 @@ components:
         sif_id:
           type: string
           format: uuid
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
           description: |
-            UUID del SIF con el que se genera el registro de facturación. Es el valor de la columna «Identificador» del menú «SIFs» del panel web. Al darte de alta, KubiFACTU crea un SIF de intermediario que puedes usar con todas tus empresas cliente.
+            UUID del SIF con el que se genera el registro de facturación, en minúsculas. Es el valor de la columna «Identificador» del menú «SIFs» del panel web. Al darte de alta, KubiFACTU crea un SIF de intermediario que puedes usar con todas tus empresas cliente.
 
-            Un SIF de empresa solo se puede usar con la empresa a la que pertenece. Con otra empresa, la petición se rechaza con un error de validación.
+            Debe ser un SIF de tu cuenta que no se haya eliminado. Si no lo es, la respuesta es `422` con el error en `sif_id`.
+
+            Un SIF de empresa solo se puede usar con la empresa a la que pertenece. Con otra empresa, la respuesta es `422` con el error en `is_invalid_sif`.
 
             Cada pareja de SIF y empresa emisora tiene su propia cadena de registros. Consulta [Sistemas informáticos de facturación (SIF)](/basic-concepts#sistemas-informáticos-de-facturación-sif) para saber cuándo puede compensar usar más de un SIF.
           example: "9db0bca1-187e-4cf4-b87c-96f2044008d7"
@@ -1417,14 +1677,23 @@ components:
           properties:
             company_name:
               type: string
-              description: Nombre de la empresa emisora.
+              maxLength: 120
+              description: Nombre de la empresa emisora. KubiFACTU no lo compara con la razón social de la empresa cliente.
             tax_id_number:
               type: string
-              description: NIF/CIF de la empresa emisora.
+              pattern: '^([0-9]{8}[A-Za-z]|[XYZxyz][0-9]{7}[A-Za-z]|[ABCDEFGHJKLMNPQRSUVWabcdefghjklmnpqrsuvw][0-9]{7}[0-9A-Ja-j])$'
+              description: |
+                NIF/CIF de la empresa emisora: un NIF, NIE o CIF español con la letra o el dígito de control correctos. Admite minúsculas: KubiFACTU lo pasa a mayúsculas.
+
+                Debe coincidir con el NIF de la empresa cliente de la API-KEY. Si no coincide, la respuesta es `422` con el error en este campo.
 
         recipients:
           type: array
-          description: Información de los receptores de la factura. Obligatorio para facturas ordinarias.
+          maxItems: 1000
+          description: |
+            Información de los destinatarios de la factura. Es obligatorio, con al menos un destinatario, si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`, o si `issued_by_third_party_or_recipient_key` es `D`. Con `F2` o `R5`, omite el campo: un destinatario o `null` devuelven `422`. Por eso `F2` y `R5` no admiten `issued_by_third_party_or_recipient_key = D`.
+
+            Cada destinatario se identifica con `tax_id_number` o con los tres campos `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`, nunca con ambos. Omite los campos que no uses: enviarlos con `null` devuelve `422`.
           items:
             type: object
             required:
@@ -1432,31 +1701,53 @@ components:
             properties:
               company_name:
                 type: string
+                maxLength: 120
                 description: Nombre de la empresa receptora.
               tax_id_number:
-                type: string
-                description: >
-                  NIF/CIF de la empresa receptora. Este campo es obligatorio si el receptor es nacional y se identifica mediante CIF/NIF.
+                allOf:
+                  - $ref: "#/components/schemas/SpanishTaxId"
+                description: |
+                  NIF/CIF del destinatario nacional: un NIF, NIE o CIF español en mayúsculas, con la letra o el dígito de control correctos. Es obligatorio si se omite `other_tax_id_number`, y debe ser distinto del NIF del emisor.
               other_country_code:
-                $ref: "#/components/schemas/other_country_code"
+                allOf:
+                  - $ref: "#/components/schemas/CountryCode"
+                description: |
+                  Código del país de residencia del destinatario no nacional, en mayúsculas. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Debe ser `ES` si `other_tax_id_type_key` es `07`. Con `ES`, la AEAT solo admite `other_tax_id_type_key` `03` o `07`.
               other_tax_id_type_key:
-                $ref: "#/components/schemas/other_tax_id_type_key"
+                allOf:
+                  - $ref: "#/components/schemas/other_tax_id_type_key"
+                description: |
+                  Tipo de identificación del destinatario no nacional. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa.
+
+                  - `02`: NIF-IVA.
+                  - `03`: pasaporte.
+                  - `04`: documento oficial de identificación expedido por el país o territorio de residencia.
+                  - `05`: certificado de residencia.
+                  - `06`: otro documento probatorio.
+                  - `07`: no censado. Exige `other_country_code = ES`.
               other_tax_id_number:
                 type: string
+                maxLength: 20
                 description: >
-                  Número de identificación en el país de residencia del destinatario de la operación de la factura expedida. Ejemplo: `L74JF44L2` para una empresa de `DE`.
+                  Número de identificación en el país de residencia del destinatario de la operación de la factura expedida, de hasta 20 caracteres. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Ejemplo: `L74JF44L2` para una empresa de `DE`.
 
         representative_company_name:
           type: string
+          maxLength: 120
           description: |
             Nombre/razón social del representante del obligado tributario.
             A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
 
+            Va siempre junto a `representative_tax_id_number`: si se informa uno, el otro es obligatorio.
+
         representative_tax_id_number:
-          type: string
+          allOf:
+            - $ref: "#/components/schemas/SpanishTaxId"
           description: |
-            NIF del representante del obligado tributario.
+            NIF del representante del obligado tributario: un NIF, NIE o CIF español en mayúsculas, con la letra o el dígito de control correctos.
             A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
+
+            Va siempre junto a `representative_company_name`: si se informa uno, el otro es obligatorio.
 
         previous_rejection_key:
           $ref: "#/components/schemas/previous_rejection_key"
@@ -1469,15 +1760,21 @@ components:
 
         full_invoice_number:
           type: string
+          minLength: 1
+          maxLength: 60
+          pattern: '^[\x20-\x7E]+$'
           description: |
-            Serie+Nº Factura que identifica a la factura emitida. Sólo puedo contener caracteres ASCII del 32 a 126 (caracteres imprimibles).
+            Serie+Nº Factura que identifica a la factura emitida, de hasta 60 caracteres. Solo puede contener caracteres ASCII del 32 al 126 (caracteres imprimibles): una tabulación, una `Ñ` o una vocal con tilde devuelven `422`. Envíalo como texto.
             Ejemplo: `2026-00001`.
+
+            Si la empresa cliente ya tiene un alta con el mismo número y el mismo ejercicio, o con el mismo número y la misma fecha de expedición, la respuesta es `422` con el error en `invoice_exists`, salvo en una subsanación (`correction_key = S`). Cuentan las altas de cualquier SIF y en cualquier estado, también las rechazadas.
           example: "2026-00001"
 
         fiscal_year:
           type: integer
+          minimum: 2024
           description: |
-            Ejercicio fiscal en el que se emite la factura. Aunque este dato no se envía a la AEAT, se utiliza para verificar que la empresa emisora no duplica números de factura. La comprobación es por empresa, no por SIF.
+            Ejercicio fiscal en el que se emite la factura, entre 2024 y el año en curso (hora peninsular española). Aunque este dato no se envía a la AEAT, se utiliza para verificar que la empresa emisora no duplica números de factura. La comprobación es por empresa, no por SIF.
           example: 2026
 
         issue_date:
@@ -1485,26 +1782,30 @@ components:
           format: date
           example: "2026-09-15"
           description: |
-            Fecha de expedición del registro de facturación.
+            Fecha de expedición del registro de facturación, en formato `yyyy-mm-dd`.
 
-            No puede ser una fecha futura.
+            Debe estar entre el 28 de octubre de 2024 y el día de hoy en hora peninsular española: no puede ser una fecha futura.
 
         operation_date:
           type: string
           format: date
+          nullable: true
           description: |
-            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición. Determina el ejercicio y periodo fiscal al que pertenece la operación."
+            Fecha en la que se ha realizado la operación, siempre que sea diferente a la fecha de expedición. Determina el ejercicio y periodo fiscal al que pertenece la operación.
 
-            Formato `yyyy-mm-dd`.
+            Formato `yyyy-mm-dd`. No puede ser anterior a la fecha de hoy menos 20 años.
           example: "2026-02-26"
 
         operation_description:
           type: string
+          minLength: 1
+          maxLength: 500
           description: |
-            Descripción del objeto de la factura.
+            Descripción del objeto de la factura, de hasta 500 caracteres.
 
         tax_breakdown:
           type: array
+          minItems: 1
           maxItems: 12
           description: |
             Anteriormente, este campo se denominaba `lines`. Este nombre sigue siendo válido como alias de retrocompatibilidad, pero las nuevas integraciones deben utilizar `tax_breakdown`.
@@ -1544,7 +1845,7 @@ components:
           items:
             type: object
             required:
-              - operation_type_key
+              - tax_type_key
               - tax_base
             oneOf:
               - required: [tax_type_key, vat_tax_regime_key]
@@ -1600,51 +1901,75 @@ components:
               tax_base:
                 type: number
                 format: decimal
+                minimum: -999999999999.99
+                maximum: 999999999999.99
                 description: |
                   Magnitud dineraria sobre la que se aplica el tipo impositivo/importe no sujeto.
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `200.00`.
+                  Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Admite negativos. Ejemplo: `200.00`.
                 example: 200.00
               tax_base_at_cost:
                 type: number
                 format: decimal
+                nullable: true
+                minimum: -999999999999.99
+                maximum: 999999999999.99
                 description: |
                   Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `100.00`.
+                  Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `100.00`.
+
+                  Solo se informa con el régimen `06` (`vat_tax_regime_key` o `igic_tax_regime_key`) o con los impuestos `02` (IPSI) y `05` (Otros), según las validaciones de la AEAT.
               tax_rate:
                 type: number
                 format: decimal
+                enum: [0, 2, 3, 4, 5, 7, 7.5, 9.5, 10, 13.5, 20, 21]
                 description: |
-                  Porcentaje aplicado sobre la base imponible para calcular la cuota.
-                  Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `21.00`.
-                example: 21.00
+                  Porcentaje aplicado sobre la base imponible para calcular la cuota. Ejemplo: `21`.
+
+                  Se admiten los valores de la lista, con cualquier impuesto. Envíalo como número JSON: como texto, `"21.00"` devuelve `422`.
+
+                  Con `operation_type_key` `S1` o `S2`, informa `tax_rate` y `tax_quota`: los exige la AEAT. Con `N1`, `N2` o `exemption_cause_key`, omite el campo: cualquier valor, también `0` o `null`, devuelve `422`.
+                example: 21
               tax_quota:
                 type: number
                 format: decimal
+                minimum: -999999999999.99
+                maximum: 999999999999.99
                 description: |
                   Cuota resultante de aplicar a la base imponible el tipo impositivo.
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.00`.
+                  Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `42.00`.
+
+                  Se informa en los mismos casos que `tax_rate`: con `N1`, `N2` o `exemption_cause_key`, omite el campo.
                 example: 42.00
               equalization_tax_rate:
                 type: number
                 format: decimal
+                nullable: true
+                enum: [0, 0.26, 0.5, 0.62, 1, 1.4, 1.75, 5.2, null]
                 description: |
-                  Tipo de recargo de equivalencia asociado en función del impuesto y tipo impositivo.
-                  Valor con 3 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
-                example: 5.20
+                  Tipo de recargo de equivalencia asociado en función del impuesto y tipo impositivo. Ejemplo: `5.2`.
+
+                  Se admiten los valores de la lista. Envíalo como número JSON: el texto `"5.20"` se rechaza. Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
+                example: 5.2
               equalization_tax_quota:
                 type: number
                 format: decimal
+                nullable: true
+                minimum: -999999999999.99
+                maximum: 999999999999.99
                 description: |
                   Cuota de resultante de aplicar a la base imponible el tipo de recargo de equivalencia.
-                  Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `10.40`.
+                  Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `10.40`. Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
                 example: 10.40
 
         total_quota:
           type: number
           format: decimal
+          minimum: -999999999999.99
+          maximum: 999999999999.99
           description: |
             Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `33.57`.
+            Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `33.57`.
+            Mientras el desglose tenga errores de validación, esta comparación no se hace y su error no aparece.
             Se compara con la suma de las cuotas y recargos del desglose, incluso cuando el resultado es cero. Una diferencia absoluta superior a 10,00 € devuelve HTTP 422 con `incorrect_total_quota` (en lotes, `invoices.N.incorrect_total_quota`).
             Esta comprobación se aplica a los envíos inmediatos, diferidos y por lotes, tanto con `tax_breakdown` como con su alias `lines`. Una diferencia de exactamente 10,00 € está dentro de la tolerancia.
             Excepciones por régimen: si existe al menos una línea válida de IVA (`tax_type_key: "01"`) con `vat_tax_regime_key` igual a `03`, `05`, `06`, `08` o `09`, de IGIC (`"03"`) con uno de esos valores en `igic_tax_regime_key`, o de IPSI (`"02"`) con `ipsi_tax_regime_key: "08"`, se omiten las comparaciones globales de `total_amount` y `total_quota` para toda esa factura.
@@ -1654,9 +1979,13 @@ components:
         total_amount:
           type: number
           format: decimal
+          minimum: -999999999999.99
+          maximum: 999999999999.99
           description: |
             Importe total de la factura. Con carácter general se compara con Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las entradas de `tax_breakdown`, salvo las excepciones por régimen indicadas a continuación.
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2450.75`.
+            Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `2450.75`.
+            Mientras el desglose tenga errores de validación, esta comparación no se hace y su error no aparece.
+            Si su valor absoluto es igual o superior a 100.000.000,00, `macrodata_key` es obligatorio.
             Se compara con la suma del desglose, incluso cuando el resultado es cero. Una diferencia absoluta superior a 10,00 € devuelve HTTP 422 con `incorrect_total_amount` (en lotes, `invoices.N.incorrect_total_amount`).
             Esta comprobación se aplica a los envíos inmediatos, diferidos y por lotes, tanto con `tax_breakdown` como con su alias `lines`. Una diferencia de exactamente 10,00 € está dentro de la tolerancia.
             Excepciones por régimen: si existe al menos una línea válida de IVA (`tax_type_key: "01"`) con `vat_tax_regime_key` igual a `03`, `05`, `06`, `08` o `09`, de IGIC (`"03"`) con uno de esos valores en `igic_tax_regime_key`, o de IPSI (`"02"`) con `ipsi_tax_regime_key: "08"`, se omiten las comparaciones globales de `total_amount` y `total_quota` para toda esa factura.
@@ -1676,39 +2005,54 @@ components:
 
         issued_by_third_party_or_recipient_key:
           type: string
+          nullable: true
           description: |
             Identificador que especifica si la factura ha sido expedida materialmente por un tercero o por el destinatario (contraparte).
 
             - Si es igual a `T` (tercero), el bloque `third_party_data` será de cumplimentación obligatoria.
-            - Si es igual a `D` (destinatario), el bloque `recipients` será de cumplimentación obligatoria.
+            - Si es igual a `D` (destinatario), el bloque `recipients` será de cumplimentación obligatoria. Por eso `D` no se admite con `invoice_type_key` `F2` ni `R5`, que no llevan destinatarios.
 
             - `T`: Tercero
             - `D`: Destinatario
+            - `null`: equivale a omitir el campo.
           enum:
             - "T"
             - "D"
+            - null
 
         third_party_data:
           type: object
-          description: Información del tercero que expide la factura.
+          description: |
+            Información del tercero que expide la factura. Es obligatorio si `issued_by_third_party_or_recipient_key` es `T`. En otro caso, omite el campo: si se envía con datos, la respuesta es `422`.
+
+            El tercero se identifica con `tax_id_number` o con los tres campos `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`, nunca con ambos. Omite los campos que no uses: enviarlos con `null` devuelve `422`.
           required:
             - company_name
           properties:
             company_name:
               type: string
+              maxLength: 120
               description: Nombre de la empresa del tercero que expide la factura.
             tax_id_number:
-              type: string
-              description: >
-                NIF/CIF de la empresa. Este campo es obligatorio si el tercero que expide la factura es nacional y se identifica mediante CIF/NIF
+              allOf:
+                - $ref: "#/components/schemas/SpanishTaxId"
+              description: |
+                NIF/CIF del tercero nacional: un NIF, NIE o CIF español en mayúsculas, con la letra o el dígito de control correctos. Es obligatorio si se omite `other_tax_id_number`, y debe ser distinto del NIF del emisor.
             other_country_code:
-              $ref: "#/components/schemas/other_country_code"
+              allOf:
+                - $ref: "#/components/schemas/CountryCode"
+              description: |
+                Código del país de residencia del tercero no nacional, en mayúsculas. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Con `ES`, la AEAT solo admite `other_tax_id_type_key` `03`.
             other_tax_id_type_key:
-              $ref: "#/components/schemas/other_tax_id_type_key"
+              allOf:
+                - $ref: "#/components/schemas/other_tax_id_type_key"
+              description: |
+                Tipo de identificación del tercero no nacional. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Admite los mismos valores que en `recipients`, salvo `07` (no censado), que la AEAT no admite para el tercero.
             other_tax_id_number:
               type: string
+              maxLength: 20
               description: >
-                Número de identificación, en el país de residencia del tercero que expide la factura. Ejemplo: `L74JF44L2` para una empresa de `DE`.
+                Número de identificación, en el país de residencia del tercero que expide la factura, de hasta 20 caracteres. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Ejemplo: `L74JF44L2` para una empresa de `DE`.
 
         rectificative_type_key:
           $ref: "#/components/schemas/rectificative_type_key"
@@ -1716,31 +2060,47 @@ components:
         rectified_tax_base:
           type: number
           format: decimal
+          minimum: -999999999999.99
+          maximum: 999999999999.99
           description: |
             Base imponible rectificada.
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `2500.55`.
+            Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `2500.55`.
+
+            Es obligatoria si `rectificative_type_key` es `S`. En otro caso, omite el campo.
           example: 2500.55
 
         rectified_tax_quota:
           type: number
           format: decimal
+          minimum: -999999999999.99
+          maximum: 999999999999.99
           description: |
             Cuota de impuesto rectificada.
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.30`.
+            Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `42.30`.
+
+            Es obligatoria si `rectificative_type_key` es `S`. En otro caso, omite el campo.
           example: 42.30
 
         rectified_equalization_tax_quota:
           type: number
           format: decimal
+          nullable: true
+          minimum: -999999999999.99
+          maximum: 999999999999.99
           description: |
             Cuota de recargo de equivalencia rectificada.
-            Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `5.20`.
+            Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `5.20`.
+
+            Solo se admite si `rectificative_type_key` es `S`.
           example: 5.20
 
         rectified_invoices:
           type: array
+          maxItems: 1000
           description: |
-            Lista de facturas que se están rectificando.
+            Lista de facturas que se están rectificando, con un máximo de 1.000.
+
+            Es obligatoria si `invoice_type_key` es `R1`, `R2`, `R3`, `R4` o `R5`. Con el resto de tipos, omite el campo.
           items:
             type: object
             required:
@@ -1749,28 +2109,33 @@ components:
               - issue_date
             properties:
               tax_id_number:
-                type: string
+                allOf:
+                  - $ref: "#/components/schemas/SpanishTaxId"
                 description: |
-                  NIF/CIF de la empresa emisora de la factura que quiere rectificar.
+                  NIF/CIF de la empresa emisora de la factura que quiere rectificar: un NIF, NIE o CIF español en mayúsculas, con la letra o el dígito de control correctos.
               full_invoice_number:
                 type: string
+                minLength: 1
+                maxLength: 60
+                pattern: '^[\x20-\x7E]+$'
                 description: |
-                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.
+                  Serie+Nº Factura que identifica a la factura que se quiere rectificar, con las mismas restricciones que `full_invoice_number`.
                   Ejemplo: `2026-00001`.
               issue_date:
                 type: string
                 format: date
                 description: |
-                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.
+                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`, igual o posterior al 1 de julio de 2024.
                   Ejemplo: `2026-02-26`.
                 example: "2026-02-26"
 
         substituted_invoices:
           type: array
+          maxItems: 1000
           description: |
-            Lista de facturas que se quieren sustituir.
+            Lista de facturas que se quieren sustituir, con un máximo de 1.000.
 
-            Sólo podrá incluirse esta agrupación cuando el campo `invoice_type_key` sea `F3`.
+            Es obligatoria si `invoice_type_key` es `F3`. Con el resto de tipos, omite el campo.
           items:
             type: object
             required:
@@ -1779,19 +2144,23 @@ components:
               - issue_date
             properties:
               tax_id_number:
-                type: string
+                allOf:
+                  - $ref: "#/components/schemas/SpanishTaxId"
                 description: |
-                  NIF/CIF de la empresa emisora de la factura que quiere rectificar.
+                  NIF/CIF de la empresa emisora de la factura que se quiere sustituir: un NIF, NIE o CIF español en mayúsculas, con la letra o el dígito de control correctos.
               full_invoice_number:
                 type: string
+                minLength: 1
+                maxLength: 60
+                pattern: '^[\x20-\x7E]+$'
                 description: |
-                  Serie+Nº Factura que identifica a la factura que se quiere rectificar.
+                  Serie+Nº Factura que identifica a la factura que se quiere sustituir, con las mismas restricciones que `full_invoice_number`.
                   Ejemplo: `2026-00001`.
               issue_date:
                 type: string
                 format: date
                 description: |
-                  Fecha de expedición de la factura que se quiere rectificar en formato `yyyy-mm-dd`.
+                  Fecha de expedición de la factura que se quiere sustituir en formato `yyyy-mm-dd`, igual o posterior al 1 de julio de 2024.
                   Ejemplo: `2026-02-26`.
                 example: "2026-02-26"
 
@@ -1800,13 +2169,17 @@ components:
 
         invoicing_agreement_registration_number:
           type: string
+          nullable: true
+          maxLength: 15
           description: |
-            Número de registro obtenido al enviar la autorización en materia de facturación o de libros registro a que se refiere la disposición adicional primera del Real Decreto que aprueba el Reglamento.
+            Número de registro obtenido al enviar la autorización en materia de facturación o de libros registro a que se refiere la disposición adicional primera del Real Decreto que aprueba el Reglamento. Hasta 15 caracteres.
 
         sif_agreement_id:
           type: string
+          nullable: true
+          maxLength: 16
           description: |
-            Identificación del acuerdo (resolución) a que se refiere el artículo 5 del Reglamento.
+            Identificación del acuerdo (resolución) a que se refiere el artículo 5 del Reglamento. Hasta 16 caracteres.
 
       required:
         - sif_id
@@ -1930,6 +2303,46 @@ components:
               description: Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación. Este campo será `null` para facturas en diferido que aún no han sido procesadas o cuando no se haya recibido respuesta de Veri*Factu.
             recovery:
               $ref: '#/components/schemas/InvoiceRecovery'
+
+    CancelInvoiceRecordRequest:
+      type: object
+      properties:
+        callback_url:
+          type: string
+          nullable: true
+          format: url
+          maxLength: 255
+          pattern: '^https://'
+          description: |
+            URL `https` de hasta 255 caracteres.
+
+            URL a la que KubiFACTU llama con el resultado de la AEAT cuando procesa el registro de anulación: su envío en diferido, un [reenvío](/openapi-reference/reenviar-registro-de-facturación) o una [consulta](/openapi-reference/consultar-registro-de-facturación-con-veri*factu).
+
+            Un mismo registro puede generar varios callbacks. Correlaciona cada elemento por `id` y procésalo de forma idempotente.
+
+            Los reintentos automáticos también llaman a esta URL: cada nuevo `retry`, el paso a `attention` y el final de la recuperación (`resolved`).
+
+            Se hará una petición POST a esta URL y se enviarán los siguientes campos en formato JSON:
+
+            - `id`: `string`. Identificador de KubiFACTU para el registro de facturación.
+            - `client_invoice_id`: `string`. Identificador del cliente para el registro de facturación.
+            - `record_type`: `string (creation|cancellation)`. Tipo de registro de facturación.
+            - `sif_id`: `string`. ID del SIF utilizado para la creación del registro.
+            - `sender_company_name`: `string`. Nombre de la empresa emisora.
+            - `sender_tax_id_number`: `string`. CIF/NIF de la empresa emisora.
+            - `full_invoice_number`: `string`. Número de factura.
+            - `fingerprint`: `string`. Huella del registro de facturación.
+            - `csv`: `string|null`. Código Seguro de Verificación (CSV) de la remisión que contiene el registro. Puede ser `null` aunque el registro esté aceptado: para saber si está acreditado, usa `vf_record_registration_status`, no la presencia del `csv`. [Leer más en la FAQ](/faq).
+            - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
+            - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
+            - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
+            - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
+            - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
+            - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
+            - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
+            - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
+            - `recovery`: `object` o `null`. Siempre presente. Vale `null` si la recuperación automática no sigue el registro; en ese caso puedes ignorarlo. Mismo formato que el campo `recovery` de la respuesta de anulación de registros de facturación.
+          example: "https://www.tuempresa.com/kubifactu/callback"
 
     CancelInvoiceRecordResponse:
       type: object
@@ -2434,6 +2847,44 @@ components:
       description: >
         Código del país en formato [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-2). Sólo es necesario rellenarlo **si el sujeto no es nacional**. El código de país debe ser `ES` si `other_tax_id_type_key` es `07 (no censado)`. Ejemplo: `DE`
 
+    CountryCode:
+      type: string
+      enum:
+        [
+          "AD", "AE", "AF", "AG", "AI", "AL", "AM", "AN", "AO", "AQ", "AR",
+          "AS", "AT", "AU", "AW", "AX", "AZ", "BA", "BB", "BD", "BE", "BF",
+          "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ", "BR", "BS",
+          "BT", "BV", "BW", "BY", "BZ", "CA", "CC", "CD", "CF", "CG", "CH",
+          "CI", "CK", "CL", "CM", "CN", "CO", "CR", "CU", "CV", "CW", "CX",
+          "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC", "EE", "EG",
+          "EH", "ER", "ES", "ET", "FI", "FJ", "FK", "FM", "FO", "FR", "GA",
+          "GB", "GD", "GE", "GF", "GG", "GH", "GI", "GL", "GM", "GN", "GP",
+          "GQ", "GR", "GS", "GT", "GU", "GW", "GY", "HK", "HM", "HN", "HR",
+          "HT", "HU", "ID", "IE", "IL", "IM", "IN", "IO", "IQ", "IR", "IS",
+          "IT", "JE", "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN",
+          "KP", "KR", "KW", "KY", "KZ", "LA", "LB", "LC", "LI", "LK", "LR",
+          "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF", "MG",
+          "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MQ", "MR", "MS", "MT",
+          "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NC", "NE", "NF", "NG",
+          "NI", "NL", "NO", "NP", "NR", "NU", "NZ", "OM", "PA", "PE", "PF",
+          "PG", "PH", "PK", "PL", "PM", "PN", "PR", "PS", "PT", "PW", "PY",
+          "QA", "RE", "RO", "RS", "RU", "RW", "SA", "SB", "SC", "SD", "SE",
+          "SG", "SH", "SI", "SJ", "SK", "SL", "SM", "SN", "SO", "SR", "SS",
+          "ST", "SV", "SX", "SY", "SZ", "TC", "TD", "TF", "TG", "TH", "TJ",
+          "TK", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA",
+          "UG", "UM", "US", "UY", "UZ", "VA", "VC", "VE", "VG", "VI", "VN",
+          "VU", "WF", "WS", "XK", "YE", "YT", "ZA", "ZM", "ZW",
+        ]
+      description: |
+        Código de país de dos letras, en mayúsculas: los códigos ISO 3166-1 alfa-2 de la lista, que incluye además `AN` y `XK`.
+
+    SpanishTaxId:
+      type: string
+      pattern: '^([0-9]{8}[A-Z]|[XYZ][0-9]{7}[A-Z]|[ABCDEFGHJKLMNPQRSUVW][0-9]{7}[0-9A-J])$'
+      description: |
+        NIF, NIE o CIF español de 9 caracteres, en mayúsculas y con la letra o el dígito de control correctos: 8 dígitos y una letra (NIF); `X`, `Y` o `Z`, 7 dígitos y una letra (NIE); o una letra de tipo de entidad, 7 dígitos y un dígito o letra de control (CIF). No admite identificadores extranjeros: un destinatario extranjero se identifica con `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`.
+      example: B12345678
+
     affected_by_incidence_key:
       type: string
       description: |
@@ -2450,12 +2901,16 @@ components:
 
         - `S`: Sí, una incidencia ha afectado a la remisión de este registro de facturación.
         - `N`: No
+        - `null`: equivale a omitir el campo.
+      nullable: true
       enum:
-        - S
-        - N
+        - "S"
+        - "N"
+        - null
 
     previous_rejection_key:
       type: string
+      nullable: true
       description: |
         Indicador de rechazo previo que, en las subsanaciones, distingue si la factura **ya está registrada en la AEAT** o si se subsana **sin registro previo**.
 
@@ -2467,7 +2922,10 @@ components:
 
         - `X`: El alta inicial fue **rechazada** y la factura **no está registrada en la AEAT**. También corresponde a las operativas especiales de **subsanación sin registro previo**. Solo puede informarse cuando `correction_key = S`; **no significa simplemente que el último envío fue rechazado**.
         - `S`: La factura **ya está registrada en la AEAT**, pero una subsanación posterior fue **rechazada**. Solo puede informarse cuando `correction_key = S`.
-        - `N` u omitido: En una subsanación habitual de una factura **ya registrada en la AEAT**, se informa `correction_key = S`. También corresponde a un alta normal/inicial, sin subsanación.
+        - `N`: En una subsanación habitual de una factura **ya registrada en la AEAT**, con `correction_key = S`.
+        - Omitido o `null`: alta normal/inicial, sin subsanación.
+
+        Si se informa este campo, también con `N`, `correction_key` es obligatorio. Sin él, la respuesta es `422` con el error en `correction_key`. En un alta normal, omite los dos campos. `X` y `S` solo se admiten con `correction_key = S`; con otro valor, el error va en `previous_rejection_key`.
 
         Con `correction_key = S` y `previous_rejection_key = X`, la API busca en KubiFACTU un registro de alta de la misma factura (mismo número y mismo ejercicio o fecha de expedición, en la misma empresa cliente) y devuelve HTTP `422` con el error en `previous_rejection_key` si ese registro:
 
@@ -2476,9 +2934,10 @@ components:
 
         `X` sigue admitiéndose cuando el alta original fue rechazada (`failed`), no está registrada (`not_registered`) o no existe en KubiFACTU.
       enum:
-        - X
-        - S
-        - N
+        - "X"
+        - "S"
+        - "N"
+        - null
 
     correction_key:
       type: string
@@ -2487,9 +2946,13 @@ components:
 
         - `S`: Sí, se trata de una subsanación; debe utilizarse con el valor de `previous_rejection_key` que corresponda.
         - `N`: No, se trata de un alta normal/inicial.
+
+        Es obligatorio si se informa `previous_rejection_key`. Si no aplica, omite el campo: `null` se rechaza con `422`.
+
+        Con `S`, KubiFACTU no comprueba si ya existe otra alta con el mismo número de factura, así que no devuelve el error `invoice_exists`.
       enum:
-        - S
-        - N
+        - "S"
+        - "N"
 
     simplified_invoice_key:
       type: string
@@ -2498,13 +2961,13 @@ components:
 
         Si no se informa este campo se entenderá que tiene valor `N`.
 
-        Sólo se podrá rellenar con `S` si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`.
+        Solo se admite si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`. Con `F2` o `R5`, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`.
 
         - `S`: Sí
         - `N`: No
       enum:
-        - S
-        - N
+        - "S"
+        - "N"
 
     without_recipient_identification_key:
       type: string
@@ -2513,28 +2976,26 @@ components:
 
         Si no se informa este campo, se entenderá que tiene valor `"N"`.
 
-        Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `F2` o `R5`.
+        Solo se admite si `invoice_type_key` es `F2` o `R5`. Con el resto de tipos, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`.
 
         - `S`: Sí
         - `N`: No
       enum:
-        - S
-        - N
+        - "S"
+        - "N"
 
     macrodata_key:
       type: string
       description: |
-        Identificador que especifica aquellas facturas con base o importe >= |100.000.000,00| (valor absoluto).
+        Identificador que especifica aquellas facturas con importe total igual o superior a 100.000.000,00 en valor absoluto.
 
-        Si no se informa este campo, se entenderá que tiene valor `"N"`.
-
-        Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `F2` o `R5`.
+        Es obligatorio si el valor absoluto de `total_amount` es igual o superior a 100.000.000,00, con cualquier `invoice_type_key`. En caso contrario, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`. KubiFACTU solo tiene en cuenta `total_amount`, no las bases del desglose.
 
         - `S`: Sí
         - `N`: No
       enum:
-        - S
-        - N
+        - "S"
+        - "N"
 
     coupon_key:
       type: string
@@ -2542,7 +3003,7 @@ components:
         Identificador que especifica si tiene minoración de la base imponible por la concesión de cupones, bonificaciones o descuentos cuando solo se expide el original de la factura.
         Si no se informa este campo, se entenderá que tiene valor `"N"`.
 
-        Sólo se podrá rellenar con `"S"` si `invoice_type_key` es `R5` o `R1`.
+        Solo se admite si `invoice_type_key` es `R1` o `R5`. Con el resto de tipos, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`.
       enum:
         - "S"
         - "N"
@@ -2568,7 +3029,7 @@ components:
     vat_tax_regime_key:
       type: string
       description: |
-        Clave que identificará el tipo de régimen del impuesto o una operación con trascendencia tributaria en el contexto del IVA. Este campo no debe incluirse si se está incluyendo `igic_tax_regime_key` o `tax_type_key` tiene un valor diferente de `01`. Los valores posibles son:
+        Clave que identificará el tipo de régimen del impuesto o una operación con trascendencia tributaria en el contexto del IVA. Es obligatoria si `tax_type_key` es `01`. Este campo no debe incluirse si se está incluyendo `igic_tax_regime_key` o `tax_type_key` tiene un valor diferente de `01`. Los valores posibles son:
 
         - `01`: Operación de régimen general.
         - `02`: Exportación.
@@ -2622,7 +3083,7 @@ components:
     igic_tax_regime_key:
       type: string
       description: |
-        Clave que identificará el tipo de régimen del impuesto o una operación con trascendencia tributaria en el contexto del IGIC. Este campo no debe incluirse se se está incluyendo `vat_tax_regime_key`. Los valores posibles son:
+        Clave que identificará el tipo de régimen del impuesto o una operación con trascendencia tributaria en el contexto del IGIC. Es obligatoria si `tax_type_key` es `03`. No debe incluirse si `tax_type_key` tiene otro valor ni junto a `vat_tax_regime_key`. Los valores posibles son:
 
         - `01`: Operación de régimen general.
         - `02`: Exportación.
@@ -2667,6 +3128,8 @@ components:
         - `S2`: Operación Sujeta y No exenta - Con Inversión del sujeto pasivo.
         - `N1`: Operación No Sujeta artículo 7, 14, otros.
         - `N2`: Operación No Sujeta por Reglas de localización.
+
+        En cada entrada del desglose se informa `operation_type_key` o `exemption_cause_key`, nunca los dos. Con `N1` o `N2`, omite `tax_rate`, `tax_quota`, `equalization_tax_rate` y `equalization_tax_quota`.
       enum:
         - "S1"
         - "S2"
@@ -2684,6 +3147,8 @@ components:
         - `E4`: Exenta por los artículos 23 y 24.
         - `E5`: Exenta por el artículo 25.
         - `E6`: Exenta por otros.
+
+        Es obligatoria si no se informa `operation_type_key` y no puede ir junto a él. Con una exención, omite `tax_rate`, `tax_quota`, `equalization_tax_rate` y `equalization_tax_quota`.
       enum:
         - "E1"
         - "E2"
@@ -2696,6 +3161,8 @@ components:
       type: string
       description: |
         Campo que identifica si el tipo de factura rectificativa es por **sustitución** o por **diferencias**.
+
+        Es obligatorio si `invoice_type_key` es `R1`, `R2`, `R3`, `R4` o `R5`. Con el resto de tipos, omite el campo.
 
         - `S`: Por sustitución.
         - `I`: Por diferencias.
@@ -2838,13 +3305,17 @@ components:
                   example: "The given data was invalid."
                 errors:
                   type: object
+                  nullable: true
                   additionalProperties:
                     type: array
                     items:
                       type: string
                   description: |
-                    Lista de errores de validación organizados por campo.
-                    Cada clave es el nombre del campo asociado al error y contiene un array de mensajes.
+                    Errores de validación organizados por campo. Cada clave es la ruta del campo en la petición, por ejemplo `recipients.0.tax_id_number` o, en un lote, `invoices.3.sif_id`, o una clave de estado como `invoice_exists`. Cada clave contiene uno o varios mensajes.
+
+                    Identifica cada error por el código HTTP y la clave: esta respuesta no incluye `code`. Los mensajes son informativos, están en inglés y pueden cambiar.
+
+                    Vale `null` cuando el `422` no se debe al contenido de la petición, sino a la configuración de la cuenta: falta el mandato SEPA, la aceptación de la autorización de intermediación o la documentación de autorización de la empresa cliente. En ese caso, `message` indica la causa.
                   example:
                     invoice_exists:
                       - "An invoice already exists with the indicated invoice number and fiscal year or issue date. If the submission of this record previously failed due to technical issues, consider resubmitting it using the record resubmission endpoint. If AEAT rejected it, send a correction with correction_key S and previous_rejection_key X. Existing invoice ID: [9db6bb78-6799-4abb-b9a0-22d127c543ed]."
@@ -2870,6 +3341,19 @@ components:
             error:
               type: object
               properties:
+                code:
+                  type: string
+                  enum: [INTERMEDIARY_SUSPENDED, INTERMEDIARY_UNSUBSCRIBED]
+                  description: |
+                    Solo aparece cuando el intermediario al que pertenece la API-KEY tiene desactivado el acceso a la API:
+
+                    - `INTERMEDIARY_SUSPENDED`: acceso suspendido.
+                    - `INTERMEDIARY_UNSUBSCRIBED`: intermediario dado de baja.
+
+                    Si la API-KEY falta o no existe, la respuesta no incluye `code`.
+                reason:
+                  type: string
+                  description: Motivo de la desactivación. Solo aparece junto a `code`.
                 message:
                   type: string
                   description: Mensaje detallado del error.
@@ -2884,7 +3368,32 @@ components:
                   type: object
                   nullable: true
                   enum: [null]
-                  description: Siempre es `null` en esta respuesta. La API-KEY se rechaza antes de asignar el identificador de la solicitud.
+                  description: Siempre es `null` en esta respuesta. La petición se rechaza antes de asignarle el identificador de la solicitud.
+                  example: null
+
+    RateLimitErrorResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            error:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Mensaje descriptivo del error, con el límite aplicado. Es informativo y puede cambiar.
+                errors:
+                  type: array
+                  maxItems: 0
+                  items: {}
+                  description: Siempre es un array vacío en esta respuesta.
+                  example: []
+                details:
+                  type: object
+                  nullable: true
+                  enum: [null]
+                  description: Siempre es `null` en esta respuesta. El límite se comprueba antes que la API-KEY.
                   example: null
 
     VerifactuHealthCheckResponse:
@@ -2954,7 +3463,7 @@ components:
       name: X-Qbikode-ClientApiKey
       in: header
       description: |
-        API-KEY de la empresa que hace la petición. Este dato se puede consultar en el panel web, accediendo a la sección _Empresas_ y accediendo a la ficha de la empresa en.
+        API-KEY de la empresa que hace la petición. Este dato se puede consultar en el panel web, accediendo a la sección _Empresas_ y a la ficha de la empresa.
 
     owner_api_key:
       type: apiKey
