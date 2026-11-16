@@ -811,7 +811,7 @@ components:
                       Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.
                       Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `100.00`.
 
-                      Solo se admite con el régimen `06` (`vat_tax_regime_key` o `igic_tax_regime_key`) o con los impuestos `02` (IPSI) y `05` (Otros). En cualquier otro caso devuelve `422`, porque la AEAT rechaza el registro (error 1257). Con el régimen `06` de IVA es obligatoria (error 1202).
+                      Solo se admite con el régimen `06` (`vat_tax_regime_key` o `igic_tax_regime_key`) o con los impuestos `02` (IPSI) y `05` (Otros). En cualquier otro caso devuelve `422`, porque la AEAT rechaza el registro (error 1257). Con el régimen `06`, de IVA o de IGIC, es obligatoria (error 1202).
                   tax_rate:
                     type: number
                     format: decimal
@@ -824,7 +824,7 @@ components:
 
                       - IVA (`tax_type_key` `01`) con `S1`: es obligatorio y solo admite los tipos vigentes en la fecha de la operación (`invoice_data.operation_date` o, si se omite, la fecha de `invoice_data.invoice_datetime`). Siempre `0`, `4`, `10` y `21`; `5` del 1 de julio de 2022 al 30 de septiembre de 2024; `2` y `7.5` del 1 de octubre al 31 de diciembre de 2024.
                       - IVA con `S1` y `vat_tax_regime_key` `11`: solo `21`.
-                      - IGIC (`03`), IPSI (`02`) y Otros (`05`) con `S1`: cualquier valor de `0` a `100`, porque la AEAT no valida estos tipos. Es obligatorio con IGIC e IPSI, y opcional con Otros.
+                      - IGIC (`03`), IPSI (`02`) y Otros (`05`) con `S1`: cualquier valor de `0` a `100`, porque la AEAT no valida estos tipos. Es obligatorio con IGIC, y con IPSI salvo que la línea lleve `tax_base_at_cost`. Con Otros es opcional.
                       - `S2`, con cualquier impuesto: es obligatorio y debe ser `0`.
 
                       Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
@@ -836,7 +836,7 @@ components:
                       Cuota resultante de aplicar a la base imponible el tipo impositivo.
                       Valor con 12 dígitos en la parte entera y 2 decimales. Ejemplo: `42.00`.
 
-                      Con `S1` es obligatoria con IVA, IGIC e IPSI, y opcional con Otros (`05`). Con `S2` es obligatoria y debe ser `0`, con cualquier impuesto. Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
+                      Con `S1` es obligatoria con IVA e IGIC, y con IPSI salvo que la línea lleve `tax_base_at_cost`. Con Otros (`05`) es opcional. Con `S2` es obligatoria y debe ser `0`, con cualquier impuesto. Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
                     example: 42.00
                   equalization_tax_rate:
                     type: number
@@ -1363,7 +1363,7 @@ components:
         - `03`: Operaciones a las que se aplique el régimen especial de bienes usados, objetos de arte, antigüedades y objetos de colección.
         - `04`: Régimen especial del oro de inversión.
         - `05`: Régimen especial de las agencias de viajes.
-        - `06`: Régimen especial grupo de entidades en IGIC (Nivel Avanzado).
+        - `06`: Régimen especial grupo de entidades en IGIC (Nivel Avanzado). Exige `tax_base_at_cost` y no se admite con `invoice_type_key` `F2`, `F3` ni `R5`.
         - `07`: Régimen especial del criterio de caja.
         - `08`: Operaciones sujetas al IPSI / IVA (Impuesto sobre la Producción, los Servicios y la Importación / Impuesto sobre el Valor Añadido).
         - `09`: Facturación de las prestaciones de servicios de agencias de viaje que actúan como mediadoras en nombre y por cuenta ajena (D.A.4ª RD1619/2012).
