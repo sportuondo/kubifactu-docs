@@ -1917,7 +1917,7 @@ components:
                   Magnitud dineraria sobre la que se aplica el tipo impositivo en **régimen especial de grupos nivel avanzado**.
                   Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `100.00`.
 
-                  Solo se admite con el régimen `06` (`vat_tax_regime_key` o `igic_tax_regime_key`) o con los impuestos `02` (IPSI) y `05` (Otros). En cualquier otro caso devuelve `422`, porque la AEAT rechaza el registro (error 1257).
+                  Solo se admite con el régimen `06` (`vat_tax_regime_key` o `igic_tax_regime_key`) o con los impuestos `02` (IPSI) y `05` (Otros). En cualquier otro caso devuelve `422`, porque la AEAT rechaza el registro (error 1257). Con el régimen `06` de IVA es obligatoria (error 1202).
               tax_rate:
                 type: number
                 format: decimal
@@ -1929,8 +1929,9 @@ components:
                   Los valores admitidos dependen del impuesto y de `operation_type_key`:
 
                   - IVA (`tax_type_key` `01`) con `S1`: es obligatorio y solo admite los tipos vigentes en la fecha de la operación (`operation_date` o, si se omite, `issue_date`). Siempre `0`, `4`, `10` y `21`; `5` del 1 de julio de 2022 al 30 de septiembre de 2024; `2` y `7.5` del 1 de octubre al 31 de diciembre de 2024.
-                  - IVA con `S2`: es obligatorio y debe ser `0`.
-                  - IGIC (`03`), IPSI (`02`) y Otros (`05`): cualquier valor de `0` a `100`. La AEAT no valida estos tipos.
+                  - IVA con `S1` y `vat_tax_regime_key` `11`: solo `21`.
+                  - IGIC (`03`), IPSI (`02`) y Otros (`05`) con `S1`: cualquier valor de `0` a `100`, porque la AEAT no valida estos tipos. Es obligatorio con IGIC e IPSI, y opcional con Otros.
+                  - `S2`, con cualquier impuesto: es obligatorio y debe ser `0`.
 
                   Con `N1`, `N2` o `exemption_cause_key`, omite el campo: cualquier valor, también `0` o `null`, devuelve `422`.
                 example: 21
@@ -1943,7 +1944,7 @@ components:
                   Cuota resultante de aplicar a la base imponible el tipo impositivo.
                   Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `42.00`.
 
-                  Con IVA (`tax_type_key` `01`) y `S1` es obligatoria. Con IVA y `S2` es obligatoria y debe ser `0`. Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
+                  Con `S1` es obligatoria con IVA, IGIC e IPSI, y opcional con Otros (`05`). Con `S2` es obligatoria y debe ser `0`, con cualquier impuesto. Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
                 example: 42.00
               equalization_tax_rate:
                 type: number
@@ -3055,12 +3056,12 @@ components:
         - `03`: Operaciones a las que se aplique el régimen especial de bienes usados, objetos de arte, antigüedades y objetos de colección.
         - `04`: Régimen especial del oro de inversión.
         - `05`: Régimen especial de las agencias de viajes.
-        - `06`: Régimen especial grupo de entidades en IVA (Nivel Avanzado).
+        - `06`: Régimen especial grupo de entidades en IVA (Nivel Avanzado). Exige `tax_base_at_cost` y no se admite con `invoice_type_key` `F2`, `F3` ni `R5`.
         - `07`: Régimen especial del criterio de caja.
         - `08`: Operaciones sujetas al IPSI / IGIC (Impuesto sobre la Producción, los Servicios y la Importación / Impuesto General Indirecto Canario).
         - `09`: Facturación de las prestaciones de servicios de agencias de viaje que actúan como mediadoras en nombre y por cuenta ajena (D.A.4ª RD1619/2012).
         - `10`: Cobros por cuenta de terceros de honorarios profesionales o de derechos derivados de la propiedad industrial, de autor u otros por cuenta de sus socios, asociados o colegiados efectuados por sociedades, asociaciones, colegios profesionales u otras entidades que realicen estas funciones de cobro.
-        - `11`: Operaciones de arrendamiento de local de negocio.
+        - `11`: Operaciones de arrendamiento de local de negocio. Con `S1`, `tax_rate` debe ser `21`.
         - `14`: Factura con IVA pendiente de devengo en certificaciones de obra cuyo destinatario sea una Administración Pública.
         - `15`: Factura con IVA pendiente de devengo en operaciones de tracto sucesivo.
         - `17`: Operación acogida a alguno de los regímenes previstos en el Capítulo XI del Título IX (OSS e IOSS).
