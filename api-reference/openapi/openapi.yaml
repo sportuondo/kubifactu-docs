@@ -433,7 +433,6 @@ paths:
 
         - Dos facturas del mismo lote con el mismo número y el mismo ejercicio, o con el mismo número y la misma fecha de expedición, son duplicadas, también si una es la subsanación de la otra. El error va en `invoices.<n>.full_invoice_number` de la segunda y siguientes.
         - El lote no devuelve `409`, `503` ni el error `is_rate_limited`.
-        - Envía como texto los campos de tipo texto, como `client_invoice_id` y `full_invoice_number`.
 
         ### Resultado mediante callback
 
