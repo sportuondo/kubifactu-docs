@@ -3084,7 +3084,7 @@ components:
       description: |
         Identificador que especifica aquellas facturas con importe total igual o superior a 100.000.000,00 en valor absoluto.
 
-        Es obligatorio si el valor absoluto de `total_amount` es igual o superior a 100.000.000,00, con cualquier `invoice_type_key`. En caso contrario, el campo solo admite `N`, que equivale a omitirlo, y `S` devuelve `422`. La AEAT no prohíbe `S` por debajo de ese importe; es una regla de KubiFACTU. KubiFACTU solo tiene en cuenta `total_amount`, no las bases del desglose.
+        Si el valor absoluto de `total_amount` es igual o superior a 100.000.000,00, con cualquier `invoice_type_key`, es obligatorio y debe ser `S`: `N` devuelve `422`, porque la AEAT lo rechaza (error 1139). En caso contrario, el campo solo admite `N`, que equivale a omitirlo, y `S` devuelve `422`, porque la AEAT también lo rechaza (error 1138). KubiFACTU solo tiene en cuenta `total_amount`, no las bases del desglose.
 
         - `S`: Sí
         - `N`: No
