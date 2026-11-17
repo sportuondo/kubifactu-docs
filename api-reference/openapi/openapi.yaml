@@ -609,11 +609,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateInvoiceRecordResponse'
         '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
+          description: |
+            No autorizado. Falta la API-KEY, no existe o el intermediario tiene desactivado el acceso a la API. En este último caso, la respuesta incluye `code` y `reason`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '404':
+          description: "No encontrado. No existe ningún registro con ese ID ni con ese `client_invoice_id` en la empresa cliente de la API-KEY."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+              example:
+                data:
+                  error:
+                    message: "Invoice with ID [9db6bb78-6799-4abb-b9a0-22d127c543ed] not found."
+                    errors: null
+                    details:
+                      request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
+        '422':
+          description: |
+            Requisito pendiente de la cuenta. `errors` es `null` y `message` indica cuál:
+
+            - `Missing SEPA mandate information…`: falta el mandato SEPA del intermediario.
+            - `Authorization for intermediation not accepted…`: el intermediario no ha aceptado la autorización de intermediación en el panel web.
+            - `Missing complete authorization documentation for this client company…`: falta la documentación de autorización de la empresa cliente.
+
+            Los mensajes son informativos y pueden cambiar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '429':
+          description: |
+            Se ha superado el límite de peticiones por segundo de la empresa cliente o, sin una API-KEY válida, de la dirección IP. Se comprueba antes que la API-KEY. La respuesta no incluye la cabecera `Retry-After`: espera un segundo antes de repetir la petición.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
         '500':
           description: "Error interno del servidor."
       security:
@@ -733,13 +767,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateInvoiceRecordResponse'
         '403':
-          description: "No autorizado. La API-KEY proporcionada no es válida."
+          description: |
+            No autorizado. Falta la API-KEY, no existe o el intermediario tiene desactivado el acceso a la API. En este último caso, la respuesta incluye `code` y `reason`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedApiKeyErrorResponse'
+        '404':
+          description: "No encontrado. No existe ningún registro con ese ID ni con ese `client_invoice_id` en la empresa cliente de la API-KEY."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
+              example:
+                data:
+                  error:
+                    message: "Invoice with ID [9db6bb78-6799-4abb-b9a0-22d127c543ed] not found."
+                    errors: null
+                    details:
+                      request_id: "9ded9e2c-d59e-4432-a926-652cbcfac365"
+        '422':
+          description: |
+            Errores de validación.
+
+            - `client_is_disabled`: la empresa cliente está desactivada.
+
+            Si `errors` es `null`, el error es un requisito pendiente de la cuenta y `message` indica cuál:
+
+            - `Missing SEPA mandate information…`: falta el mandato SEPA del intermediario.
+            - `Authorization for intermediation not accepted…`: el intermediario no ha aceptado la autorización de intermediación en el panel web.
+            - `Missing complete authorization documentation for this client company…`: falta la documentación de autorización de la empresa cliente.
+
+            Los mensajes son informativos y pueden cambiar. Identifica cada error por la clave de `errors`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '429':
+          description: |
+            Se ha superado el límite de peticiones por segundo de la empresa cliente o, sin una API-KEY válida, de la dirección IP. Se comprueba antes que la API-KEY. La respuesta no incluye la cabecera `Retry-After`: espera un segundo antes de repetir la petición.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
         '500':
           description: "Error interno del servidor."
+        '503':
+          description: |
+            Otra operación de la misma empresa cliente con la AEAT está en curso, por ejemplo un alta o una anulación inmediata, un reenvío, otra consulta o el envío de sus registros diferidos. No se consulta el registro. Vuelve a enviar la petición pasados los segundos que indica `data.error.errors.retry_after`.
+
+            Solo ocurre cuando la consulta tiene que llegar a la AEAT: un diferido que todavía no se ha enviado devuelve sus datos guardados sin esperar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceBusyErrorResponse'
+              example:
+                data:
+                  error:
+                    code: E-SERVICE-BUSY
+                    message: "Another invoice submission is being processed for this company. Please retry."
+                    errors:
+                      retry_after: 5
+                    details: null
       security:
         - client_api_key: []
 
@@ -1642,8 +1731,8 @@ components:
             - `vf_post_status`: `string|null`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
             - `vf_record_registration_status`: `string|null`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
             - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
-            - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
-            - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
+            - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu. Si supera los 1.000 caracteres, se recorta a los 1.000 primeros seguidos de `...`.
+            - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64, recortado: si supera los 500 caracteres, se envían los 500 primeros seguidos de `...`. El recorte se hace antes de codificar en Base64. Para leer el cuerpo completo, [obtén el registro](/openapi-reference/obtener-registro-de-facturación).
             - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
             - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
             - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
@@ -2378,7 +2467,7 @@ components:
               type: string
               nullable: true
               format: byte
-              description: Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación. Este campo será `null` para facturas en diferido que aún no han sido procesadas o cuando no se haya recibido respuesta de Veri*Factu.
+              description: Cuerpo de la respuesta de Veri*Factu en formato Base64. En un envío inmediato o un reenvío contiene el XML completo de la respuesta de la AEAT; en un registro diferido, solo la parte que corresponde a ese registro (`RespuestaLinea`). Este campo será `null` para facturas en diferido que aún no han sido procesadas o cuando no se haya recibido respuesta de Veri*Factu.
             recovery:
               $ref: '#/components/schemas/InvoiceRecovery'
 
@@ -2414,8 +2503,8 @@ components:
             - `vf_post_status`: `string`. Ver valores posibles en la documentación del campo `vf_post_status` de la respuesta de envío de registros de facturación.
             - `vf_record_registration_status`: `string`. Ver valores posibles en la documentación del campo `vf_record_registration_status` de la respuesta de envío de registros de facturación.
             - `has_warnings`: `bool`. Indica si el registro contiene errores que deban ser subsanados.
-            - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu.
-            - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64. Contiene el XML completo devuelto por la AEAT tras el envío del registro de facturación.
+            - `vf_error_descriptions`: `string|null`. Cadena con la descripción de los errores devueltos por Veri*Factu. Si supera los 1.000 caracteres, se recorta a los 1.000 primeros seguidos de `...`.
+            - `vf_response_body`: `string|null`. Cuerpo de la respuesta de Veri*Factu en formato Base64, recortado: si supera los 500 caracteres, se envían los 500 primeros seguidos de `...`. El recorte se hace antes de codificar en Base64. Para leer el cuerpo completo, [obtén el registro](/openapi-reference/obtener-registro-de-facturación).
             - `xml_url`: `string|null`. URL para descargar el XML del registro de facturación enviado a Veri*Factu mediante el endpoint [Descargar XML del registro de facturación](/openapi-reference/descargar-xml-del-registro-de-facturación). Será `null` si el XML aún no está disponible.
             - `qr_value`: `string|null`. URL del código QR para validación de la factura en Veri*Factu. Será `null` si el registro fue rechazado o no aplica mostrar QR.
             - `qr_image_url`: `string|null`. URL para descargar la imagen PNG del código QR generado por KubiFACTU mediante el endpoint [Descargar imagen QR del registro de facturación](/openapi-reference/descargar-imagen-qr-del-registro-de-facturación). Será `null` si el registro fue rechazado o no aplica mostrar QR.
@@ -3173,7 +3262,7 @@ components:
     ipsi_tax_regime_key:
       type: string
       description: |
-        Clave del régimen de IPSI aplicable a una operación sujeta a este impuesto. Es obligatoria para las nuevas peticiones con `tax_type_key: "02"` desde esta actualización. No se deben incluir `vat_tax_regime_key` ni `igic_tax_regime_key` en esas peticiones; las claves de régimen IPSI tampoco son compatibles con otros tipos impositivos. Los valores admitidos son:
+        Clave del régimen de IPSI aplicable a una operación sujeta a este impuesto. Es obligatoria con `tax_type_key: "02"`. No se deben incluir `vat_tax_regime_key` ni `igic_tax_regime_key` en esas peticiones; las claves de régimen IPSI tampoco son compatibles con otros tipos impositivos. Los valores admitidos son:
 
         - `01`: Régimen general.
         - `08`: Operaciones sujetas al IGIC / IVA.
