@@ -484,6 +484,7 @@ components:
                 $ref: "#/components/schemas/other_tax_id_type_key"
               other_id_card_id:
                 type: string
+                maxLength: 20
                 description: >
                   Número de identificación en el país de residencia del destinatario de la operación de la factura expedida. Ejemplo: `L74JF44L2` para una empresa de `DE`.
 
@@ -618,6 +619,7 @@ components:
                   $ref: "#/components/schemas/other_tax_id_type_key"
                 other_id_card_id:
                   type: string
+                  maxLength: 20
                   description: >
                     Número de identificación, en el país de residencia del tercero que expide la factura. Ejemplo: `L74JF44L2` para una empresa de `DE`.
 
@@ -627,26 +629,32 @@ components:
             rectified_base_amount:
               type: number
               format: integer
+              minimum: -99999999999999
+              maximum: 999999999999
               description: |
                 Base imponible rectificada.
-                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
-              example: 2500.55
+                Valor entero en céntimos. Ejemplo: Para 254,36 € el valor debe ser `25436`.
+              example: 250055
 
             rectified_quota:
               type: number
               format: integer
+              minimum: -99999999999999
+              maximum: 999999999999
               description: |
                 Cuota de impuesto rectificada.
-                Valor en céntimos con decimales. Ejemplo: Para 254.36€ el valor debería ser `24536`.
-              example: 42.30
+                Valor entero en céntimos. Ejemplo: Para 254,36 € el valor debe ser `25436`.
+              example: 4230
 
             rectified_equalization_tax_quota:
               type: number
-              format: decimal
+              format: integer
+              minimum: -99999999999999
+              maximum: 999999999999
               description: |
                 Cuota de recargo de equivalencia rectificada.
-                Valor en céntimos con decimales. Ejemplo: Para 5.2€ el valor debería ser `520`.
-              example: 5.20
+                Valor entero en céntimos. Ejemplo: Para 5,20 € el valor debe ser `520`.
+              example: 520
 
             replaced_rectified_invoices:
               type: array
@@ -869,6 +877,8 @@ components:
             total_quota:
               type: number
               format: integer
+              minimum: -99999999999999
+              maximum: 999999999999
               description: |
                 Importe total de la cuota (sumatorio de la cuota repercutida y cuota de recargo de equivalencia) de la factura.
                 Valor entero en céntimos. Ejemplo: Para 254,36 € el valor debe ser `25436`.
@@ -882,6 +892,8 @@ components:
             total_amount:
               type: number
               format: integer
+              minimum: -99999999999999
+              maximum: 999999999999
               description: |
                 Importe total de la factura. Con carácter general se compara con Ʃ(`tax_base` + `tax_quota` + `equalization_tax_quota`) de todas las entradas de `invoice_data.tax_breakdown`, salvo las excepciones por régimen indicadas a continuación.
                 Valor entero en céntimos. Ejemplo: Para 254,36 € el valor debe ser `25436`.
