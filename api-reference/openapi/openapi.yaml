@@ -139,7 +139,7 @@ paths:
         - Los errores que dependen de los datos de la cuenta en KubiFACTU (el SIF, el NIF de la empresa cliente, las facturas ya registradas, la espera que pide la AEAT o la cadena de registros) no se pueden comprobar antes. Están en las respuestas `409`, `422` y `503`.
         - El resultado de la AEAT solo se conoce al procesar el registro. Se devuelve con HTTP `200` en `vf_post_status` y `vf_record_registration_status`, también cuando la AEAT rechaza el registro o el envío falla.
 
-        Omite los campos que no apliquen. Enviar `null` en un campo que el esquema no marca como `nullable` devuelve `422`. KubiFACTU elimina los espacios al principio y al final de los textos y convierte un texto vacío en `null`.
+        Omite los campos que no apliquen. Un campo enviado con `null` o con un texto vacío equivale a omitirlo; si el campo es obligatorio, la respuesta es `422`. KubiFACTU elimina los espacios al principio y al final de los textos, así que un texto con solo espacios también equivale a omitir el campo.
       operationId: "createInvoiceRecord"
       x-mint:
         content: |
@@ -305,7 +305,7 @@ paths:
         - Los errores que dependen de los datos de la cuenta en KubiFACTU (el SIF, el NIF de la empresa cliente o las facturas ya registradas) no se pueden comprobar antes. Están en la respuesta `422`.
         - El resultado de la AEAT llega después, al enviar el registro.
 
-        Omite los campos que no apliquen. Enviar `null` en un campo que el esquema no marca como `nullable` devuelve `422`. KubiFACTU elimina los espacios al principio y al final de los textos y convierte un texto vacío en `null`.
+        Omite los campos que no apliquen. Un campo enviado con `null` o con un texto vacío equivale a omitirlo; si el campo es obligatorio, la respuesta es `422`. KubiFACTU elimina los espacios al principio y al final de los textos, así que un texto con solo espacios también equivale a omitir el campo.
       operationId: "createDeferredInvoiceRecord"
       requestBody:
         required: true
@@ -1688,11 +1688,12 @@ components:
 
         recipients:
           type: array
+          nullable: true
           maxItems: 1000
           description: |
-            Información de los destinatarios de la factura. Es obligatorio, con al menos un destinatario, si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`, o si `issued_by_third_party_or_recipient_key` es `D`. Con `F2` o `R5`, omite el campo: un destinatario o `null` devuelven `422`. Por eso `F2` y `R5` no admiten `issued_by_third_party_or_recipient_key = D`.
+            Información de los destinatarios de la factura. Es obligatorio, con al menos un destinatario, si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`, o si `issued_by_third_party_or_recipient_key` es `D`. Con `F2` o `R5`, omite el campo o envíalo con `null`: un destinatario devuelve `422`. Por eso `F2` y `R5` no admiten `issued_by_third_party_or_recipient_key = D`.
 
-            Cada destinatario se identifica con `tax_id_number` o con los tres campos `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`, nunca con ambos. Omite los campos que no uses: enviarlos con `null` devuelve `422`.
+            Cada destinatario se identifica con `tax_id_number` o con los tres campos `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`, nunca con ambos. Omite los campos que no uses o envíalos con `null`.
           items:
             type: object
             required:
@@ -1703,18 +1704,21 @@ components:
                 maxLength: 120
                 description: Nombre de la empresa receptora.
               tax_id_number:
-                allOf:
+                anyOf:
                   - $ref: "#/components/schemas/SpanishTaxId"
+                  - $ref: "#/components/schemas/OmittedValue"
                 description: |
                   NIF/CIF del destinatario nacional: un NIF, NIE o CIF español con la letra o el dígito de control correctos. Es obligatorio si se omite `other_tax_id_number`. Puede coincidir con el NIF del emisor, como en las facturas de autoconsumo.
               other_country_code:
-                allOf:
+                anyOf:
                   - $ref: "#/components/schemas/CountryCode"
+                  - $ref: "#/components/schemas/OmittedValue"
                 description: |
                   Código del país de residencia del destinatario no nacional. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Debe ser `ES` si `other_tax_id_type_key` es `07`. Con `ES`, la AEAT solo admite `other_tax_id_type_key` `03` o `07`.
               other_tax_id_type_key:
-                allOf:
+                anyOf:
                   - $ref: "#/components/schemas/other_tax_id_type_key"
+                  - $ref: "#/components/schemas/OmittedValue"
                 description: |
                   Tipo de identificación del destinatario no nacional. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa.
 
@@ -1726,12 +1730,14 @@ components:
                   - `07`: no censado. Exige `other_country_code = ES`.
               other_tax_id_number:
                 type: string
+                nullable: true
                 maxLength: 20
                 description: >
                   Número de identificación en el país de residencia del destinatario de la operación de la factura expedida, de hasta 20 caracteres. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Ejemplo: `L74JF44L2` para una empresa de `DE`.
 
         representative_company_name:
           type: string
+          nullable: true
           maxLength: 120
           description: |
             Nombre/razón social del representante del obligado tributario.
@@ -1740,8 +1746,9 @@ components:
             Va siempre junto a `representative_tax_id_number`: si se informa uno, el otro es obligatorio.
 
         representative_tax_id_number:
-          allOf:
+          anyOf:
             - $ref: "#/components/schemas/SpanishTaxId"
+            - $ref: "#/components/schemas/OmittedValue"
           description: |
             NIF del representante del obligado tributario: un NIF, NIE o CIF español con la letra o el dígito de control correctos.
             A rellenar solo en caso de que el registro de facturación remitido haya sido generado por un representante/asesor del obligado tributario.
@@ -1852,28 +1859,52 @@ components:
                   tax_type_key:
                     type: string
                     enum: ["01"]
+                  vat_tax_regime_key:
+                    $ref: "#/components/schemas/vat_tax_regime_key"
                 not:
                   anyOf:
                     - required: [igic_tax_regime_key]
+                      properties:
+                        igic_tax_regime_key:
+                          $ref: "#/components/schemas/igic_tax_regime_key"
                     - required: [ipsi_tax_regime_key]
+                      properties:
+                        ipsi_tax_regime_key:
+                          $ref: "#/components/schemas/ipsi_tax_regime_key"
               - required: [tax_type_key, ipsi_tax_regime_key]
                 properties:
                   tax_type_key:
                     type: string
                     enum: ["02"]
+                  ipsi_tax_regime_key:
+                    $ref: "#/components/schemas/ipsi_tax_regime_key"
                 not:
                   anyOf:
                     - required: [vat_tax_regime_key]
+                      properties:
+                        vat_tax_regime_key:
+                          $ref: "#/components/schemas/vat_tax_regime_key"
                     - required: [igic_tax_regime_key]
+                      properties:
+                        igic_tax_regime_key:
+                          $ref: "#/components/schemas/igic_tax_regime_key"
               - required: [tax_type_key, igic_tax_regime_key]
                 properties:
                   tax_type_key:
                     type: string
                     enum: ["03"]
+                  igic_tax_regime_key:
+                    $ref: "#/components/schemas/igic_tax_regime_key"
                 not:
                   anyOf:
                     - required: [vat_tax_regime_key]
+                      properties:
+                        vat_tax_regime_key:
+                          $ref: "#/components/schemas/vat_tax_regime_key"
                     - required: [ipsi_tax_regime_key]
+                      properties:
+                        ipsi_tax_regime_key:
+                          $ref: "#/components/schemas/ipsi_tax_regime_key"
               - required: [tax_type_key]
                 properties:
                   tax_type_key:
@@ -1882,21 +1913,40 @@ components:
                 not:
                   anyOf:
                     - required: [vat_tax_regime_key]
+                      properties:
+                        vat_tax_regime_key:
+                          $ref: "#/components/schemas/vat_tax_regime_key"
                     - required: [ipsi_tax_regime_key]
+                      properties:
+                        ipsi_tax_regime_key:
+                          $ref: "#/components/schemas/ipsi_tax_regime_key"
                     - required: [igic_tax_regime_key]
+                      properties:
+                        igic_tax_regime_key:
+                          $ref: "#/components/schemas/igic_tax_regime_key"
             properties:
               tax_type_key:
                 $ref: "#/components/schemas/tax_type_key"
               vat_tax_regime_key:
-                $ref: "#/components/schemas/vat_tax_regime_key"
+                anyOf:
+                  - $ref: "#/components/schemas/vat_tax_regime_key"
+                  - $ref: "#/components/schemas/OmittedValue"
               igic_tax_regime_key:
-                $ref: "#/components/schemas/igic_tax_regime_key"
+                anyOf:
+                  - $ref: "#/components/schemas/igic_tax_regime_key"
+                  - $ref: "#/components/schemas/OmittedValue"
               ipsi_tax_regime_key:
-                $ref: "#/components/schemas/ipsi_tax_regime_key"
+                anyOf:
+                  - $ref: "#/components/schemas/ipsi_tax_regime_key"
+                  - $ref: "#/components/schemas/OmittedValue"
               operation_type_key:
-                $ref: "#/components/schemas/operation_type_key"
+                anyOf:
+                  - $ref: "#/components/schemas/operation_type_key"
+                  - $ref: "#/components/schemas/OmittedValue"
               exemption_cause_key:
-                $ref: "#/components/schemas/exemption_cause_key"
+                anyOf:
+                  - $ref: "#/components/schemas/exemption_cause_key"
+                  - $ref: "#/components/schemas/OmittedValue"
               tax_base:
                 type: number
                 format: decimal
@@ -1920,6 +1970,7 @@ components:
               tax_rate:
                 type: number
                 format: decimal
+                nullable: true
                 minimum: 0
                 maximum: 100
                 description: |
@@ -1932,18 +1983,19 @@ components:
                   - IGIC (`03`), IPSI (`02`) y Otros (`05`) con `S1`: cualquier valor de `0` a `100`, porque la AEAT no valida estos tipos. Es obligatorio con IGIC, y con IPSI salvo que la línea lleve `tax_base_at_cost`. Con Otros es opcional.
                   - `S2`, con cualquier impuesto: es obligatorio y debe ser `0`.
 
-                  Con `N1`, `N2` o `exemption_cause_key`, omite el campo: cualquier valor, también `0` o `null`, devuelve `422`.
+                  Con `N1`, `N2` o `exemption_cause_key`, omite el campo o envíalo con `null`: cualquier otro valor, también `0`, devuelve `422`.
                 example: 21
               tax_quota:
                 type: number
                 format: decimal
+                nullable: true
                 minimum: -999999999999.99
                 maximum: 999999999999.99
                 description: |
                   Cuota resultante de aplicar a la base imponible el tipo impositivo.
                   Valor con 12 dígitos en la parte entera y 2 decimales como máximo. Ejemplo: `42.00`.
 
-                  Con `S1` es obligatoria con IVA e IGIC, y con IPSI salvo que la línea lleve `tax_base_at_cost`. Con Otros (`05`) es opcional. Con `S2` es obligatoria y debe ser `0`, con cualquier impuesto. Con `N1`, `N2` o `exemption_cause_key`, omite el campo.
+                  Con `S1` es obligatoria con IVA e IGIC, y con IPSI salvo que la línea lleve `tax_base_at_cost`. Con Otros (`05`) es opcional. Con `S2` es obligatoria y debe ser `0`, con cualquier impuesto. Con `N1`, `N2` o `exemption_cause_key`, omite el campo o envíalo con `null`.
                 example: 42.00
               equalization_tax_rate:
                 type: number
@@ -2039,10 +2091,11 @@ components:
 
         third_party_data:
           type: object
+          nullable: true
           description: |
             Información del tercero que expide la factura. Es obligatorio si `issued_by_third_party_or_recipient_key` es `T`. En otro caso, omite el campo: si se envía con datos, la respuesta es `422`.
 
-            El tercero se identifica con `tax_id_number` o con los tres campos `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`, nunca con ambos. Omite los campos que no uses: enviarlos con `null` devuelve `422`.
+            El tercero se identifica con `tax_id_number` o con los tres campos `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`, nunca con ambos. Omite los campos que no uses o envíalos con `null`.
           required:
             - company_name
           properties:
@@ -2051,22 +2104,26 @@ components:
               maxLength: 120
               description: Nombre de la empresa del tercero que expide la factura.
             tax_id_number:
-              allOf:
+              anyOf:
                 - $ref: "#/components/schemas/SpanishTaxId"
+                - $ref: "#/components/schemas/OmittedValue"
               description: |
                 NIF/CIF del tercero nacional: un NIF, NIE o CIF español con la letra o el dígito de control correctos. Es obligatorio si se omite `other_tax_id_number`, y debe ser distinto del NIF del emisor, también si solo cambian las mayúsculas o los espacios.
             other_country_code:
-              allOf:
+              anyOf:
                 - $ref: "#/components/schemas/CountryCode"
+                - $ref: "#/components/schemas/OmittedValue"
               description: |
                 Código del país de residencia del tercero no nacional. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Con `ES`, la AEAT solo admite `other_tax_id_type_key` `03`.
             other_tax_id_type_key:
-              allOf:
+              anyOf:
                 - $ref: "#/components/schemas/other_tax_id_type_key"
+                - $ref: "#/components/schemas/OmittedValue"
               description: |
                 Tipo de identificación del tercero no nacional. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Admite los mismos valores que en `recipients`, salvo `07` (no censado), que la AEAT no admite para el tercero.
             other_tax_id_number:
               type: string
+              nullable: true
               maxLength: 20
               description: >
                 Número de identificación, en el país de residencia del tercero que expide la factura, de hasta 20 caracteres. Es obligatorio si se omite `tax_id_number` y debe omitirse si se informa. Ejemplo: `L74JF44L2` para una empresa de `DE`.
@@ -2076,6 +2133,7 @@ components:
 
         rectified_tax_base:
           type: number
+          nullable: true
           format: decimal
           minimum: -999999999999.99
           maximum: 999999999999.99
@@ -2088,6 +2146,7 @@ components:
 
         rectified_tax_quota:
           type: number
+          nullable: true
           format: decimal
           minimum: -999999999999.99
           maximum: 999999999999.99
@@ -2113,6 +2172,7 @@ components:
 
         rectified_invoices:
           type: array
+          nullable: true
           maxItems: 1000
           description: |
             Lista de facturas que se están rectificando, con un máximo de 1.000.
@@ -2148,6 +2208,7 @@ components:
 
         substituted_invoices:
           type: array
+          nullable: true
           maxItems: 1000
           description: |
             Lista de facturas que se quieren sustituir, con un máximo de 1.000.
@@ -2904,6 +2965,13 @@ components:
         NIF, NIE o CIF español de 9 caracteres, con la letra o el dígito de control correctos: 8 dígitos y una letra (NIF); `X`, `Y` o `Z`, 7 dígitos y una letra (NIE); o una letra de tipo de entidad, 7 dígitos y un dígito o letra de control (CIF). No admite identificadores extranjeros: un destinatario extranjero se identifica con `other_country_code`, `other_tax_id_type_key` y `other_tax_id_number`.
       example: B12345678
 
+    OmittedValue:
+      type: string
+      nullable: true
+      enum:
+        - null
+      description: "`null` equivale a omitir el campo."
+
     affected_by_incidence_key:
       type: string
       description: |
@@ -2941,10 +3009,10 @@ components:
 
         - `X`: El alta inicial fue **rechazada** y la factura **no está registrada en la AEAT**. También corresponde a las operativas especiales de **subsanación sin registro previo**. Solo puede informarse cuando `correction_key = S`; **no significa simplemente que el último envío fue rechazado**.
         - `S`: La factura **ya está registrada en la AEAT**, pero una subsanación posterior fue **rechazada**. Solo puede informarse cuando `correction_key = S`.
-        - `N`: En una subsanación habitual de una factura **ya registrada en la AEAT**, con `correction_key = S`.
+        - `N`: En una subsanación habitual de una factura **ya registrada en la AEAT**, con `correction_key = S`. Sin `correction_key`, o con `correction_key = N`, es un alta normal/inicial, igual que si se omite el campo.
         - Omitido o `null`: alta normal/inicial, sin subsanación.
 
-        Si se informa este campo, también con `N`, `correction_key` es obligatorio. Sin él, la respuesta es `422` con el error en `correction_key`. En un alta normal, omite los dos campos. `X` y `S` solo se admiten con `correction_key = S`; con otro valor, el error va en `previous_rejection_key`.
+        `X` y `S` solo se admiten con `correction_key = S`. Sin `correction_key`, o con `correction_key = N`, la respuesta es `422` con el error en `previous_rejection_key`.
 
         Con `correction_key = S` y `previous_rejection_key = X`, la API busca en KubiFACTU un registro de alta de la misma factura (mismo número y mismo ejercicio o fecha de expedición, en la misma empresa cliente) y devuelve HTTP `422` con el error en `previous_rejection_key` si ese registro:
 
@@ -2960,72 +3028,88 @@ components:
 
     correction_key:
       type: string
+      nullable: true
       description: |
         Indicador que especifica que se trata de una subsanación de un registro de facturación de alta previamente generado, con o sin registro previo en la AEAT según el valor de `previous_rejection_key`. El contenido de este nuevo registro de facturación es el correcto y el que deberá tenerse en cuenta. Si no se informa este campo, se entenderá que tiene valor `N` (alta normal/inicial). [Ver más información al respecto](/faq#¿qué-debo-hacer-cuando-veri-factu-“acepta-con-errores”-una-de-mis-facturas).
 
         - `S`: Sí, se trata de una subsanación; debe utilizarse con el valor de `previous_rejection_key` que corresponda.
         - `N`: No, se trata de un alta normal/inicial.
-
-        Es obligatorio si se informa `previous_rejection_key`. Si no aplica, omite el campo: `null` se rechaza con `422`.
+        - `null`: equivale a omitir el campo.
 
         Con `S`, KubiFACTU no comprueba si ya existe otra alta con el mismo número de factura, así que no devuelve el error `invoice_exists`.
       enum:
         - "S"
         - "N"
+        - null
 
     simplified_invoice_key:
       type: string
+      nullable: true
       description: |
         Factura simplificada Articulo 7.2 Y 7.3 RD 1619/2012.
 
         Si no se informa este campo se entenderá que tiene valor `N`.
 
-        Solo se admite si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`. Con `F2` o `R5`, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`.
+        `S` solo se admite si `invoice_type_key` es `F1`, `F3`, `R1`, `R2`, `R3` o `R4`. Con `F2` o `R5`, el campo solo admite `N`, que equivale a omitirlo; `S` devuelve `422` (apartado 8 de las validaciones de la AEAT).
 
         - `S`: Sí
         - `N`: No
+        - `null`: equivale a omitir el campo.
       enum:
         - "S"
         - "N"
+        - null
 
     without_recipient_identification_key:
       type: string
+      nullable: true
       description: |
         Factura sin identificación del destinatario según el artículo 6.1.d del RD 1619/2012.
 
         Si no se informa este campo, se entenderá que tiene valor `"N"`.
 
-        Solo se admite si `invoice_type_key` es `F2` o `R5`. Con el resto de tipos, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`.
+        `S` solo se admite si `invoice_type_key` es `F2` o `R5`. Con el resto de tipos, el campo solo admite `N`, que equivale a omitirlo; `S` devuelve `422` (apartado 9 de las validaciones de la AEAT).
 
         - `S`: Sí
         - `N`: No
+        - `null`: equivale a omitir el campo.
       enum:
         - "S"
         - "N"
+        - null
 
     macrodata_key:
       type: string
+      nullable: true
       description: |
         Identificador que especifica aquellas facturas con importe total igual o superior a 100.000.000,00 en valor absoluto.
 
-        Es obligatorio si el valor absoluto de `total_amount` es igual o superior a 100.000.000,00, con cualquier `invoice_type_key`. En caso contrario, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`. KubiFACTU solo tiene en cuenta `total_amount`, no las bases del desglose.
+        Es obligatorio si el valor absoluto de `total_amount` es igual o superior a 100.000.000,00, con cualquier `invoice_type_key`. En caso contrario, el campo solo admite `N`, que equivale a omitirlo, y `S` devuelve `422`. La AEAT no prohíbe `S` por debajo de ese importe; es una regla de KubiFACTU. KubiFACTU solo tiene en cuenta `total_amount`, no las bases del desglose.
 
         - `S`: Sí
         - `N`: No
+        - `null`: equivale a omitir el campo.
       enum:
         - "S"
         - "N"
+        - null
 
     coupon_key:
       type: string
+      nullable: true
       description: |
         Identificador que especifica si tiene minoración de la base imponible por la concesión de cupones, bonificaciones o descuentos cuando solo se expide el original de la factura.
         Si no se informa este campo, se entenderá que tiene valor `"N"`.
 
-        Solo se admite si `invoice_type_key` es `R1` o `R5`. Con el resto de tipos, omite el campo: cualquier valor, también `N` o `null`, devuelve `422`.
+        `S` solo se admite si `invoice_type_key` es `R1` o `R5`. Con el resto de tipos, el campo solo admite `N`, que equivale a omitirlo; `S` devuelve `422` (apartado 14 de las validaciones de la AEAT).
+
+        - `S`: Sí
+        - `N`: No
+        - `null`: equivale a omitir el campo.
       enum:
         - "S"
         - "N"
+        - null
       example: "N"
 
     tax_type_key:
@@ -3178,16 +3262,18 @@ components:
 
     rectificative_type_key:
       type: string
+      nullable: true
       description: |
         Campo que identifica si el tipo de factura rectificativa es por **sustitución** o por **diferencias**.
 
-        Es obligatorio si `invoice_type_key` es `R1`, `R2`, `R3`, `R4` o `R5`. Con el resto de tipos, omite el campo.
+        Es obligatorio si `invoice_type_key` es `R1`, `R2`, `R3`, `R4` o `R5`. Con el resto de tipos, omite el campo o envíalo con `null`.
 
         - `S`: Por sustitución.
         - `I`: Por diferencias.
       enum:
         - "S"
         - "I"
+        - null
 
     vf_post_status:
       nullable: true
